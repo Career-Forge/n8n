@@ -1,0 +1,427 @@
+{
+  "name": "Advanced Pipeline: Base Job Finder (ForgeScore)",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following Master Resume and perform weighted analytics, heavily prioritizing the most recent experiences and projects. Output ONLY a JSON object with two fields: \"targetRole\" (the single best job title) and \"location\" (ideal location or 'Remote' if unclear).\n\n## RESUME:\n{{ $json.data }}"
+      },
+      "id": "5e1f439e-610b-4be3-ac2b-fac0c78fc719",
+      "name": "Stage 1: Role Generator",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        528,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-3-flash-preview",
+        "options": {}
+      },
+      "id": "de285784-5916-43ea-a7ff-243589bc0423",
+      "name": "Gemini-3-Flash (BYOK)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        528,
+        208
+      ],
+      "credentials": {
+        "openRouterApi": {
+          "id": "3Iip0FV9B9KVZMdc",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert Job Scraper with web access.\nA user has been targeted for the following career profile: {{ $json.text }}.\n\nUsing your native OpenRouter Web Search capabilities, search EXACTLY these tracking sites:\nsite:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:boards.workable.com.\n\nFilter results for jobs posted strictly in the PAST 24 HOURS.\nFetch the content from the top 10 relevant job URLs and output their JD text.",
+        "options": {}
+      },
+      "id": "204722df-087d-4ee2-a72a-3f5914a5ab5b",
+      "name": "Stage 2: Job Hunter Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-3-flash-preview",
+        "options": {}
+      },
+      "id": "f9bc7567-dfdd-4c55-8d2f-de82749014cc",
+      "name": "Hunter Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        880,
+        192
+      ],
+      "credentials": {
+        "openRouterApi": {
+          "id": "3Iip0FV9B9KVZMdc",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a ForgeScore Evaluator. Execute a 100-point scoring algorithm to evaluate how well each job matches the candidate's resume.\n\n## SCORING BREAKDOWN:\n- Technical Skills (0-40): Match required tech stack, tools, languages\n- Experience (0-30): Match years, seniority level, domain experience\n- Education (0-15): Match degree requirements, certifications\n- Projects (0-15): Match relevant project work, achievements\n\n## MASTER RESUME:\n{{ $('Merge').item.json.data }}\n\n## SCRAPED JOBS:\n{{ $json.output }}\n\n## OUTPUT FORMAT:\nReturn a JSON array of objects, each with:\n- jobTitle, company, jobUrl\n- overallScore (0-100)\n- breakdown: { technicalSkills, experience, education, projects }\n- strengths: [top 3 strengths]\n- gaps: [top 3 gaps]\n- recommendation: 'STRONG MATCH' | 'GOOD MATCH' | 'WEAK MATCH'\n\nOnly include jobs scoring >= 50. Sort by overallScore descending."
+      },
+      "id": "1098d837-4724-47e3-8cf8-ff950b57f1be",
+      "name": "Stage 3: ForgeScore Evaluator",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        1232,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-3.1-pro-preview",
+        "options": {}
+      },
+      "id": "d92fc074-cbbd-422e-81f1-33e7ab459b75",
+      "name": "Evaluator Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        192
+      ],
+      "credentials": {
+        "openRouterApi": {
+          "id": "3Iip0FV9B9KVZMdc",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the ForgeScore output into structured items\nconst rawText = $input.first().json.text || $input.first().json.output || '';\n\n// Try to extract JSON array from the response\nlet jobs = [];\ntry {\n  // Look for JSON array in the response\n  const jsonMatch = rawText.match(/\\[\\s*\\{[\\s\\S]*\\}\\s*\\]/);\n  if (jsonMatch) {\n    jobs = JSON.parse(jsonMatch[0]);\n  } else {\n    // If no JSON array found, wrap the raw text as a single result\n    jobs = [{ rawOutput: rawText, parsedAt: new Date().toISOString() }];\n  }\n} catch (e) {\n  jobs = [{ rawOutput: rawText, parseError: e.message, parsedAt: new Date().toISOString() }];\n}\n\n// Add timestamp to each job\nconst timestamp = new Date().toISOString();\nreturn jobs.map(job => ({\n  json: {\n    ...job,\n    scannedAt: timestamp\n  }\n}));"
+      },
+      "id": "parse_results",
+      "name": "Parse ForgeScore Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1452,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {
+          "fileName": "forgescore_results.json"
+        }
+      },
+      "id": "convert_to_file",
+      "name": "Convert to JSON File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Job Matcher - Upload Your Resume",
+        "formDescription": "Upload your resume (PDF or DOCX) to match against job postings from ATS platforms",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Upload Your Resume",
+              "fieldType": "file",
+              "fieldName": "resume",
+              "acceptFileTypes": ".pdf,.docx",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -288,
+        0
+      ],
+      "id": "70a554b0-9174-4cd1-a74a-6dbb49f29eb5",
+      "name": "Upload Resume & Start",
+      "webhookId": "80c8e948-c3ae-457c-b465-c289571b4695"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f939174f-0ee3-410b-9ee1-2699f64a7f05",
+                    "leftValue": "={{ $json.resume[0].mimetype }}",
+                    "rightValue": "application/pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "85c4260f-f345-49fe-b132-c2a6384198b8",
+                    "leftValue": "={{ $json.resume[0].mimetype }}",
+                    "rightValue": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -96,
+        0
+      ],
+      "id": "df41afd3-612a-48c6-84e3-2f1aac0d54f2",
+      "name": "Check File Type"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "resume",
+        "options": {
+          "joinPages": true,
+          "keepSource": "json"
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        112,
+        -96
+      ],
+      "id": "8b7ce5d0-43da-41fb-a0e1-8a1468d397f4",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "resume",
+        "options": {
+          "keepSource": "json"
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        112,
+        96
+      ],
+      "id": "81551893-1b3a-437c-9f98-df7aa1d10f75",
+      "name": "Extract DOCX"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        336,
+        0
+      ],
+      "id": "d62a1705-6da8-4aaa-a191-1752c195f7a9",
+      "name": "Merge"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gemini-3-Flash (BYOK)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Stage 1: Role Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stage 1: Role Generator": {
+      "main": [
+        [
+          {
+            "node": "Stage 2: Job Hunter Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hunter Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Stage 2: Job Hunter Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stage 2: Job Hunter Agent": {
+      "main": [
+        [
+          {
+            "node": "Stage 3: ForgeScore Evaluator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluator Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Stage 3: ForgeScore Evaluator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stage 3: ForgeScore Evaluator": {
+      "main": [
+        [
+          {
+            "node": "Parse ForgeScore Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse ForgeScore Results": {
+      "main": [
+        [
+          {
+            "node": "Convert to JSON File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Resume & Start": {
+      "main": [
+        [
+          {
+            "node": "Check File Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check File Type": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract DOCX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract DOCX": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Stage 1: Role Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c25cc876-6632-451f-945e-1fc625c86f8a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5be19b2673e10c00809d8ae628ae9c7da324003fb6e9a0362afb5492b93eac08"
+  },
+  "id": "IantT6hEmNxnGgsC",
+  "tags": []
+}

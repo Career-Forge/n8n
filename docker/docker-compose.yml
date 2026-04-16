@@ -1,0 +1,212 @@
+version: "3.8"
+
+# ============================================================
+#  CareerForge n8n — Local Demo Stack
+#  Run with: docker compose up -d  (from the docker/ folder)
+#  n8n UI: http://localhost:5678
+#  Copy .env.example → .env and fill in your keys before first run
+# ============================================================
+
+services:
+
+  # ----------------------------------------------------------
+  #  n8n — Core Workflow Engine
+  # ----------------------------------------------------------
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: careerforge_n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # --- Core ---
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+      - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678}
+
+      # --- Auth ---
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER:-careerforge}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-demo1234}
+
+      # --- Community Nodes (required for Firecrawl node) ---
+      - N8N_COMMUNITY_PACKAGES_ENABLED=true
+      - N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - N8N_WEBHOOK_URL=https://semifinal-linguini-showplace.ngrok-free.dev
+      - WEBHOOK_URL=https://semifinal-linguini-showplace.ngrok-free.dev
+
+      # --- Execution ---
+      - EXECUTIONS_PROCESS=main
+      - EXECUTIONS_DATA_SAVE_ON_ERROR=all
+      - EXECUTIONS_DATA_SAVE_ON_SUCCESS=all
+      - EXECUTIONS_DATA_MANUAL_EXECUTIONS=true
+      - EXECUTIONS_DATA_MAX_AGE=336
+
+      # --- Timezone ---
+      - GENERIC_TIMEZONE=${TIMEZONE:-America/New_York}
+      - TZ=${TIMEZONE:-America/New_York}
+
+      # --- LLM ---
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+
+      # --- Database ---
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+
+      # --- Scraping ---
+      - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
+
+      # --- Search ---
+      - SERPER_API_KEY=${SERPER_API_KEY}
+      - YOUCOM_API_KEY=${YOUCOM_API_KEY}
+
+      # --- Telegram ---
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+
+      # --- Persistence ---
+      - DB_TYPE=sqlite
+      - DB_SQLITE_DATABASE=/home/node/.n8n/database.sqlite
+
+      # --- UI ---
+      - N8N_EDITOR_BASE_URL=${WEBHOOK_URL:-http://localhost:5678}
+      - N8N_PERSONALIZATION_ENABLED=false
+      - N8N_VERSION_NOTIFICATIONS_ENABLED=false
+      - N8N_DIAGNOSTICS_ENABLED=false
+
+      # --- ChromaDB API ---
+      - CHROMA_API_URL=http://chroma-api:5680
+
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./workflows:/home/node/.n8n/workflows-import:ro
+      - ../storage:/home/node/storage
+
+    networks:
+      - careerforge_net
+
+    depends_on:
+      - chroma-api
+
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ----------------------------------------------------------
+  #  LaTeX Compiler Service — PDF generation for resumes
+  # ----------------------------------------------------------
+  latex-service:
+    build:
+      context: ../latex-service
+      dockerfile: Dockerfile
+    container_name: careerforge_latex
+    restart: unless-stopped
+    ports:
+      - "5679:5679"
+    volumes:
+      - ../storage:/app/storage
+    networks:
+      - careerforge_net
+
+  # ----------------------------------------------------------
+  #  ChromaDB — Vector database for persistent memory
+  #  Pinned to 0.5.23: stable REST API with server-side embedding
+  #  (v1.0.0 changed the upsert contract to require explicit embeddings)
+  # ----------------------------------------------------------
+  chroma-service:
+    image: chromadb/chroma:0.5.23
+    container_name: careerforge_chroma
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    networks:
+      - careerforge_net
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/heartbeat')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ----------------------------------------------------------
+  #  ChromaDB HTTP API Wrapper — Flask microservice so n8n
+  #  can talk to ChromaDB via plain HTTP JSON calls (port 5680)
+  # ----------------------------------------------------------
+  chroma-api:
+    build:
+      context: ../chroma-api
+      dockerfile: Dockerfile
+    container_name: careerforge_chroma_api
+    restart: unless-stopped
+    ports:
+      - "5680:5680"
+    environment:
+      - CHROMA_HOST=chroma-service
+      - CHROMA_PORT=8000
+      - CHROMA_API_VERSION=v1
+    volumes:
+      - ../storage:/app/storage
+    depends_on:
+      chroma-service:
+        condition: service_healthy
+    networks:
+      - careerforge_net
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5680/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ----------------------------------------------------------
+  #  CareerForge Avatars — Multi-avatar FastAPI service
+  #  Architecture (n8n-first):
+  #    n8n is the front door and orchestrator.
+  #    For complex intents (apply, intel, interview_prep, salary_coach),
+  #    n8n sends the ack to Telegram then calls POST /api/dispatch here.
+  #    This service does the LLM work and sends avatar responses
+  #    directly to Telegram via each avatar's own bot token.
+  #  Internal URL: http://avatars:8000
+  # ----------------------------------------------------------
+  avatars:
+    build:
+      context: ../../careerforge_Telegram
+      dockerfile: Dockerfile
+    container_name: careerforge_avatars
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../../careerforge_Telegram/.env.local
+    volumes:
+      - ../../careerforge_Telegram/data:/app/data
+    networks:
+      - careerforge_net
+    depends_on:
+      - n8n
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+# ----------------------------------------------------------
+#  Volumes & Networks
+# ----------------------------------------------------------
+volumes:
+  n8n_data:
+    driver: local
+  chroma_data:
+    driver: local
+
+networks:
+  careerforge_net:
+    driver: bridge

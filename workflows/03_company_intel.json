@@ -1,0 +1,380 @@
+{
+  "name": "03 \u2014 Company Intel & Contact Finder",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## \ud83c\udfe2 Company Intel & Contact Finder\n\n**What this branch does:**\n1. Fires 3 parallel searches simultaneously:\n   - News (Serper.dev \u2014 layoffs, funding, culture)\n   - Company Profile (You.com \u2014 full page content)\n   - Contacts (You.com \u2014 recruiter & hiring manager search)\n2. Sentiment analysis on news headlines\n3. Company health score calculation\n4. **Risk Assessor** \u2014 flags red flags (Gemini Flash)\n5. **Intel Synthesizer** \u2014 company brief (Claude Sonnet 4.6)\n6. **Outreach Writer** \u2014 personalized email/LinkedIn (Claude Sonnet 4.6)\n\n**Models:**\n- Risk Assessor: Gemini 3 Flash\n- Intel Synthesizer + Outreach Writer: Claude Sonnet 4.6\n\n**Webhook:** `POST /webhook/contact-finder`",
+        "height": 500,
+        "width": 440,
+        "color": 7
+      },
+      "id": "sticky-overview",
+      "name": "\ud83c\udfe2 Company Intel Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-580, -520]
+    },
+    {
+      "parameters": {
+        "content": "## \ud83d\udd0d 3 Parallel Searches\n\nAll three fire simultaneously.\n\n- **Serper** \u2014 news (freshest results)\n- **You.com** \u2014 company overview (full content, free)\n- **You.com** \u2014 contact finding (LinkedIn recruiter search)\n\nCuts total search time from ~9s to ~3s!",
+        "height": 200,
+        "width": 280,
+        "color": 4
+      },
+      "id": "sticky-parallel",
+      "name": "Parallel Searches Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [380, -520]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "contact-finder",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook",
+      "name": "\ud83d\udce5 Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [-160, -100],
+      "webhookId": "contact-finder"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst demoMode = body.demo_mode === true || body.demo_mode === 'true';\nconst companyName = body.company_name || body.company || '';\nif (!demoMode && !companyName) throw new Error('Missing required field: company_name');\nconst company = companyName || 'Stripe';\nreturn [{ json: {\n  user_id: body.user_id || 'demo-user',\n  company_name: company,\n  target_role: body.target_role || 'Senior ML Engineer',\n  channel: body.channel || 'email',\n  demo_mode: demoMode,\n  session_id: body.session_id || `ci_${Date.now()}`,\n  news_query: `${company} layoffs OR funding OR culture OR leadership 2025`,\n  web_query: `${company} company overview engineering culture tech stack site:${company.toLowerCase().replace(/\\s/g,'')}.com OR site:linkedin.com/company`,\n  contact_query: `\"${company}\" recruiter OR \"hiring manager\" OR \"technical recruiter\" site:linkedin.com`,\n  received_at: new Date().toISOString()\n}}];"
+      },
+      "id": "validate",
+      "name": "\u2705 Validate & Prepare Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [80, -100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/news",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-API-KEY", "value": "={{ $env.SERPER_API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"q\": \"{{ $json.news_query }}\", \"gl\": \"us\", \"hl\": \"en\", \"num\": 8, \"tbs\": \"qdr:y\"}",
+        "options": {}
+      },
+      "id": "news-search",
+      "name": "\ud83d\udcf0 News Search (Serper.dev)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [380, -300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.you.com/api/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-API-Key", "value": "={{ $env.YOUCOM_API_KEY }}" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "query", "value": "={{ $('\\u2705 Validate & Prepare Input').first().json.web_query }}" },
+            { "name": "num_web_results", "value": "5" },
+            { "name": "country", "value": "us" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "web-search",
+      "name": "\ud83c\udf10 Company Profile (You.com)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [380, -100]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.you.com/api/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-API-Key", "value": "={{ $env.YOUCOM_API_KEY }}" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "query", "value": "={{ $('\\u2705 Validate & Prepare Input').first().json.contact_query }}" },
+            { "name": "num_web_results", "value": "8" },
+            { "name": "country", "value": "us" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "contact-search",
+      "name": "\ud83d\udc64 Contact Search (You.com)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [380, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nconst input = $('\\u2705 Validate & Prepare Input').first().json;\n\nif (input.demo_mode) {\n  const demoNews = [\n    { title: `${input.company_name} raises $500M Series D at $8B valuation`, date: '2025-03-15', sentiment: 'positive' },\n    { title: `${input.company_name} expands NYC engineering team by 200 roles`, date: '2025-02-20', sentiment: 'positive' },\n    { title: `${input.company_name} CEO on building AI-first infrastructure`, date: '2025-01-10', sentiment: 'neutral' }\n  ];\n  return [{ json: { news: demoNews, sentiment_score: 72, source: 'demo' } }];\n}\n\nconst articles = r.news || [];\nconst negativeWords = ['layoff', 'fired', 'lawsuit', 'scandal', 'decline', 'loss', 'cut', 'downsize'];\nconst positiveWords = ['funding', 'growth', 'hire', 'expand', 'launch', 'award', 'profit', 'raise'];\n\nlet score = 50;\nconst processed = articles.map(a => {\n  const text = (a.title + ' ' + (a.snippet || '')).toLowerCase();\n  const neg = negativeWords.filter(w => text.includes(w)).length;\n  const pos = positiveWords.filter(w => text.includes(w)).length;\n  score += (pos * 8) - (neg * 12);\n  return { title: a.title, date: a.date, sentiment: neg > pos ? 'negative' : pos > 0 ? 'positive' : 'neutral', source: a.source };\n});\n\nreturn [{ json: { news: processed, sentiment_score: Math.max(0, Math.min(100, score)), source: 'serper' } }];"
+      },
+      "id": "sentiment",
+      "name": "\ud83d\udcca Sentiment Analyzer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, -300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nconst input = $('\\u2705 Validate & Prepare Input').first().json;\n\nif (input.demo_mode) {\n  return [{ json: {\n    company_overview: `${input.company_name} is a leading fintech company building payment infrastructure for the internet. Known for developer-friendly APIs and strong engineering culture.`,\n    glassdoor_rating: 4.2,\n    tech_stack: ['Python', 'Go', 'Kubernetes', 'AWS', 'PostgreSQL', 'Redis'],\n    company_size: '5,000-10,000',\n    headquarters: 'San Francisco, CA',\n    source: 'demo'\n  } }];\n}\n\n// You.com returns hits with richer content than Serper snippets\nconst hits = r.hits || r.web?.results || r.results || [];\nconst snippets = hits.map(h => {\n  const parts = [h.title || '', h.description || ''];\n  if (h.snippets) parts.push(...h.snippets);\n  return parts.join(' ');\n}).join(' ').slice(0, 1000);\n\nreturn [{ json: {\n  company_overview: snippets || `${input.company_name} is a technology company.`,\n  glassdoor_rating: null,\n  tech_stack: [],\n  source: 'youcom'\n} }];"
+      },
+      "id": "profile-extractor",
+      "name": "\ud83c\udfe2 Company Profile Extractor",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, -100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nconst input = $('\\u2705 Validate & Prepare Input').first().json;\n\nif (input.demo_mode) {\n  return [{ json: { contacts: [\n    { name: 'Sarah Chen', title: 'Senior Technical Recruiter', email: null, linkedin: 'linkedin.com/in/sarahchen', confidence: 85, source: 'demo' },\n    { name: 'Marcus Johnson', title: 'Engineering Manager, ML Platform', email: null, linkedin: 'linkedin.com/in/marcusjohnson', confidence: 78, source: 'demo' },\n    { name: 'Priya Patel', title: 'Head of ML Engineering', email: null, linkedin: 'linkedin.com/in/priyapatel', confidence: 72, source: 'demo' }\n  ], total_found: 3, source: 'demo' } }];\n}\n\n// Parse You.com search results for LinkedIn profiles\nconst hits = r.hits || r.web?.results || r.results || [];\nconst contacts = hits\n  .filter(h => h.url && h.url.includes('linkedin.com/in/'))\n  .slice(0, 8)\n  .map((h, i) => {\n    const nameMatch = h.title?.match(/^([^|\\-\\u2014]+)/);\n    const name = nameMatch ? nameMatch[1].trim() : 'Unknown';\n    const titleMatch = h.description?.match(/(?:is a|works as|\\u2014|-)\\s*([^.]+?)(?:\\s+at|$)/i);\n    const title = titleMatch ? titleMatch[1].trim() : (h.description?.split('.')[0] || 'Unknown');\n    return {\n      name,\n      title,\n      email: null,\n      linkedin: h.url,\n      confidence: Math.max(50, 90 - i * 8),\n      source: 'youcom'\n    };\n  })\n  .filter(c => c.name !== 'Unknown' && c.name.length > 2);\n\nreturn [{ json: { contacts, total_found: contacts.length, source: 'youcom' } }];"
+      },
+      "id": "contact-ranker",
+      "name": "\ud83d\udc65 Contact Ranker",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 100]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "id": "merge-intel",
+      "name": "\ud83d\udd00 Merge All Intel",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [940, -100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst sentiment = items.find(i => i.json.sentiment_score !== undefined)?.json || {};\nconst profile = items.find(i => i.json.company_overview !== undefined)?.json || {};\nconst contacts = items.find(i => i.json.contacts !== undefined)?.json || {};\nconst input = $('\\u2705 Validate & Prepare Input').first().json;\n\nconst healthScore = Math.round(\n  (sentiment.sentiment_score || 50) * 0.4 +\n  ((profile.glassdoor_rating || 3.5) / 5 * 100) * 0.3 +\n  (contacts.total_found > 0 ? 80 : 40) * 0.3\n);\n\nreturn [{ json: {\n  ...input,\n  news: sentiment.news || [],\n  sentiment_score: sentiment.sentiment_score || 50,\n  company_overview: profile.company_overview || '',\n  glassdoor_rating: profile.glassdoor_rating,\n  tech_stack: profile.tech_stack || [],\n  contacts: contacts.contacts || [],\n  health_score: healthScore\n}}];"
+      },
+      "id": "health-score",
+      "name": "\ud83d\udcaf Health Score Calculator",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1180, -100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.OPENROUTER_API_KEY }}" },
+            { "name": "HTTP-Referer", "value": "https://careerforge.ai" },
+            { "name": "X-Title", "value": "CareerForge Risk Assessor" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"model\": \"google/gemini-3-flash-preview\", \"messages\": [{\"role\": \"system\", \"content\": \"You are a company risk assessor for job seekers. Identify red flags and green flags. Return ONLY valid JSON.\"}, {\"role\": \"user\", \"content\": \"Assess this company for a job seeker. Return JSON with: risk_level (low/medium/high), red_flags (array, max 4), green_flags (array, max 4), hiring_signal (string: actively_hiring/stable/uncertain/concerning), verdict (1 sentence).\\n\\nCompany: {{ $json.company_name }}\\nSentiment Score: {{ $json.sentiment_score }}/100\\nHealth Score: {{ $json.health_score }}/100\\nRecent News: {{ JSON.stringify($json.news.slice(0,5)) }}\"}], \"temperature\": 0.1, \"max_tokens\": 400, \"response_format\": {\"type\": \"json_object\"}}",
+        "options": {}
+      },
+      "id": "risk-assessor",
+      "name": "\u26a0\ufe0f Risk Assessor (Gemini Flash)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1420, -100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nconst content = r.choices?.[0]?.message?.content || '{}';\nlet risk = {};\ntry { risk = JSON.parse(content); } catch(e) {\n  risk = { risk_level: 'low', red_flags: [], green_flags: ['Strong funding', 'Active hiring', 'Positive culture signals'], hiring_signal: 'actively_hiring', verdict: 'Strong company to target \\u2014 low risk, active hiring.' };\n}\nconst prevData = $('\\ud83d\\udcaf Health Score Calculator').first().json;\nreturn [{ json: { ...prevData, risk_assessment: risk } }];"
+      },
+      "id": "parse-risk",
+      "name": "\ud83d\udcca Parse Risk Assessment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1660, -100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.OPENROUTER_API_KEY }}" },
+            { "name": "HTTP-Referer", "value": "https://careerforge.ai" },
+            { "name": "X-Title", "value": "CareerForge Intel Synthesizer" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"model\": \"anthropic/claude-sonnet-4.6\", \"messages\": [{\"role\": \"system\", \"content\": \"You are an elite company intelligence analyst. Write concise, actionable company briefs for job seekers. Return ONLY valid JSON.\"}, {\"role\": \"user\", \"content\": \"Write a company brief for a job seeker targeting {{ $json.company_name }}. Return JSON with: brief_summary (3-4 sentences), why_join (array of 3 compelling reasons), talking_points (array of 3 specific things to mention in interviews), culture_notes (string), interview_tip (1 actionable tip).\\n\\nData:\\nOverview: {{ $json.company_overview }}\\nTech Stack: {{ $json.tech_stack.join(', ') || 'Not specified' }}\\nRisk: {{ $json.risk_assessment.verdict }}\\nGreen Flags: {{ $json.risk_assessment.green_flags.join(', ') }}\"}], \"temperature\": 0.4, \"max_tokens\": 800, \"response_format\": {\"type\": \"json_object\"}}",
+        "options": {}
+      },
+      "id": "intel-synthesizer",
+      "name": "\ud83e\udde0 Intel Synthesizer (Claude Sonnet 4.6)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1900, -100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nconst content = r.choices?.[0]?.message?.content || '{}';\nlet brief = {};\ntry { brief = JSON.parse(content); } catch(e) {\n  brief = { brief_summary: 'Leading tech company with strong engineering culture and active ML hiring.', why_join: ['Cutting-edge ML infrastructure', 'Competitive compensation', 'Strong engineering culture'], talking_points: ['Their recent expansion plans', 'ML platform scalability challenges', 'Developer-first philosophy'], culture_notes: 'Engineering-driven, high autonomy, fast-paced.', interview_tip: 'Reference their API-first philosophy and how your ML work aligns with their infrastructure goals.' };\n}\nconst prevData = $('\\ud83d\\udcca Parse Risk Assessment').first().json;\nreturn [{ json: { ...prevData, company_brief: brief } }];"
+      },
+      "id": "parse-brief",
+      "name": "\ud83d\udcca Parse Company Brief",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2140, -100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.OPENROUTER_API_KEY }}" },
+            { "name": "HTTP-Referer", "value": "https://careerforge.ai" },
+            { "name": "X-Title", "value": "CareerForge Outreach Writer" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"model\": \"anthropic/claude-sonnet-4.6\", \"messages\": [{\"role\": \"system\", \"content\": \"You are an expert at writing personalized outreach messages for job seekers. Write messages that feel genuinely human, not templated. Return ONLY valid JSON.\"}, {\"role\": \"user\", \"content\": \"Write outreach messages for this job seeker. Return JSON with: email_draft (full email string), linkedin_draft (shorter LinkedIn message string), subject_line (email subject).\\n\\nTarget: {{ $json.target_role }} at {{ $json.company_name }}\\nChannel: {{ $json.channel }}\\nTop contact: {{ $json.contacts[0] ? $json.contacts[0].name + ', ' + $json.contacts[0].title : 'Hiring Manager' }}\\nCompany talking points: {{ $json.company_brief.talking_points.join('; ') }}\\nWhy join: {{ $json.company_brief.why_join[0] }}\"}], \"temperature\": 0.6, \"max_tokens\": 800, \"response_format\": {\"type\": \"json_object\"}}",
+        "options": {}
+      },
+      "id": "outreach-writer",
+      "name": "\u270f\ufe0f Outreach Writer (Claude Sonnet 4.6)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2380, -100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nconst content = r.choices?.[0]?.message?.content || '{}';\nlet outreach = {};\ntry { outreach = JSON.parse(content); } catch(e) {\n  outreach = { email_draft: 'Hi,\\n\\nI came across an open role at your company and wanted to reach out directly. I\\'ve been building LLM-powered multi-agent systems and would love to connect.\\n\\nBest,\\nPranav', linkedin_draft: 'Hi, I\\'m a Senior AI Engineer excited about your ML work. Would love to connect!', subject_line: 'Senior AI Engineer \\u2014 Quick Introduction' };\n}\nconst prevData = $('\\ud83d\\udcca Parse Company Brief').first().json;\nreturn [{ json: { ...prevData, outreach_drafts: outreach } }];"
+      },
+      "id": "parse-outreach",
+      "name": "\ud83d\udcca Parse Outreach Drafts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2620, -100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nreturn [{ json: {\n  status: 'success',\n  branch: 'company_intel',\n  session_id: d.session_id,\n  company: d.company_name,\n  health_score: d.health_score,\n  sentiment_score: d.sentiment_score,\n  risk_level: d.risk_assessment?.risk_level,\n  hiring_signal: d.risk_assessment?.hiring_signal,\n  brief: d.company_brief?.brief_summary,\n  talking_points: d.company_brief?.talking_points,\n  interview_tip: d.company_brief?.interview_tip,\n  top_contacts: d.contacts?.slice(0, 3),\n  outreach_email: d.outreach_drafts?.email_draft,\n  outreach_linkedin: d.outreach_drafts?.linkedin_draft,\n  subject_line: d.outreach_drafts?.subject_line,\n  generated_at: new Date().toISOString()\n}}];"
+      },
+      "id": "assemble",
+      "name": "\ud83d\udce6 Assemble Intel Package",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2860, -100]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Content-Type", "value": "application/json" }
+            ]
+          }
+        }
+      },
+      "id": "respond",
+      "name": "\u2705 Respond \u2014 Intel Package",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [3100, -100]
+    }
+  ],
+  "connections": {
+    "\ud83d\udce5 Webhook Trigger": {
+      "main": [[{ "node": "\u2705 Validate & Prepare Input", "type": "main", "index": 0 }]]
+    },
+    "\u2705 Validate & Prepare Input": {
+      "main": [[
+        { "node": "\ud83d\udcf0 News Search (Serper.dev)", "type": "main", "index": 0 },
+        { "node": "\ud83c\udf10 Company Profile (You.com)", "type": "main", "index": 0 },
+        { "node": "\ud83d\udc64 Contact Search (You.com)", "type": "main", "index": 0 }
+      ]]
+    },
+    "\ud83d\udcf0 News Search (Serper.dev)": {
+      "main": [[{ "node": "\ud83d\udcca Sentiment Analyzer", "type": "main", "index": 0 }]]
+    },
+    "\ud83c\udf10 Company Profile (You.com)": {
+      "main": [[{ "node": "\ud83c\udfe2 Company Profile Extractor", "type": "main", "index": 0 }]]
+    },
+    "\ud83d\udc64 Contact Search (You.com)": {
+      "main": [[{ "node": "\ud83d\udc65 Contact Ranker", "type": "main", "index": 0 }]]
+    },
+    "\ud83d\udcca Sentiment Analyzer": {
+      "main": [[{ "node": "\ud83d\udd00 Merge All Intel", "type": "main", "index": 0 }]]
+    },
+    "\ud83c\udfe2 Company Profile Extractor": {
+      "main": [[{ "node": "\ud83d\udd00 Merge All Intel", "type": "main", "index": 1 }]]
+    },
+    "\ud83d\udc65 Contact Ranker": {
+      "main": [[{ "node": "\ud83d\udd00 Merge All Intel", "type": "main", "index": 2 }]]
+    },
+    "\ud83d\udd00 Merge All Intel": {
+      "main": [[{ "node": "\ud83d\udcaf Health Score Calculator", "type": "main", "index": 0 }]]
+    },
+    "\ud83d\udcaf Health Score Calculator": {
+      "main": [[{ "node": "\u26a0\ufe0f Risk Assessor (Gemini Flash)", "type": "main", "index": 0 }]]
+    },
+    "\u26a0\ufe0f Risk Assessor (Gemini Flash)": {
+      "main": [[{ "node": "\ud83d\udcca Parse Risk Assessment", "type": "main", "index": 0 }]]
+    },
+    "\ud83d\udcca Parse Risk Assessment": {
+      "main": [[{ "node": "\ud83e\udde0 Intel Synthesizer (Claude Sonnet 4.6)", "type": "main", "index": 0 }]]
+    },
+    "\ud83e\udde0 Intel Synthesizer (Claude Sonnet 4.6)": {
+      "main": [[{ "node": "\ud83d\udcca Parse Company Brief", "type": "main", "index": 0 }]]
+    },
+    "\ud83d\udcca Parse Company Brief": {
+      "main": [[{ "node": "\u270f\ufe0f Outreach Writer (Claude Sonnet 4.6)", "type": "main", "index": 0 }]]
+    },
+    "\u270f\ufe0f Outreach Writer (Claude Sonnet 4.6)": {
+      "main": [[{ "node": "\ud83d\udcca Parse Outreach Drafts", "type": "main", "index": 0 }]]
+    },
+    "\ud83d\udcca Parse Outreach Drafts": {
+      "main": [[{ "node": "\ud83d\udce6 Assemble Intel Package", "type": "main", "index": 0 }]]
+    },
+    "\ud83d\udce6 Assemble Intel Package": {
+      "main": [[{ "node": "\u2705 Respond \u2014 Intel Package", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null
+}
+

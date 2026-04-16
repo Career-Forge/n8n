@@ -1,0 +1,48 @@
+# Environment & secrets
+.env
+.env.local
+.env.*
+!.env.example
+
+# n8n runtime databases (Docker volume data)
+*.sqlite
+*.sqlite-journal
+*.db
+
+# Debug SQL queries
+docker/query*.sql
+docker/qlatest.sql
+
+# Old workflow versions (superseded, contain dev artifacts)
+workflows/06_telegram_bot.json
+workflows/06_telegram_bot_v2.json
+workflows/06_telegram_bot_v3.json
+workflows/07_careerforge_master_v1.json
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Build artifacts
+dist/
+build/
+
+# Personal data in storage (resume contains PII)
+storage/master_resume/master_resume.txt
+storage/applications/
+storage/exports/
