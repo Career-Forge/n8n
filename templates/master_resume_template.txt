@@ -1,1 +1,113 @@
-# Placeholder — written in Session 2.
+# MASTER RESUME — [YOUR NAME]
+
+> This file is your COMPLETE career data. CareerForge reads it and generates
+> tailored resumes + cover letters for each job.
+>
+> FASTEST WAY TO FILL THIS OUT (2 minutes):
+> 1. Copy this entire file (Ctrl+A, Ctrl+C)
+> 2. Open ChatGPT, Claude, or Gemini
+> 3. Paste this in, and also attach or paste your current resume (PDF/DOCX/text)
+> 4. Tell the AI: "Fill out this template using my resume. Keep every metric
+>    and achievement exactly as written. If you think of anything from my
+>    LinkedIn I might have forgotten, add it too. Return the filled template."
+> 5. Copy the filled version back into this file
+> 6. Save as master_resume.txt in the /data/user-data/ folder
+>
+> CareerForge will auto-detect your seniority (fresher/experienced/senior)
+> from the total years of experience.
+
+## PERSONAL
+name: [Your Full Name]
+email: [your.email@example.com]
+phone: [+1-555-555-5555]
+linkedin: [https://linkedin.com/in/yourhandle]
+github: [https://github.com/yourhandle]
+portfolio: [https://yourname.com or leave empty]
+location: [City, State, Country]
+work_authorization: [US Citizen | Permanent Resident | H-1B | OPT | requires sponsorship | ...]
+
+## SENIORITY
+# Auto-detected from experience count. Override if needed:
+# mode: [fresher | experienced | senior]
+# fresher = <2 yrs work, student, or recent grad
+# experienced = 2-10 yrs
+# senior = 10+ yrs or staff/principal/director/VP/manager titles
+
+## SUMMARY
+# 2-3 sentences on who you are professionally. Used primarily in senior mode.
+# Leave empty to skip.
+
+## EXPERIENCES
+# List reverse-chronologically. One entry per role.
+# Use this exact format:
+
+### [Job Title] @ [Company]
+dates: [Jan 2022 - Present]
+location: [City, State | Remote]
+bullets:
+  - [Achievement with metric. Start with action verb. Max ~110 chars.]
+  - [Technical detail + tool/tech used + quantified impact.]
+  - [Leadership or collaboration bullet. Team size. Business outcome.]
+  - [Max 4 bullets for most recent role, 3 for 2nd, 2 for older.]
+
+### [Previous Job Title] @ [Previous Company]
+dates: [Jul 2020 - Dec 2021]
+location: [City, State]
+bullets:
+  - [...]
+  - [...]
+
+## PROJECTS
+# Include for fresher + experienced. Optional for senior.
+# Include project demos and open source work here.
+
+### [Project Name]
+tech: [React, Node, Postgres, etc.]
+url: [github.com/... or live demo link]
+bullets:
+  - [What you built, metrics if available, outcome]
+  - [Technical detail or learning]
+
+## EDUCATION
+# List reverse-chronologically.
+
+### [Degree] in [Major]
+institution: [University Name]
+location: [City, State]
+graduation: [May 2020]
+gpa: [3.8]  # include only if >=3.5 AND you're a fresher
+coursework: [relevant course, another course]  # fresher only, optional
+
+## SKILLS
+# Grouped. Skip categories you don't need.
+
+### Programming Languages
+Python, TypeScript, Go, Rust
+
+### Frameworks & Libraries
+React, FastAPI, Next.js, PyTorch, LangChain
+
+### Cloud & DevOps
+AWS (EC2, S3, Lambda, RDS), Docker, Kubernetes, Terraform, GitHub Actions
+
+### Databases
+PostgreSQL, MongoDB, Redis, Pinecone
+
+### Other
+[Additional specialized categories as needed]
+
+## CERTIFICATIONS
+# Optional. List with year.
+- AWS Solutions Architect Associate (2024)
+- Google Cloud Professional Data Engineer (2023)
+
+## ACHIEVEMENTS
+# Optional. Speaking, publications, awards, notable open source.
+- Speaker at [Conference Name], talk: "[Topic]"
+- Published: [Paper/Article Title] (outlet)
+- Open source: [Project Name] — X GitHub stars
+- [Hackathon wins, awards, etc.]
+
+## LANGUAGES
+# Optional. Spoken/written languages.
+English (native), Hindi (native), Spanish (professional)

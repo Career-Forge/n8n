@@ -1,1 +1,98 @@
-# Placeholder — written in Session 2.
+# MASTER RESUME — Sarah Chen
+
+## PERSONAL
+name: Sarah Chen
+email: sarah.chen@gmail.com
+phone: +1-415-555-0142
+linkedin: https://linkedin.com/in/sarahchen-ml
+github: https://github.com/sarahchen
+portfolio: https://sarahchen.dev
+location: San Francisco, CA, USA
+work_authorization: H-1B
+
+## SENIORITY
+# Auto-detected: experienced (4 years)
+
+## SUMMARY
+ML Engineer with 4 years of experience building production retrieval and ranking systems at scale. Specialized in search infrastructure, real-time inference pipelines, and applied NLP. Previously shipped ML features serving 15M+ users at a Series B startup.
+
+## EXPERIENCES
+
+### ML Engineer @ Nexus AI Research
+dates: Mar 2024 - Present
+location: San Francisco, CA
+bullets:
+  - Built FAISS-based retrieval pipeline serving 2M queries/day with <50ms p99 latency using PyTorch and Ray
+  - Designed A/B testing framework for ranking models, improving click-through rate by 18% across 3 experiments
+  - Led migration from batch to real-time feature store (Feast + Redis), reducing feature freshness from 6hrs to 45s
+  - Mentored 2 junior engineers on ML system design; both promoted within 8 months
+
+### ML Engineer @ DataLoop (Series B)
+dates: Jun 2022 - Feb 2024
+location: San Francisco, CA
+bullets:
+  - Developed text classification pipeline processing 500K documents/day with 94.2% accuracy using fine-tuned BERT
+  - Reduced model training costs by 40% by implementing mixed-precision training and gradient checkpointing on A100s
+  - Built internal labeling tool used by 12-person annotation team, cutting labeling time per document from 8min to 3min
+
+### Machine Learning Intern @ Shopwise
+dates: May 2021 - Aug 2021
+location: New York, NY
+bullets:
+  - Implemented product recommendation engine using collaborative filtering, increasing average order value by 7.3%
+  - Created automated data quality pipeline catching 15% of upstream schema drift issues before model retraining
+
+## PROJECTS
+
+### OpenRAG
+tech: Python, LangChain, Pinecone, FastAPI
+url: github.com/sarahchen/openrag
+bullets:
+  - Built open-source RAG framework supporting 4 vector backends with unified query API; 1.2K GitHub stars
+  - Achieved 23% higher retrieval accuracy than naive chunking via hierarchical document splitting strategy
+
+### VibeCheck — Real-time Sentiment Dashboard
+tech: React, TypeScript, FastAPI, HuggingFace Transformers, WebSocket
+url: vibecheck.sarahchen.dev
+bullets:
+  - Built full-stack dashboard analyzing live Twitter sentiment for any topic with <2s end-to-end latency
+  - Deployed distilled BERT model (60MB) on a single $5/mo VPS serving 200 concurrent WebSocket connections
+
+## EDUCATION
+
+### M.S. in Computer Science
+institution: Stanford University
+location: Stanford, CA
+graduation: Jun 2022
+coursework: Deep Learning (CS 230), NLP with Deep Learning (CS 224N), Mining Massive Datasets (CS 246)
+
+## SKILLS
+
+### Programming Languages
+Python, TypeScript, Go, SQL, Bash
+
+### ML & Data
+PyTorch, TensorFlow, scikit-learn, HuggingFace Transformers, LangChain, FAISS, Pinecone, Weights & Biases
+
+### Frameworks & Libraries
+FastAPI, React, Next.js, Ray, Feast
+
+### Cloud & DevOps
+AWS (SageMaker, EC2, S3, Lambda), Docker, Kubernetes, Terraform, GitHub Actions
+
+### Databases
+PostgreSQL, Redis, MongoDB, DynamoDB, Elasticsearch
+
+### Tools & Platforms
+MLflow, Airflow, dbt, Grafana, Datadog
+
+## CERTIFICATIONS
+- AWS Machine Learning Specialty (2023)
+- Google Cloud Professional ML Engineer (2024)
+
+## ACHIEVEMENTS
+- Speaker at MLOps Community Meetup SF, talk: "Real-time Feature Stores Without the Pain"
+- Open source: OpenRAG — 1.2K GitHub stars, featured in LangChain community showcase
+
+## LANGUAGES
+English (native), Mandarin (native), French (conversational)
