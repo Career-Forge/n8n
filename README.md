@@ -76,11 +76,11 @@ Cheap/free models for classification and scoring. Paid models only where writing
 | Task | Model | Cost |
 |------|-------|------|
 | Intent routing | `meta-llama/llama-3.3-70b-instruct:free` | Free |
-| Seniority detection | `deepseek/deepseek-chat-v3:free` | Free |
-| Job scoring | `google/gemini-3-flash-lite` | ~$0.001/batch |
-| ForgeScore | `deepseek/deepseek-chat-v3:free` | Free |
-| Contact extraction | `deepseek/deepseek-chat-v3:free` | Free |
-| Company intel synthesis | `deepseek/deepseek-chat-v3:free` | Free |
+| Seniority detection | `deepseek/deepseek-chat-v3.1:free` | Free |
+| Job scoring | `google/gemini-3.1-flash-lite-preview` | ~$0.001/batch |
+| ForgeScore | `deepseek/deepseek-chat-v3.1:free` | Free |
+| Contact extraction | `deepseek/deepseek-chat-v3.1:free` | Free |
+| Company intel synthesis | `deepseek/deepseek-chat-v3.1:free` | Free |
 | **ResumeForge** | `anthropic/claude-sonnet-4.6` | ~$0.05 |
 | **CoverForge** | `anthropic/claude-sonnet-4.6` | ~$0.05 |
 | **Outreach writer** | `anthropic/claude-sonnet-4.6` | ~$0.05 |
@@ -128,13 +128,14 @@ In n8n: **Workflows > Import from file** > select `workflows/01_careerforge.json
 
 In n8n **Settings > Credentials**, create:
 
-| Credential | Type | Header | Value |
-|-----------|------|--------|-------|
-| OpenRouter API | Header Auth | `Authorization` | `Bearer sk-or-v1-...` |
+| Credential | Type | Setting | Value |
+|-----------|------|---------|-------|
+| OpenRouter API | **OpenAI-compatible** | Base URL | `https://openrouter.ai/api/v1` |
+| OpenRouter API | OpenAI-compatible | API Key | `sk-or-v1-...` |
 | Firecrawl API | Header Auth | `Authorization` | `Bearer fc-...` |
 | You.com API | Header Auth | `X-API-Key` | your key |
 | Serper API | Header Auth | `X-API-KEY` | your key |
-| Telegram Bot | Telegram credential | — | Bot token from @BotFather |
+| Telegram Bot | Telegram API | — | Bot token from @BotFather |
 
 Activate the workflow. Text your bot "help" to verify.
 
@@ -188,12 +189,16 @@ careerforge-n8n/
 |       +-- app.py                     # Flask + pdflatex PDF compiler
 |
 |-- docker/
-|   |-- docker-compose.yml             # n8n + LaTeX service
+|   |-- docker-compose.yml             # n8n + LaTeX (local dev)
+|   |-- docker-compose.render.yml      # Render free tier (SQLite)
+|   |-- Dockerfile.render              # Render/Railway image (bakes templates in)
+|   |-- render.yaml                    # Render Blueprint
+|   |-- railway.json                   # Railway config
 |   |-- .env.example                   # All API keys documented
 |   +-- README.md
 |
 +-- scripts/
-    +-- DEMO_SCRIPT.md                 # Meetup demo walkthrough
+    +-- uptime_ping.sh                 # Keep-alive ping for Render free tier
 ```
 
 ---
@@ -237,16 +242,16 @@ Configure 1, 2, or 3 providers. The system gracefully degrades — works with an
 
 | Component | Status |
 |-----------|--------|
-| Intent router (10 intents) | In progress |
-| find_jobs (Greenhouse + scoring) | In progress |
-| apply (PDF pipeline) | In progress |
-| revise (chat memory iteration) | Planned |
-| score (ForgeScore standalone) | Planned |
-| intel (company health) | Planned |
-| outreach (contact finder + writer) | Planned |
-| salary / track / status | Planned |
-| LaTeX PDF service | Working |
-| Deployment configs | Planned |
+| Intent router (10 intents) | Complete |
+| find_jobs (Greenhouse + scoring) | Complete |
+| apply (PDF pipeline) | Complete |
+| revise (chat memory iteration) | Complete |
+| score (ForgeScore standalone) | Complete |
+| intel (company health) | Complete |
+| outreach (contact finder + writer) | Complete |
+| salary / track / status | Complete |
+| LaTeX PDF service | Complete |
+| Deployment configs (5 tiers) | Complete |
 
 ---
 
