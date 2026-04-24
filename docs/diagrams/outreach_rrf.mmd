@@ -1,0 +1,26 @@
+flowchart TD
+    INTENT["Route Intent<br/>output: intel OR outreach"] --> PREP["Prepare Research<br/><i>Build search queries<br/>6 for intel, 3 for outreach</i>"]
+
+    PREP --> DRAFT_CHECK{"Draft request?<br/><i>e.g. 'draft 2'</i>"}
+
+    DRAFT_CHECK -->|Yes| LOAD_CONTACT["Load Draft Contact<br/><i>from staticData.last_contacts</i>"]
+    DRAFT_CHECK -->|No| SEARCH["Web Search<br/><i>Serper + You.com + Firecrawl<br/>require('https') calls</i>"]
+
+    SEARCH --> RRF["RRF Merge<br/><i>k=60, top 15 results<br/>URL dedup + source tracking</i>"]
+
+    RRF --> TYPE_CHECK{"Intel or Outreach?"}
+
+    TYPE_CHECK -->|Intel| INTEL_LLM["CompanyIntel<br/><i>DeepSeek :free</i>"]
+    TYPE_CHECK -->|Outreach| CONTACT_LLM["ContactFinder<br/><i>DeepSeek :free</i>"]
+
+    INTEL_LLM --> FORMAT_INTEL["Format Intel Report<br/><i>Health score, layoffs,<br/>sentiment, H1B, funding</i>"]
+    FORMAT_INTEL --> SEND_INTEL["Send Intel<br/><i>Telegram</i>"]
+
+    CONTACT_LLM --> FORMAT_CONTACTS["Format Contacts<br/><i>Store to staticData</i>"]
+    FORMAT_CONTACTS --> SEND_CONTACTS["Send Contacts<br/><i>Telegram</i>"]
+
+    LOAD_CONTACT --> CONTACT_CHECK{"Contact found?"}
+    CONTACT_CHECK -->|No| SEND_ERROR["Send Error<br/><i>Telegram</i>"]
+    CONTACT_CHECK -->|Yes| WRITER["OutreachWriter<br/><i>Claude Sonnet 4.6</i>"]
+    WRITER --> FORMAT_OUTREACH["Format Outreach<br/><i>LinkedIn + email + follow-up</i>"]
+    FORMAT_OUTREACH --> SEND_OUTREACH["Send Outreach<br/><i>Telegram</i>"]

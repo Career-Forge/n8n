@@ -1,39 +1,49 @@
-# CareerForge Deployment Guide
+# Deployment Guide
 
-This guide covers every way to run CareerForge 24/7. Start with **Option 0 (ngrok)** to test locally, then graduate to a cloud option when you're ready to go live.
+Five ways to run CareerForge, from "works on my laptop" to "zero ops cloud." Start with Tier 0, graduate when you're ready.
+
+| Tier | Where | Cost | Trade-off |
+|------|-------|------|-----------|
+| 0 | Local Docker + ngrok | $0 | Laptop must stay on |
+| 1 | Render free tier | $0 | Cold starts, 750 hrs/mo |
+| 2 | Railway | $5/mo | Reliable, zero ops |
+| 3 | Hetzner VPS | $4.59/mo | Full control, daily backups |
+| 4 | n8n Cloud | $20/mo | Managed, import and go |
 
 ---
 
-## Option 0: Local Dev with ngrok ← **YOU ARE HERE**
+## Tier 0: Local Docker + ngrok
 
-Keep your Docker stack running locally, expose it to the internet via ngrok's free static domain. Works as long as your laptop is on.
+Keep your Docker stack running locally, expose it via ngrok's free static domain. Works as long as your machine is on.
 
 ### Prerequisites
 - Docker Desktop running
 - ngrok account at [ngrok.com](https://ngrok.com) (free)
-- Your n8n stack already up via `docker compose up -d`
+- Your n8n stack already up via `docker compose up -d` (see [QUICKSTART](docs/QUICKSTART.md))
 
-> **Your static domain is already assigned** — every free ngrok account gets one `*.ngrok-free.app` domain automatically. No browser UI needed for any of the steps below.
+> Your static domain is already assigned — every free ngrok account gets one `*.ngrok-free.app` domain automatically. No browser UI needed.
 
 ---
 
-### 🪟 Windows (PowerShell)
+### Windows (PowerShell)
 
-**1. Install ngrok via winget (one-time)**
+**1. Install ngrok (one-time)**
 ```powershell
 winget install ngrok.ngrok
 # Restart terminal after install, then verify:
 ngrok version
 ```
 
-**2. Authenticate ngrok with your token (one-time)**
-Get your authtoken from [dashboard.ngrok.com → Your Authtoken](https://dashboard.ngrok.com/get-started/your-authtoken):
+**2. Authenticate (one-time)**
+
+Get your authtoken from [dashboard.ngrok.com/get-started/your-authtoken](https://dashboard.ngrok.com/get-started/your-authtoken):
 ```powershell
 ngrok config add-authtoken YOUR_AUTHTOKEN_HERE
 ```
 
-**3. Get your free static domain via PowerShell API call (one-time)**
-> Your free account already has a static `*.ngrok-free.app` domain auto-assigned. Retrieve it:
+**3. Get your free static domain (one-time)**
+
+Your free account already has a static `*.ngrok-free.app` domain. Retrieve it:
 ```powershell
 # Get your ngrok API key from: https://dashboard.ngrok.com/api-keys
 $apiKey = "YOUR_NGROK_API_KEY"
@@ -43,65 +53,52 @@ $headers = @{
 }
 $domains = Invoke-RestMethod -Uri "https://api.ngrok.com/reserved_domains" -Headers $headers
 $domains.reserved_domains | Select-Object domain, region
-# Output: crazy-fox-1234.ngrok-free.app  ← copy this
+# Output: crazy-fox-1234.ngrok-free.app  <-- copy this
 ```
 
-**4. Set the domain in your `.env` file**
+**4. Set the domain in `.env`**
 ```powershell
-# Edit .env in your project directory
 $ngrokDomain = "crazy-fox-1234.ngrok-free.app"   # your domain from step 3
-$envPath = ".env"
+$envPath = "docker/.env"
 (Get-Content $envPath) -replace 'WEBHOOK_URL=.*', "WEBHOOK_URL=https://$ngrokDomain/" |
-    Set-Content $envPath
-(Get-Content $envPath) -replace 'N8N_HOST=.*', "N8N_HOST=$ngrokDomain" |
     Set-Content $envPath
 ```
 
 **5. Restart Docker and start the tunnel**
 ```powershell
+cd docker
 docker compose down
 docker compose up -d
 # Wait ~10 seconds for n8n to boot, then:
 ngrok http --domain=crazy-fox-1234.ngrok-free.app 5678
 ```
-Leave this PowerShell window open. ngrok forwards `https://crazy-fox-1234.ngrok-free.app` → `localhost:5678`.
+Leave this PowerShell window open. ngrok forwards `https://crazy-fox-1234.ngrok-free.app` to `localhost:5678`.
 
 **6. Optional: Auto-start ngrok on Windows boot**
 ```powershell
-# Create a scheduled task that starts ngrok on login
 $action = New-ScheduledTaskAction -Execute 'ngrok' `
     -Argument 'http --domain=crazy-fox-1234.ngrok-free.app 5678'
 $trigger = New-ScheduledTaskTrigger -AtLogOn
 Register-ScheduledTask -TaskName 'CareerForge-ngrok' `
     -Action $action -Trigger $trigger -RunLevel Highest -Force
 ```
-Now ngrok auto-starts every time you log in to Windows — no manual step needed!
+Now ngrok auto-starts every login.
 
-**7. Verify Telegram webhook is active**
+**7. Verify Telegram webhook**
 ```powershell
-# Confirm Telegram can reach your n8n
 $botToken = "YOUR_BOT_TOKEN"
 Invoke-RestMethod "https://api.telegram.org/bot$botToken/getWebhookInfo" |
     Select-Object -ExpandProperty result | Select-Object url, last_error_message
 # Should show: url = https://crazy-fox-1234.ngrok-free.app/webhook/...
 ```
 
-**8. Test**
-Send `/jobs` to your Telegram bot — it should trigger within 1-2 seconds.
-
-### Gotchas (all platforms)
-- **Machine must stay on** — if it sleeps/shuts down, the tunnel dies and Telegram messages queue up
-- **Static domain persists** across restarts — you never need to re-register the webhook with Telegram
-- **ngrok free tier**: 1 static domain, unlimited bandwidth for personal use
-
 ---
 
-### 🍎 macOS (bash / zsh)
+### macOS (bash / zsh)
 
-**1. Install ngrok via Homebrew (one-time)**
+**1. Install ngrok (one-time)**
 ```bash
 brew install ngrok/ngrok/ngrok
-# Verify:
 ngrok version
 ```
 
@@ -112,32 +109,30 @@ ngrok config add-authtoken YOUR_AUTHTOKEN_HERE
 
 **3. Get your static domain (one-time)**
 ```bash
-# Get your API key from https://dashboard.ngrok.com/api-keys
 NGROK_API_KEY="YOUR_NGROK_API_KEY"
 curl -s -H "Authorization: Bearer $NGROK_API_KEY" \
      -H "Ngrok-Version: 2" \
      https://api.ngrok.com/reserved_domains \
   | python3 -c "import sys,json; d=json.load(sys.stdin); [print(x['domain']) for x in d['reserved_domains']]"
-# Output: crazy-fox-1234.ngrok-free.app  ← copy this
+# Output: crazy-fox-1234.ngrok-free.app
 ```
 
-**4. Patch your `.env` file**
+**4. Patch `.env`**
 ```bash
-NGROK_DOMAIN="crazy-fox-1234.ngrok-free.app"   # from step 3
-sed -i '' "s|WEBHOOK_URL=.*|WEBHOOK_URL=https://$NGROK_DOMAIN/|" .env
-sed -i '' "s|N8N_HOST=.*|N8N_HOST=$NGROK_DOMAIN|" .env
+NGROK_DOMAIN="crazy-fox-1234.ngrok-free.app"
+sed -i '' "s|WEBHOOK_URL=.*|WEBHOOK_URL=https://$NGROK_DOMAIN/|" docker/.env
 ```
 
 **5. Restart Docker and start the tunnel**
 ```bash
+cd docker
 docker compose down && docker compose up -d
-# Wait ~10 seconds, then:
+sleep 10
 ngrok http --domain=crazy-fox-1234.ngrok-free.app 5678
 ```
 
-**6. Optional: Auto-start ngrok on Mac login (launchd)**
+**6. Optional: Auto-start ngrok on login (launchd)**
 ```bash
-# Create a launchd plist
 NGROK_DOMAIN="crazy-fox-1234.ngrok-free.app"
 cat > ~/Library/LaunchAgents/com.careerforge.ngrok.plist << EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -161,19 +156,17 @@ cat > ~/Library/LaunchAgents/com.careerforge.ngrok.plist << EOF
 </plist>
 EOF
 launchctl load ~/Library/LaunchAgents/com.careerforge.ngrok.plist
-# ngrok now auto-starts on every macOS login
 ```
 
 **7. Verify Telegram webhook**
 ```bash
 BOT_TOKEN="YOUR_BOT_TOKEN"
 curl -s "https://api.telegram.org/bot$BOT_TOKEN/getWebhookInfo" | python3 -m json.tool | grep url
-# Should show: "url": "https://crazy-fox-1234.ngrok-free.app/webhook/..."
 ```
 
 ---
 
-### 🐧 Linux (bash — Ubuntu/Debian/Fedora/Arch)
+### Linux (Ubuntu / Debian / Fedora / Arch)
 
 **1. Install ngrok (one-time)**
 
@@ -186,11 +179,9 @@ echo "deb https://ngrok-agent.s3.amazonaws.com buster main" \
 sudo apt update && sudo apt install ngrok
 
 # Fedora / RHEL
-sudo snap install ngrok        # OR download binary:
-# curl -Lo ngrok.zip https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-stable-linux-amd64.zip
-# unzip ngrok.zip && sudo mv ngrok /usr/local/bin/
+sudo snap install ngrok
 
-# Arch Linux
+# Arch
 yay -S ngrok   # AUR
 ```
 
@@ -206,25 +197,24 @@ curl -s -H "Authorization: Bearer $NGROK_API_KEY" \
      -H "Ngrok-Version: 2" \
      https://api.ngrok.com/reserved_domains \
   | python3 -c "import sys,json; d=json.load(sys.stdin); [print(x['domain']) for x in d['reserved_domains']]"
-# Output: crazy-fox-1234.ngrok-free.app
 ```
 
-**4. Patch your `.env` file**
+**4. Patch `.env`**
 ```bash
 NGROK_DOMAIN="crazy-fox-1234.ngrok-free.app"
-sed -i "s|WEBHOOK_URL=.*|WEBHOOK_URL=https://$NGROK_DOMAIN/|" .env
-sed -i "s|N8N_HOST=.*|N8N_HOST=$NGROK_DOMAIN|" .env
+sed -i "s|WEBHOOK_URL=.*|WEBHOOK_URL=https://$NGROK_DOMAIN/|" docker/.env
 ```
-> Note: Linux `sed -i` has no extra argument (unlike macOS `sed -i ''`)
+> Linux `sed -i` has no extra argument (unlike macOS `sed -i ''`).
 
 **5. Restart Docker and start the tunnel**
 ```bash
+cd docker
 docker compose down && docker compose up -d
 sleep 10
 ngrok http --domain=crazy-fox-1234.ngrok-free.app 5678
 ```
 
-**6. Optional: Auto-start ngrok on Linux boot (systemd)**
+**6. Optional: Auto-start ngrok on boot (systemd)**
 ```bash
 NGROK_DOMAIN="crazy-fox-1234.ngrok-free.app"
 NGROK_BIN=$(which ngrok)
@@ -247,10 +237,7 @@ EOF
 sudo systemctl daemon-reload
 sudo systemctl enable careerforge-ngrok
 sudo systemctl start careerforge-ngrok
-# Check status:
-sudo systemctl status careerforge-ngrok
 ```
-ngrok now auto-starts on every boot and auto-restarts if it crashes.
 
 **7. Verify Telegram webhook**
 ```bash
@@ -258,372 +245,385 @@ BOT_TOKEN="YOUR_BOT_TOKEN"
 curl -s "https://api.telegram.org/bot$BOT_TOKEN/getWebhookInfo" | python3 -m json.tool | grep url
 ```
 
+### Gotchas (all platforms)
+- Machine must stay on — if it sleeps, the tunnel dies and Telegram messages queue up
+- Static domain persists across restarts — you never need to re-register the webhook
+- ngrok free tier: 1 static domain, unlimited bandwidth for personal use
+
 ---
 
+## Tier 1: Render Free + UptimeRobot
 
-## Option 1: Render (Free) + UptimeRobot Keep-Alive
+Zero-cost hosting that works even when your laptop is off. Not production-grade but good enough for job hunting.
 
-**Best for:** Zero-cost testing that works even when laptop is off. Not production-grade but good enough for job hunting.
+> Render free tier spins down after 15 min of inactivity. UptimeRobot pings it every 5 min to keep it awake. You get 750 free hours per month — enough for 24/7 with keep-alive.
 
-> ⚠️ Render free tier spins down after 15 min inactivity. UptimeRobot pings it every 5 min to keep it awake.
+### Why SQLite, not Postgres
 
-### Step-by-Step
+Render's free Postgres expires after 30 days. Then your data is gone. SQLite with a persistent disk has no expiry. CareerForge uses `staticData` for cross-execution state anyway — SQLite is plenty.
 
-**1. Push your repo to GitHub** (if not already)
+### Deploy with Render Blueprint
 
-**2. Deploy on Render**
+The repo includes a `docker/render.yaml` Blueprint that sets up both services automatically:
+
+**1. Push to GitHub** (if not already)
+
+**2. Deploy via Blueprint**
 ```
-1. Go to https://render.com → New → Web Service
+1. Go to https://render.com → New → Blueprint
 2. Connect your GitHub repo
-3. Runtime: Docker
-4. Instance Type: Free
+3. Point to docker/render.yaml
+4. Render creates both services (n8n + latex) automatically
 ```
 
-**3. Add a PostgreSQL database**
-```
-Render Dashboard → New → PostgreSQL → Free tier
-Copy the "Internal Database URL"
-```
+**3. Set environment variables** (Render Dashboard > your n8n service > Environment)
 
-**4. Set Environment Variables** (Render → your service → Environment)
+The Blueprint pre-configures most vars. You still need to add your API keys:
 ```env
-DB_TYPE=postgresdb
-DB_POSTGRESDB_HOST=<from Render Postgres internal URL>
-DB_POSTGRESDB_PORT=5432
-DB_POSTGRESDB_DATABASE=n8n
-DB_POSTGRESDB_USER=<from Render Postgres>
-DB_POSTGRESDB_PASSWORD=<from Render Postgres>
-N8N_ENCRYPTION_KEY=<run: openssl rand -hex 32>
-WEBHOOK_URL=https://your-app.onrender.com/
-N8N_HOST=your-app.onrender.com
-N8N_PROTOCOL=https
-N8N_BASIC_AUTH_ACTIVE=true
-N8N_BASIC_AUTH_USER=admin
-N8N_BASIC_AUTH_PASSWORD=<your password>
-OPENROUTER_API_KEY=<your key>
+OPENROUTER_API_KEY=sk-or-v1-your-key
+TELEGRAM_BOT_TOKEN=123456789:your-token
+FIRECRAWL_API_KEY=fc-your-key          # or SERPER/YOUCOM
 ```
 
-**5. Deploy → wait ~3 min for first build**
+The Blueprint auto-generates `N8N_ENCRYPTION_KEY` for you.
 
-**6. Set up UptimeRobot keep-alive**
+**4. Import the workflow**
+
+Open your Render n8n URL > Workflows > Import from file > select `workflows/01_careerforge.json`.
+
+**5. Set up UptimeRobot keep-alive**
 ```
-1. Go to https://uptimerobot.com → Sign up free
+1. Go to https://uptimerobot.com — sign up free
 2. Add New Monitor:
    - Type: HTTP(s)
    - URL: https://your-app.onrender.com/healthz
    - Interval: Every 5 minutes
 3. Save
 ```
-UptimeRobot also emails you if your instance goes down — free monitoring!
 
-**7. Register Telegram webhook**
-```
-Visit this URL in your browser (replace values):
-https://api.telegram.org/bot{YOUR_BOT_TOKEN}/setWebhook?url=https://your-app.onrender.com/webhook/{N8N_WEBHOOK_ID}
-```
-Get `N8N_WEBHOOK_ID` from the Telegram Trigger node URL in n8n.
+UptimeRobot also emails you if your instance goes down — free monitoring.
 
-### Auto-Backup: Postgres → Google Drive (Before Day 30 Expiry)
-
-Rather than panicking on day 30, set up an **n8n workflow** that automatically exports and uploads your database to Google Drive on day 29. You get an alert, and recovery is just a Drive download.
-
-**How it works:**
-1. A `pg_dump` SQL export runs inside the Postgres container
-2. n8n reads the dump file via an Execute Command node
-3. Google Drive node uploads it to `CareerForge/Backups/n8n_backup_YYYYMMDD.sql`
-4. Telegram notifies you: "⚠️ Render DB expires tomorrow. Backup saved to Drive."
-
-**Create this n8n workflow on Render:**
-```
-Schedule Trigger (cron: 0 9 28 * *)   ← Day 28 of every month at 9am
-    ↓
-Execute Command node:
-  Command: docker exec postgres pg_dump -U n8n n8n > /tmp/n8n_backup.sql && cat /tmp/n8n_backup.sql
-    ↓
-Code node (format as file):
-  const sqlContent = $input.first().json.stdout;
-  return [{ binary: { backup: { data: Buffer.from(sqlContent).toString('base64'),
-    mimeType: 'application/sql',
-    fileName: `n8n_backup_${new Date().toISOString().slice(0,10)}.sql` } } }];
-    ↓
-Google Drive node:
-  Operation: Upload File
-  Folder: CareerForge/Backups/
-  Binary Property: backup
-    ↓
-Telegram node:
-  "⚠️ Render DB expires in ~2 days. Backup saved:\nCareerForge/Backups/n8n_backup_[date].sql\nCreate a new Render Postgres and restore with: psql -U n8n n8n < backup.sql"
+Alternatively, use the included keep-alive script with an external cron:
+```bash
+# From any always-on machine (home server, another VPS, etc.)
+*/5 * * * * /path/to/scripts/uptime_ping.sh https://your-app.onrender.com
 ```
 
-**To restore on a fresh Render Postgres:**
-```powershell
-# Download backup from Google Drive, then:
-# Copy to your Render Postgres container
-$backupFile = "n8n_backup_2026-04-15.sql"
-# In your Render shell (via Dashboard → Shell):
-psql -U n8n -d n8n < $backupFile
-```
+**6. Activate the workflow** and test with `help` in Telegram.
 
-> This means Render's 30-day limit becomes a minor inconvenience, not a disaster. Your workflows, credentials, and execution history are always safe in Drive.
-
-### Other Limitations
+### Limitations
 - Cold starts can cause 20-30s delay even with UptimeRobot
-- **Not recommended for scheduled scans** — cold starts may miss the cron trigger window
+- Not great for scheduled cron triggers — cold starts may miss the window
+- 512MB RAM on free tier — tight but works for CareerForge
 
 ---
 
-## Option 2: Railway ($5/mo Hobby) ← **Best Balance**
+## Tier 2: Railway ($5/mo)
 
-**Best for:** Reliable 24/7, easiest setup, no ops headache.
+Reliable 24/7. Easiest setup. No cold starts, no ops headache.
 
-> ✅ GitHub Education pack check: Railway is NOT in the GitHub Student Pack (as of 2026). But at $5/mo it's the cheapest reliable option.
-
-### Step-by-Step
+### Deploy
 
 **1. Sign up at** [railway.com](https://railway.com)
 
-**2. Deploy n8n template**
+**2. Create project from GitHub**
 ```
-New Project → Deploy a Template → search "n8n" → 
-Select the n8n + PostgreSQL template → Deploy Now
+New Project > Deploy from GitHub Repo > select your fork
 ```
-Railway auto-provisions n8n + PostgreSQL in ~2 minutes.
 
-**3. Configure Variables** (n8n service → Variables tab)
+Railway detects the `docker/railway.json` config and uses `docker/Dockerfile.render` to build.
+
+**3. Add a PostgreSQL plugin**
+```
+Your project > + New > Database > PostgreSQL
+```
+Railway auto-injects the database connection vars.
+
+**4. Set environment variables** (n8n service > Variables tab)
 ```env
 N8N_ENCRYPTION_KEY=<run: openssl rand -hex 32>
 WEBHOOK_URL=https://<your-railway-domain>.up.railway.app/
-N8N_HOST=<your-railway-domain>.up.railway.app
-N8N_PROTOCOL=https
 N8N_BASIC_AUTH_ACTIVE=true
 N8N_BASIC_AUTH_USER=admin
 N8N_BASIC_AUTH_PASSWORD=<your password>
 OPENROUTER_API_KEY=<your key>
-```
-Railway auto-sets the Postgres DB vars from the linked database.
-
-**4. Add your custom domain (optional)**
-```
-n8n service → Settings → Domains → Generate Domain
-OR add your own domain with a CNAME record
+TELEGRAM_BOT_TOKEN=<your token>
 ```
 
-**5. Redeploy** → Railway restarts with new vars automatically
+**5. Generate a domain**
+```
+n8n service > Settings > Domains > Generate Domain
+```
 
-**6. Import workflows**
-Open `https://<your-domain>.up.railway.app` → Settings → Import workflow → upload `CareerForge_Master.json`
+**6. Deploy** — Railway auto-builds and restarts.
 
-**7. Activate** — toggle the workflow on → Telegram bot is now live 24/7 ✅
+**7. Import workflow** — open your Railway n8n URL, import `workflows/01_careerforge.json`, set credentials, activate.
 
 ### Notes
-- Persistent PostgreSQL — no expiry like Render
-- Auto-deploys on git push if connected to GitHub
-- Logs: Railway Dashboard → Deployments → click latest → View Logs
+- Persistent PostgreSQL — no 30-day expiry
+- Auto-deploys on `git push` if connected to GitHub
+- $5/mo includes 8GB RAM, 8 vCPU — way more than you need
+- Logs: Railway Dashboard > Deployments > latest > View Logs
 
 ---
 
-## Option 3: DigitalOcean Droplet ($4–6/mo) ← **GitHub Education: $200 FREE**
+## Tier 3: Hetzner VPS ($4.59/mo)
 
-**Best for:** Students with GitHub Education pack. $200 credit = ~2.5 years of free hosting on the cheapest droplet!
+Full control. Cheapest paid option. Caddy for automatic HTTPS, systemd for process management, daily pg_dump backups.
 
-> ✅ **GitHub Education:** Go to [education.github.com/pack](https://education.github.com/pack) → claim DigitalOcean $200 credit. Valid for 1 year, requires credit card for verification (won't be charged within credits).
+### Create the server
 
-### Step-by-Step
-
-**1. Create Droplet**
 ```
-DigitalOcean Dashboard → Create → Droplets
+Hetzner Cloud Console: https://console.hetzner.cloud
+Plan: CX22 (2 vCPU, 4GB RAM) — $4.59/mo
+Location: Ashburn, VA (or nearest to you)
 OS: Ubuntu 22.04 LTS
-Plan: Basic → Regular → $6/mo (1 vCPU, 1GB RAM)  ← minimum for n8n + Postgres
-Region: NYC3 (closest to Jersey City!)
-Auth: SSH Key (recommended) or Password
+Auth: SSH key (recommended)
 ```
 
-**2. SSH into your droplet**
-```bash
-ssh root@YOUR_DROPLET_IP
-```
+### Install Docker
 
-**3. Install Docker**
 ```bash
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
+ssh root@YOUR_SERVER_IP
+
+curl -fsSL https://get.docker.com | sh
 sudo usermod -aG docker $USER
 newgrp docker
 ```
 
-**4. Create project directory**
+### Clone and configure
+
 ```bash
-mkdir ~/careerforge && cd ~/careerforge
+git clone https://github.com/YOUR_USER/careerforge-n8n.git ~/careerforge
+cd ~/careerforge/docker
+cp .env.example .env
+nano .env  # fill in your API keys
 ```
 
-**5. Create `.env`**
-```bash
-nano .env
-```
+Add these VPS-specific vars to `.env`:
 ```env
-POSTGRES_USER=n8n
-POSTGRES_PASSWORD=CHANGE_ME_STRONG_PASSWORD
-POSTGRES_DB=n8n
-N8N_HOST=n8n.yourdomain.com
-N8N_PROTOCOL=https
-N8N_ENCRYPTION_KEY=CHANGE_ME_RUN_openssl_rand_hex_32
-N8N_BASIC_AUTH_ACTIVE=true
-N8N_BASIC_AUTH_USER=admin
-N8N_BASIC_AUTH_PASSWORD=CHANGE_ME
-OPENROUTER_API_KEY=YOUR_KEY
+DB_TYPE=postgresdb
+DB_POSTGRESDB_HOST=postgres
+DB_POSTGRESDB_PORT=5432
+DB_POSTGRESDB_DATABASE=n8n
+DB_POSTGRESDB_USER=n8n
+DB_POSTGRESDB_PASSWORD=CHANGE_ME_STRONG_PASSWORD
 WEBHOOK_URL=https://n8n.yourdomain.com/
 ```
 
-**6. Create `docker-compose.yml`**
-```bash
-nano docker-compose.yml
-```
+### Create VPS docker-compose
+
+Create `~/careerforge/docker/docker-compose.vps.yml`:
 ```yaml
 services:
   postgres:
-    image: postgres:15
-    restart: always
-    env_file: .env
+    image: postgres:16
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${DB_POSTGRESDB_USER}
+      POSTGRES_PASSWORD: ${DB_POSTGRESDB_PASSWORD}
+      POSTGRES_DB: ${DB_POSTGRESDB_DATABASE}
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_POSTGRESDB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   n8n:
     image: n8nio/n8n:latest
-    restart: always
+    restart: unless-stopped
     ports:
       - "127.0.0.1:5678:5678"
     env_file: .env
     environment:
-      - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=postgres
-      - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
-      - DB_POSTGRESDB_USER=${POSTGRES_USER}
-      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
-      - N8N_HOST=${N8N_HOST}
-      - N8N_PROTOCOL=${N8N_PROTOCOL}
-      - WEBHOOK_URL=${WEBHOOK_URL}
-      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
-      - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE}
-      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
-      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - DB_TYPE=${DB_TYPE}
+      - DB_POSTGRESDB_HOST=${DB_POSTGRESDB_HOST}
+      - DB_POSTGRESDB_PORT=${DB_POSTGRESDB_PORT}
+      - DB_POSTGRESDB_DATABASE=${DB_POSTGRESDB_DATABASE}
+      - DB_POSTGRESDB_USER=${DB_POSTGRESDB_USER}
+      - DB_POSTGRESDB_PASSWORD=${DB_POSTGRESDB_PASSWORD}
     volumes:
       - n8n_data:/home/node/.n8n
+      - ../templates:/data/templates:ro
+      - ../prompts:/data/prompts:ro
+      - ../user-data:/data/user-data:ro
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
-  latex-service:
-    image: YOUR_LATEX_SERVICE_IMAGE   # or build from Dockerfile
-    restart: always
+  latex:
+    build: ../services/latex
+    restart: unless-stopped
     ports:
       - "127.0.0.1:5679:5679"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5679/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
-  db_data:
+  pg_data:
   n8n_data:
 ```
 
-**7. Start services**
+### Start services
+
 ```bash
-docker compose up -d
+docker compose -f docker-compose.vps.yml up -d
 ```
 
-**8. Install Nginx + HTTPS**
+### Install Caddy (automatic HTTPS)
+
+Caddy handles TLS certificates automatically. No certbot, no renewal cron.
+
 ```bash
-sudo apt update && sudo apt install nginx certbot python3-certbot-nginx -y
-
-sudo nano /etc/nginx/sites-available/n8n
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update && sudo apt install caddy
 ```
-Paste:
-```nginx
-server {
-    listen 80;
-    server_name n8n.yourdomain.com;
 
-    location / {
-        proxy_pass http://127.0.0.1:5678;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_http_version 1.1;
-        proxy_set_header Connection "Upgrade";
-        proxy_set_header Upgrade $http_upgrade;
-    }
+Create `/etc/caddy/Caddyfile`:
+```
+n8n.yourdomain.com {
+    reverse_proxy localhost:5678
 }
 ```
+
 ```bash
-sudo ln -s /etc/nginx/sites-available/n8n /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-sudo certbot --nginx -d n8n.yourdomain.com
-```
-Certbot auto-renews SSL — HTTPS is now live ✅
-
-**9. Point your domain**
-Add an A record: `n8n.yourdomain.com → YOUR_DROPLET_IP`
-
-**10. Open n8n, import workflow, activate** → 24/7 live 🚀
-
----
-
-## Option 4: Hetzner VPS (€3.79/mo) ← **Cheapest Paid Option**
-
-Identical to Option 3 (DigitalOcean) — just cheaper. Not in GitHub Education pack but nearly half the price.
-
-```
-Hetzner Cloud: https://console.hetzner.cloud
-Plan: CX22 (2 vCPU, 4GB RAM) = €3.79/mo  ← overkill but great headroom
-Location: Ashburn, VA (closest US datacenter)
-OS: Ubuntu 22.04
-```
-Then follow **all steps from Option 3** from Step 2 onwards. Identical process.
-
----
-
-## Option 5: n8n Cloud ($20/mo) ← **Zero Ops**
-
-If you never want to touch a server:
-```
-1. Go to https://app.n8n.cloud → Start free trial
-2. Import CareerForge_Master.json
-3. Add credentials (OpenRouter, Google, Telegram)
-4. Activate → done
-```
-No Docker, no nginx, no certbot. But at $20/mo it's 4–5x more expensive than VPS options.
-
----
-
-## Post-Deploy Checklist (All Options)
-
-After any deployment:
-```
-□ n8n UI accessible at your domain/URL
-□ Login works with your admin credentials
-□ CareerForge_Master.json imported
-□ All credentials configured:
-  □ Telegram bot token
-  □ OpenRouter API key  
-  □ Google Cloud Service Account (Sheets + Drive)
-□ Telegram Trigger workflow is ACTIVE
-□ Send /start to your bot → it responds
-□ Send /jobs → pipeline triggers
-□ Check Google Sheet → row appears
-□ Check Google Drive → PDF uploaded
+sudo systemctl restart caddy
+sudo systemctl enable caddy
 ```
 
----
+That's it. Caddy auto-provisions a Let's Encrypt cert and auto-renews. No config files, no cron jobs.
 
-## Backing Up Your Workflows
+### Point your domain
 
-Run this on any server deployment to backup n8n data:
+Add an A record: `n8n.yourdomain.com` -> `YOUR_SERVER_IP`
+
+### systemd service for Docker Compose
+
+Make CareerForge start on boot and restart on failure:
+
 ```bash
-# Backup n8n workflows + credentials (encrypted)
-docker cp n8n:/home/node/.n8n ~/n8n-backup-$(date +%Y%m%d)
+sudo tee /etc/systemd/system/careerforge.service > /dev/null << 'EOF'
+[Unit]
+Description=CareerForge n8n Stack
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/root/careerforge/docker
+ExecStart=/usr/bin/docker compose -f docker-compose.vps.yml up -d
+ExecStop=/usr/bin/docker compose -f docker-compose.vps.yml down
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable careerforge
 ```
-Or export individual workflows from n8n UI → Settings → Export.
+
+### Daily database backups
+
+```bash
+sudo tee /etc/cron.daily/careerforge-backup > /dev/null << 'SCRIPT'
+#!/bin/bash
+BACKUP_DIR="/root/careerforge/backups"
+mkdir -p "$BACKUP_DIR"
+docker exec $(docker ps -qf "ancestor=postgres:16") \
+  pg_dump -U n8n n8n | gzip > "$BACKUP_DIR/n8n_$(date +%Y%m%d).sql.gz"
+# Keep last 14 days
+find "$BACKUP_DIR" -name "*.sql.gz" -mtime +14 -delete
+SCRIPT
+sudo chmod +x /etc/cron.daily/careerforge-backup
+```
+
+This runs daily via cron, keeps 14 days of compressed backups, and auto-prunes old ones.
+
+### Import and activate
+
+Open `https://n8n.yourdomain.com`, import `workflows/01_careerforge.json`, configure credentials, activate. You're live.
+
+---
+
+## Tier 4: n8n Cloud ($20/mo)
+
+Zero ops. No Docker, no servers, no reverse proxies. You pay for convenience.
+
+**1. Sign up at** [app.n8n.cloud](https://app.n8n.cloud) — 14-day free trial
+
+**2. Import workflow** — Settings > Import > upload `workflows/01_careerforge.json`
+
+**3. Add credentials:**
+- OpenRouter: type "OpenAI-compatible", base URL `https://openrouter.ai/api/v1`, paste your API key
+- Telegram: paste your bot token
+
+**4. Activate** — toggle the workflow on. Done.
+
+### What you get
+- 2500 executions/month (Starter plan)
+- Managed Postgres, automatic backups
+- Built-in HTTPS, no webhook setup needed
+- n8n team handles updates and uptime
+
+### What you don't get
+- Volume mounts for templates/prompts — you'll edit prompts directly in the n8n UI
+- Custom LaTeX service — you'd need to host that separately or use a cloud LaTeX API
+- Shell access for debugging
+
+---
+
+## Post-Deploy Checklist
+
+After any deployment method:
+
+```
+[ ] n8n UI accessible at your URL
+[ ] Login works with your credentials
+[ ] 01_careerforge.json imported and opened
+[ ] Credentials configured:
+    [ ] OpenRouter (OpenAI-compatible type, base URL: https://openrouter.ai/api/v1)
+    [ ] Telegram bot token
+[ ] At least one search provider key set (Firecrawl, Serper, or You.com)
+[ ] master_resume.txt placed in user-data/ (or /data/user-data/ in container)
+[ ] Workflow toggled ACTIVE
+[ ] Send "help" to your bot — it responds
+[ ] Send "find ML engineer jobs" — job search works
+[ ] Pick a job number — PDF generation works
+```
+
+---
+
+## Backing Up
+
+### SQLite (Tier 0, Tier 1)
+```bash
+# Copy the n8n data volume
+docker cp $(docker ps -qf "name=n8n"):/home/node/.n8n ~/n8n-backup-$(date +%Y%m%d)
+```
+
+### Postgres (Tier 2, Tier 3)
+```bash
+docker exec $(docker ps -qf "ancestor=postgres:16") \
+  pg_dump -U n8n n8n > n8n_backup_$(date +%Y%m%d).sql
+```
+
+### Workflow JSON (any tier)
+Export from n8n UI: Workflows > your workflow > Download.
+
+---
+
+## Choosing a tier
+
+- **Just testing?** Tier 0. Ten minutes to first PDF.
+- **Job hunting but broke?** Tier 1. Free and always-on (mostly).
+- **Want it to just work?** Tier 2. Five bucks, no drama.
+- **Want full control?** Tier 3. Your server, your rules, daily backups.
+- **Hate servers?** Tier 4. Pay n8n to deal with it.

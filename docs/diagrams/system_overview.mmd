@@ -1,0 +1,26 @@
+flowchart TD
+    TG["Telegram Message"] --> ROUTER["Intent Router<br/><i>Llama 3.3 70B :free</i>"]
+    CRON["Schedule Trigger<br/><i>8am + 11:30am ET</i>"] --> FIND
+
+    ROUTER --> |help| HELP["Help Text"]
+    ROUTER --> |find_jobs| FIND["Job Discovery<br/><i>Greenhouse API + JobScorer</i>"]
+    ROUTER --> |apply| APPLY["Resume + Cover PDF<br/><i>Claude Sonnet 4.6 + LaTeX</i>"]
+    ROUTER --> |revise| REVISE["Refine Last Output<br/><i>Chat Memory + Sonnet</i>"]
+    ROUTER --> |score| SCORE["ForgeScore<br/><i>Resume vs JD</i>"]
+    ROUTER --> |intel| INTEL["Company Intel<br/><i>Search Fan-out + RRF</i>"]
+    ROUTER --> |outreach| OUTREACH["Contact Finder<br/><i>Switch + RRF + Outreach Writer</i>"]
+    ROUTER --> |salary| SALARY["Salary Intel"]
+    ROUTER --> |track| TRACK["Application Tracker"]
+    ROUTER --> |status| STATUS["Pipeline Status"]
+
+    FIND --> TG_OUT["Telegram Response"]
+    APPLY --> PDF["PDF via LaTeX Service"]
+    PDF --> TG_DOC["Telegram sendDocument"]
+    REVISE --> PDF
+    SCORE --> TG_OUT
+    INTEL --> TG_OUT
+    OUTREACH --> TG_OUT
+    SALARY --> TG_OUT
+    TRACK --> TG_OUT
+    STATUS --> TG_OUT
+    HELP --> TG_OUT

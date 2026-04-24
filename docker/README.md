@@ -1,110 +1,53 @@
-# CareerForge n8n — Local Docker Setup
+# CareerForge n8n — Docker Setup
 
-Run the full CareerForge multi-agent pipeline locally in under 5 minutes.
+Run CareerForge locally in under 10 minutes. See [docs/QUICKSTART.md](../docs/QUICKSTART.md) for the full walkthrough.
 
 ## Prerequisites
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
-- API keys for the services you want to use (see `.env.example`)
+- API keys (see `.env.example` for the full list)
 
 ## Quick Start
 
 ```bash
-# 1. Clone or copy this folder to your machine
 cd careerforge_n8n/docker
-
-# 2. Create your environment file
-cp .env.example .env
-
-# 3. Fill in your API keys in .env (open in any text editor)
-
-# 4. Start the stack
-docker compose up -d
-
-# 5. Open n8n in your browser
-open http://localhost:5678
-# Login: careerforge / demo1234
+cp .env.example .env        # fill in your API keys
+docker compose up -d         # starts n8n + LaTeX compiler
+open http://localhost:5678   # login: careerforge / demo1234
 ```
 
-## Import the Workflows
+## Import the Workflow
 
-Once n8n is running:
+1. Open **http://localhost:5678**
+2. **Workflows** → **Import from file** → upload `workflows/01_careerforge.json`
+3. Open the imported workflow → set credentials (see below)
+4. Toggle the workflow **Active**
 
-1. Go to **http://localhost:5678**
-2. Click **Workflows** in the left sidebar
-3. Click **Add workflow** → **Import from file**
-4. Import each JSON file from the `../workflows/` folder in this order:
-   - `01_application_forge.json`
-   - `02_job_discovery.json`
-   - `03_company_intel.json`
-   - `04_morning_job_digest.json`
-   - `05_master_orchestration.json`
-5. For each workflow, open it and assign credentials (see below)
+## Set Up Credentials
 
-## Assign Credentials
+In n8n: **Settings → Credentials → Add Credential**
 
-Go to **Settings → Credentials** and create:
-
-| Credential Name | Type | Value |
+| Credential | Type | Notes |
 |:---|:---|:---|
-| `OpenRouter API` | Header Auth | `Authorization: Bearer <your-openrouter-key>` |
-| `Supabase API` | Header Auth | `apikey: <your-supabase-anon-key>` |
-| `Firecrawl API` | Header Auth | `Authorization: Bearer <your-firecrawl-key>` |
-| `Serper API` | Header Auth | `X-API-KEY: <your-serper-key>` |
-| `Hunter API` | Header Auth | `Authorization: Bearer <your-hunter-key>` |
+| OpenRouter API | OpenAI-compatible | Base URL: `https://openrouter.ai/api/v1`, API key: your `sk-or-v1-...` |
+| CareerForge Bot | Telegram API | Bot token from @BotFather |
 
-## Test the Master Webhook
-
-```bash
-curl -X POST http://localhost:5678/webhook/careerforge \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_id": "demo-user",
-    "message": "Find me Senior ML Engineer jobs in New York"
-  }'
-```
+That's it. Search provider keys (Firecrawl, Serper, You.com) are read from environment variables — no n8n credentials needed for those.
 
 ## Useful Commands
 
 ```bash
-# View logs
-docker compose logs -f n8n
-
-# Stop the stack
-docker compose down
-
-# Stop and remove all data (fresh start)
-docker compose down -v
-
-# Update n8n to latest version
-docker compose pull && docker compose up -d
+docker compose logs -f n8n       # live logs
+docker compose down              # stop
+docker compose down -v           # stop + wipe data
+docker compose pull && docker compose up -d  # update n8n
 ```
 
-## Architecture
+## Stack
 
 ```
-POST /webhook/careerforge
-        │
-        ▼
-  Brian the Router (GPT-4.1-nano)
-        │
-        ▼
-  ┌─────┴──────────────────────┐
-  │     Switch by Intent        │
-  └──┬──────────┬──────────┬───┘
-     │          │          │
-     ▼          ▼          ▼
-Application  Job        Company
-  Forge    Discovery    Intel
-(Resume +  (Scrape +   (Research +
- Cover)     Score)      Outreach)
-     │          │          │
-     └──────────┴──────────┘
-                │
-                ▼
-         The Judge (Gemini Flash)
-         Hallucination detection
-                │
-                ▼
-         Respond to User
+n8n        → http://localhost:5678   (workflow engine)
+latex      → http://localhost:5679   (PDF compiler, internal)
 ```
+
+Both services restart automatically on crash or reboot.

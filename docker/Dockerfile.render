@@ -1,0 +1,13 @@
+# CareerForge n8n — Render / Railway Dockerfile
+# Wraps the official n8n image with templates, prompts, and user-data
+# baked into the image (since Render can't mount host volumes from a repo).
+
+FROM n8nio/n8n:latest
+
+# Copy project files into the image
+COPY templates /data/templates
+COPY prompts /data/prompts
+COPY user-data /data/user-data
+
+# n8n listens on 5678 by default
+EXPOSE 5678

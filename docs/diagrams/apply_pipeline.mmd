@@ -1,0 +1,28 @@
+flowchart TD
+    START["Route Intent<br/>output: apply"] --> EXTRACT["Extract Input<br/><i>chat_id, message_text</i>"]
+    EXTRACT --> PARSE["Parse Personal Info<br/><i>Read master_resume.txt</i>"]
+    PARSE --> SENIORITY["SeniorityDetector<br/><i>DeepSeek :free</i>"]
+    SENIORITY --> LOAD["Load Skeletons<br/><i>Read .tex files from /data/templates</i>"]
+    LOAD --> FORGESCORE["ForgeScore<br/><i>DeepSeek :free</i>"]
+    FORGESCORE --> GATE{"Score >= 4.0?"}
+
+    GATE -->|"Skip (< 4.0)"| SKIP_MSG["Send Skip Message<br/><i>Telegram</i>"]
+    GATE -->|"Caution (4.0-5.9)"| CAUTION_MSG["Send Caution + Continue<br/><i>Telegram</i>"]
+    GATE -->|"Apply (>= 6.0)"| PREP["Prepare Apply Context"]
+    CAUTION_MSG --> PREP
+
+    PREP --> RESUME_FORGE["ResumeForge<br/><i>Claude Sonnet 4.6</i>"]
+    PREP --> COVER_FORGE["CoverForge<br/><i>Claude Sonnet 4.6</i>"]
+
+    RESUME_FORGE --> BUILD_R["Build Resume LaTeX<br/><i>Skeleton + JSON → .tex</i>"]
+    COVER_FORGE --> BUILD_C["Build Cover LaTeX<br/><i>Skeleton + JSON → .tex</i>"]
+
+    BUILD_R --> COMPILE_R["Compile PDF<br/><i>POST latex-service:5679</i>"]
+    BUILD_C --> COMPILE_C["Compile PDF<br/><i>POST latex-service:5679</i>"]
+
+    COMPILE_R --> SEND_R["Send Resume PDF<br/><i>Telegram sendDocument</i>"]
+    COMPILE_C --> SEND_C["Send Cover PDF<br/><i>Telegram sendDocument</i>"]
+
+    SEND_R --> STORE["Store Apply Context<br/><i>staticData.last_apply</i>"]
+    SEND_C --> STORE
+    STORE --> DONE["Send Confirmation<br/><i>Telegram</i>"]

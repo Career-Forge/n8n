@@ -1,0 +1,35 @@
+flowchart LR
+    subgraph T0["Tier 0 — Local"]
+        direction TB
+        T0_COST["$0"]
+        T0_DESC["Docker + ngrok<br/>Laptop must stay on"]
+    end
+
+    subgraph T1["Tier 1 — Render Free"]
+        direction TB
+        T1_COST["$0"]
+        T1_DESC["SQLite + disk<br/>UptimeRobot keep-alive<br/>750 hrs/mo, cold starts"]
+    end
+
+    subgraph T2["Tier 2 — Railway"]
+        direction TB
+        T2_COST["$5/mo"]
+        T2_DESC["Postgres included<br/>No cold starts<br/>Auto-deploy on push"]
+    end
+
+    subgraph T3["Tier 3 — Hetzner VPS"]
+        direction TB
+        T3_COST["$4.59/mo"]
+        T3_DESC["CX22 (2 vCPU, 4GB)<br/>Caddy + systemd<br/>Full control, daily backups"]
+    end
+
+    subgraph T4["Tier 4 — n8n Cloud"]
+        direction TB
+        T4_COST["$20/mo"]
+        T4_DESC["Managed, zero ops<br/>Import JSON + activate<br/>2500 executions/mo"]
+    end
+
+    T0 -->|"Want 24/7?"| T1
+    T1 -->|"Need reliability?"| T2
+    T2 -->|"Want full control?"| T3
+    T3 -->|"Want zero ops?"| T4

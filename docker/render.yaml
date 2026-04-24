@@ -1,0 +1,63 @@
+# ═══════════════════════════════════════════════════════════════
+#  CareerForge n8n — Render Blueprint
+#  Deploy: Render Dashboard → New → Blueprint → connect this repo
+#  Uses SQLite + persistent disk (no Postgres — free tier expires)
+# ═══════════════════════════════════════════════════════════════
+
+services:
+  # ── n8n workflow engine ────────────────────────────────────
+  - type: web
+    name: careerforge-n8n
+    runtime: docker
+    plan: free
+    dockerfilePath: ./docker/Dockerfile.render
+    disk:
+      name: n8n-data
+      mountPath: /home/node/.n8n
+      sizeGB: 1
+    healthCheckPath: /healthz
+    envVars:
+      - key: GENERIC_TIMEZONE
+        value: America/New_York
+      - key: TZ
+        value: America/New_York
+      - key: DB_TYPE
+        value: sqlite
+      - key: N8N_BASIC_AUTH_ACTIVE
+        value: "true"
+      - key: N8N_COMMUNITY_PACKAGES_ENABLED
+        value: "true"
+      - key: N8N_BLOCK_ENV_ACCESS_IN_NODE
+        value: "false"
+      - key: N8N_PERSONALIZATION_ENABLED
+        value: "false"
+      - key: N8N_DIAGNOSTICS_ENABLED
+        value: "false"
+      # Auto-generated
+      - key: N8N_ENCRYPTION_KEY
+        generateValue: true
+      # Set manually in Render dashboard
+      - key: WEBHOOK_URL
+        sync: false
+      - key: N8N_USER
+        sync: false
+      - key: N8N_PASSWORD
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: FIRECRAWL_API_KEY
+        sync: false
+      - key: YOUCOM_API_KEY
+        sync: false
+      - key: SERPER_API_KEY
+        sync: false
+
+  # ── LaTeX compiler ─────────────────────────────────────────
+  - type: web
+    name: careerforge-latex
+    runtime: docker
+    plan: free
+    dockerfilePath: ./services/latex/Dockerfile
+    healthCheckPath: /health
