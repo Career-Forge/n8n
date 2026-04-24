@@ -1,0 +1,985 @@
+{
+  "name": "CareerForge Master",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["message"]
+      },
+      "id": "cf-001",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [220, 460],
+      "webhookId": "careerforge-telegram",
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 12 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "cf-002",
+      "name": "Schedule 8am ET",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [220, 700]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 15 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "cf-003",
+      "name": "Schedule 1130am ET",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [220, 940]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "chat_id",
+              "name": "chat_id",
+              "value": "={{ $json.message.chat.id }}",
+              "type": "number"
+            },
+            {
+              "id": "message_text",
+              "name": "message_text",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            },
+            {
+              "id": "source",
+              "name": "source",
+              "value": "telegram",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "cf-004",
+      "name": "Extract Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 460]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "chat_id",
+              "name": "chat_id",
+              "value": "={{ $env.TELEGRAM_OWNER_CHAT_ID }}",
+              "type": "number"
+            },
+            {
+              "id": "message_text",
+              "name": "message_text",
+              "value": "find jobs",
+              "type": "string"
+            },
+            {
+              "id": "source",
+              "name": "source",
+              "value": "schedule",
+              "type": "string"
+            },
+            {
+              "id": "intent_override",
+              "name": "intent_override",
+              "value": "find_jobs",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "cf-005",
+      "name": "Schedule Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 820]
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are CareerForge's intent classification agent. You receive a Telegram message from a job seeker and classify it into one of 10 intents, extracting any relevant entities. You have access to the last 5 conversation turns via chat memory to resolve ambiguous references.\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\nOutput Schema:\n```json\n{\n  \"intent\": \"help | find_jobs | apply | revise | score | intel | outreach | salary | track | status\",\n  \"entities\": {\n    \"company\": \"string or null\",\n    \"role\": \"string or null\",\n    \"location\": \"string or null\",\n    \"job_number\": \"integer or null\",\n    \"changes\": \"string or null\"\n  },\n  \"confidence\": \"high | medium | low\",\n  \"reasoning\": \"1 sentence on why this intent\"\n}\n```\n\nIntent Classification:\n1. help — Greetings, \"what can you do\", \"help\", anything unclear or off-topic. Default when nothing else matches.\n2. find_jobs — Search for jobs. Triggers: \"find jobs\", \"job search\", \"latest jobs\", \"job digest\", \"what's new\", job titles + locations.\n3. apply — Generate resume + cover letter for a specific job. Triggers: a bare number (\"3\"), \"apply to 3\", \"generate resume for job 2\".\n4. revise — Modify the last generated resume or cover letter. Triggers: \"shorter\", \"longer\", \"more X\", \"less X\", \"change Y\", \"rewrite\", \"tweak\".\n5. score — Score resume fit against a job description. Triggers: \"score\", \"how do I match\", \"fit check\".\n6. intel — Company research or health reports. Triggers: \"tell me about [company]\", \"is [company] safe\", \"red flags\", layoffs, funding, culture.\n7. outreach — Find contacts or generate cold outreach. Triggers: \"who should I contact\", \"find recruiters\", \"cold email\".\n8. salary — Compensation data or negotiation advice. Triggers: \"salary\", \"compensation\", \"how much does [company] pay\".\n9. track — Log or update application status. Triggers: \"track\", \"save this application\", \"mark as applied\".\n10. status — View tracked applications. Triggers: \"show my applications\", \"application status\", \"pipeline\".\n\nEntity Extraction:\n- company: Normalize casing. null if not mentioned.\n- role: Extract job title. null if not mentioned.\n- location: Extract location. null if not mentioned.\n- job_number: Bare number = job_number. null if not mentioned.\n- changes: For revise only. null for all other intents.\n\nDisambiguation:\n- Only a number (\"3\") → apply with job_number: 3\n- Refinement language → revise (even if company mentioned)\n- \"Who should I contact\" → outreach, not intel\n- Company safety/layoff questions → intel, not outreach\n- Ambiguous → most specific intent, confidence: low\n- Truly unclear → help, confidence: low\n- Typos: be generous (\"fnd jobs\" → find_jobs)\n- Mixed messages: pick first actionable intent\n- Follow-ups: use chat memory context"
+        },
+        "promptType": "define",
+        "text": "={{ $json.message_text }}"
+      },
+      "id": "cf-006",
+      "name": "Intent Router",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [740, 460]
+    },
+    {
+      "parameters": {
+        "model": "meta-llama/llama-3.3-70b-instruct:free",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1",
+          "temperature": 0
+        }
+      },
+      "id": "cf-007",
+      "name": "OpenRouter LLM (Router)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [640, 680],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Extract Input').item.json.chat_id || $('Schedule Payload').item.json.chat_id }}",
+        "tableName": "n8n_chat_histories",
+        "contextWindowLength": 5
+      },
+      "id": "cf-008",
+      "name": "Postgres Chat Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [760, 680],
+      "credentials": {
+        "postgres": {
+          "id": "POSTGRES_CREDENTIAL_ID",
+          "name": "Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"intent\": {\n      \"type\": \"string\",\n      \"enum\": [\"help\", \"find_jobs\", \"apply\", \"revise\", \"score\", \"intel\", \"outreach\", \"salary\", \"track\", \"status\"]\n    },\n    \"entities\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"company\": { \"type\": [\"string\", \"null\"] },\n        \"role\": { \"type\": [\"string\", \"null\"] },\n        \"location\": { \"type\": [\"string\", \"null\"] },\n        \"job_number\": { \"type\": [\"integer\", \"null\"] },\n        \"changes\": { \"type\": [\"string\", \"null\"] }\n      }\n    },\n    \"confidence\": {\n      \"type\": \"string\",\n      \"enum\": [\"high\", \"medium\", \"low\"]\n    },\n    \"reasoning\": { \"type\": \"string\" }\n  },\n  \"required\": [\"intent\", \"entities\", \"confidence\", \"reasoning\"]\n}"
+      },
+      "id": "cf-009",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [880, 680]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "version": 2, "caseSensitive": true },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.intent }}",
+                    "rightValue": "help",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "help"
+            },
+            {
+              "conditions": {
+                "options": { "version": 2, "caseSensitive": true },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.intent }}",
+                    "rightValue": "find_jobs",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "find_jobs"
+            },
+            {
+              "conditions": {
+                "options": { "version": 2, "caseSensitive": true },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.intent }}",
+                    "rightValue": "apply",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "apply"
+            },
+            {
+              "conditions": {
+                "options": { "version": 2, "caseSensitive": true },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.intent }}",
+                    "rightValue": "revise",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "revise"
+            },
+            {
+              "conditions": {
+                "options": { "version": 2, "caseSensitive": true },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.intent }}",
+                    "rightValue": "score",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "score"
+            },
+            {
+              "conditions": {
+                "options": { "version": 2, "caseSensitive": true },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.intent }}",
+                    "rightValue": "intel",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "intel"
+            },
+            {
+              "conditions": {
+                "options": { "version": 2, "caseSensitive": true },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.intent }}",
+                    "rightValue": "outreach",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "outreach"
+            },
+            {
+              "conditions": {
+                "options": { "version": 2, "caseSensitive": true },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.intent }}",
+                    "rightValue": "salary",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "salary"
+            },
+            {
+              "conditions": {
+                "options": { "version": 2, "caseSensitive": true },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.intent }}",
+                    "rightValue": "track",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "track"
+            },
+            {
+              "conditions": {
+                "options": { "version": 2, "caseSensitive": true },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.intent }}",
+                    "rightValue": "status",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "status"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "cf-010",
+      "name": "Route Intent",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [1020, 460]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Input').item.json.chat_id || $('Schedule Payload').item.json.chat_id }}",
+        "text": "👋 *CareerForge — Your AI Job Hunt Assistant*\n\nHere's what I can do:\n\n🔍 *Find Jobs* — \"find ML jobs in NYC\"\n📄 *Apply* — reply with a job number (e.g. \"3\") to generate a tailored resume + cover letter\n✏️ *Revise* — \"make it shorter\" / \"add more Python\"\n📊 *Score* — \"score my resume\" for a fit check\n🏢 *Company Intel* — \"tell me about Anthropic\"\n📧 *Outreach* — \"find recruiters at Scale AI\"\n💰 *Salary* — \"salary for ML Engineer at Google\"\n📋 *Track* — \"track this application\"\n📁 *Status* — \"show my applications\"\n\nJust type naturally — I'll figure out what you need!",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-011",
+      "name": "Send Help",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1320, 60],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Hardcoded company list for Greenhouse API\nconst companies = [\n  'anthropic',\n  'openai',\n  'databricks',\n  'huggingface',\n  'cohere',\n  'scale',\n  'adept',\n  'perplexity',\n  'mistral',\n  'together',\n  'replicate',\n  'runwayml',\n  'character-ai',\n  'elevenlabs',\n  'midjourney'\n];\n\nreturn companies.map(slug => ({\n  json: { company_slug: slug }\n}));"
+      },
+      "id": "cf-020",
+      "name": "Company List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 340]
+    },
+    {
+      "parameters": {
+        "url": "=https://boards-api.greenhouse.io/v1/boards/{{ $json.company_slug }}/jobs",
+        "options": {
+          "timeout": 15000,
+          "batching": {
+            "batch": {
+              "batchSize": 5,
+              "batchInterval": 1000
+            }
+          }
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "true"
+            }
+          ]
+        },
+        "retry": {
+          "maxRetries": 3,
+          "retryInterval": 5000
+        }
+      },
+      "id": "cf-021",
+      "name": "Fetch Greenhouse Jobs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1540, 340],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate, filter by keywords, dedupe, take top 20 by recency\nconst allJobs = [];\nconst seen = new Set();\n\n// Role keywords to filter (broad ML/AI/Software match)\nconst keywords = [\n  'engineer', 'developer', 'scientist', 'researcher',\n  'machine learning', 'ml ', 'ai ', 'data', 'backend',\n  'software', 'infrastructure', 'platform', 'systems',\n  'fullstack', 'full-stack', 'full stack', 'applied',\n  'nlp', 'retrieval', 'search', 'python', 'deep learning'\n];\n\nfor (const item of $input.all()) {\n  const jobs = item.json.jobs || [];\n  const companySlug = item.json.company_slug || 'unknown';\n\n  for (const job of jobs) {\n    if (!job || !job.id) continue;\n\n    const dedupKey = `${job.id}`;\n    if (seen.has(dedupKey)) continue;\n    seen.add(dedupKey);\n\n    const title = (job.title || '').toLowerCase();\n    const dept = ((job.departments || [])[0]?.name || '').toLowerCase();\n    const combined = `${title} ${dept}`;\n\n    // Check if job matches any keyword\n    const matches = keywords.some(kw => combined.includes(kw));\n    if (!matches) continue;\n\n    const location = (job.location?.name || 'Unknown');\n\n    allJobs.push({\n      job_id: `${companySlug}-${job.id}`,\n      title: job.title,\n      company: companySlug,\n      location: location,\n      department: (job.departments || [])[0]?.name || '',\n      url: job.absolute_url || `https://boards.greenhouse.io/${companySlug}/jobs/${job.id}`,\n      updated_at: job.updated_at || '1970-01-01',\n      description_snippet: (job.content || '').replace(/<[^>]*>/g, '').substring(0, 300)\n    });\n  }\n}\n\n// Sort by updated_at desc (most recent first), take top 20\nallJobs.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));\nconst top20 = allJobs.slice(0, 20);\n\nreturn [{ json: { jobs: top20, count: top20.length } }];"
+      },
+      "id": "cf-022",
+      "name": "Aggregate Jobs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 340]
+    },
+    {
+      "parameters": {
+        "filePath": "/data/user-data/master_resume.txt"
+      },
+      "id": "cf-023",
+      "name": "Read Resume",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [1980, 340]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build the scorer input: resume summary + jobs batch\nconst jobs = $('Aggregate Jobs').first().json.jobs;\nconst resumeBinary = $('Read Resume').first().binary;\n\n// Extract resume text from binary data\nlet resumeText = '';\nif (resumeBinary && resumeBinary.data) {\n  resumeText = Buffer.from(resumeBinary.data.data, 'base64').toString('utf-8');\n} else {\n  resumeText = $('Read Resume').first().json.data || 'No resume found';\n}\n\n// Build a condensed summary for the scorer (first 2000 chars)\nconst masterResumeSummary = resumeText.substring(0, 2000);\n\nconst jobBatch = jobs.map(j => ({\n  job_id: j.job_id,\n  title: j.title,\n  company: j.company,\n  location: j.location,\n  department: j.department,\n  url: j.url,\n  description_snippet: j.description_snippet\n}));\n\nreturn [{\n  json: {\n    master_resume_summary: masterResumeSummary,\n    jobs: jobBatch\n  }\n}];"
+      },
+      "id": "cf-024",
+      "name": "Build Scorer Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2200, 340]
+    },
+    {
+      "parameters": {
+        "prompt": "=You are a lightweight job-ranking engine. You receive a candidate's master resume summary and a batch of job listings, then score each job's fit on a 0-10 scale with a one-line reason.\n\nReturn strict JSON only — no markdown fencing, no commentary, no preamble.\n\nOutput schema:\n{\"scored\":[{\"job_id\":\"string\",\"fit_score\":integer 0-10,\"one_liner\":\"under 80 chars\"}]}\n\nScoring criteria:\n- Skills overlap: candidate skills vs job requirements\n- Role alignment: title/department vs candidate's experience\n- Location match: candidate's location or remote\n- Seniority fit: experience level alignment\n\nCalibration:\n- 8-10: Strong match\n- 6-7: Good match\n- 4-5: Partial\n- 1-3: Weak\n- 0: Complete mismatch\n\none_liner format: Start with \"Strong fit\", \"Good fit\", \"Partial\", \"Weak\", or \"Mismatch\" + dash + top reasons.\n\nReturn scored array sorted by fit_score descending.\n\n---\n\nCandidate Resume Summary:\n{{ $json.master_resume_summary }}\n\nJobs to Score:\n{{ JSON.stringify($json.jobs) }}"
+      },
+      "id": "cf-025",
+      "name": "JobScorer",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [2420, 340]
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-3-flash-lite",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1",
+          "temperature": 0
+        }
+      },
+      "id": "cf-026",
+      "name": "OpenRouter LLM (Scorer)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [2360, 560],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"scored\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"job_id\": { \"type\": \"string\" },\n          \"fit_score\": { \"type\": \"integer\" },\n          \"one_liner\": { \"type\": \"string\" }\n        },\n        \"required\": [\"job_id\", \"fit_score\", \"one_liner\"]\n      }\n    }\n  },\n  \"required\": [\"scored\"]\n}"
+      },
+      "id": "cf-027",
+      "name": "Scorer Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [2500, 560]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format top 5 scored jobs as Telegram message + store in static data\nconst scorerOutput = $input.first().json.output || $input.first().json;\nconst scored = scorerOutput.scored || [];\nconst allJobs = $('Aggregate Jobs').first().json.jobs;\n\n// Take top 5\nconst top5 = scored.slice(0, 5);\n\n// Build lookup map\nconst jobMap = {};\nfor (const j of allJobs) {\n  jobMap[j.job_id] = j;\n}\n\n// Store in workflow static data for /apply N reference\nconst staticData = $getWorkflowStaticData('global');\nstaticData.last_jobs = {};\n\n// Format Telegram message\nlet msg = '🔍 *Top Job Matches*\\n\\n';\n\ntop5.forEach((s, i) => {\n  const num = i + 1;\n  const job = jobMap[s.job_id] || {};\n  const title = job.title || 'Unknown';\n  const company = (job.company || 'unknown').replace(/-/g, ' ');\n  const location = job.location || 'Unknown';\n  const score = s.fit_score;\n  const liner = s.one_liner;\n  const url = job.url || '';\n\n  // Store for later /apply N\n  staticData.last_jobs[num] = {\n    job_id: s.job_id,\n    title: title,\n    company: company,\n    location: location,\n    url: url,\n    fit_score: score,\n    description_snippet: job.description_snippet || ''\n  };\n\n  msg += `*${num}.* [${title}](${url})\\n`;\n  msg += `    🏢 ${company} · 📍 ${location}\\n`;\n  msg += `    📊 Fit: ${score}/10 — ${liner}\\n\\n`;\n});\n\nmsg += '_Reply with a number (1-5) to generate a tailored resume._';\n\nreturn [{ json: { message: msg } }];"
+      },
+      "id": "cf-028",
+      "name": "Format Digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2640, 340]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Input').item.json.chat_id || $('Schedule Payload').item.json.chat_id }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "disable_web_page_preview": true
+        }
+      },
+      "id": "cf-029",
+      "name": "Send Digest",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [2860, 340],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Input').item.json.chat_id }}",
+        "text": "🚧 *Apply* — This feature is coming soon!\n\nReply with a job number after receiving a digest, and I'll generate a tailored resume + cover letter.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-040",
+      "name": "Stub: Apply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1320, 580],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Input').item.json.chat_id }}",
+        "text": "🚧 *Revise* — This feature is coming soon!\n\nAfter generating a resume, you'll be able to say things like \"make it shorter\" or \"add more Python\".",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-041",
+      "name": "Stub: Revise",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1320, 740],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Input').item.json.chat_id }}",
+        "text": "🚧 *Score* — This feature is coming soon!\n\nYou'll be able to score your resume fit against any job description.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-042",
+      "name": "Stub: Score",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1320, 900],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Input').item.json.chat_id }}",
+        "text": "🚧 *Company Intel* — This feature is coming soon!\n\nYou'll be able to get health reports on any company — layoffs, funding, reviews, and more.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-043",
+      "name": "Stub: Intel",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1320, 1060],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Input').item.json.chat_id }}",
+        "text": "🚧 *Outreach* — This feature is coming soon!\n\nYou'll be able to find contacts at any company and generate cold outreach messages.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-044",
+      "name": "Stub: Outreach",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1320, 1220],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Input').item.json.chat_id }}",
+        "text": "🚧 *Salary* — This feature is coming soon!\n\nYou'll be able to look up compensation data and get negotiation advice.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-045",
+      "name": "Stub: Salary",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1320, 1380],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Input').item.json.chat_id }}",
+        "text": "🚧 *Track* — This feature is coming soon!\n\nYou'll be able to log and track your job applications.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-046",
+      "name": "Stub: Track",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1320, 1540],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Input').item.json.chat_id }}",
+        "text": "🚧 *Status* — This feature is coming soon!\n\nYou'll be able to view all your tracked applications and their status.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-047",
+      "name": "Stub: Status",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1320, 1700],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Input').item.json.chat_id || $('Schedule Payload').item.json.chat_id }}",
+        "text": "Sorry, I didn't understand that. Try /help to see what I can do!",
+        "additionalFields": {}
+      },
+      "id": "cf-048",
+      "name": "Send Fallback",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1320, 1860],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule 8am ET": {
+      "main": [
+        [
+          {
+            "node": "Schedule Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule 1130am ET": {
+      "main": [
+        [
+          {
+            "node": "Schedule Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Input": {
+      "main": [
+        [
+          {
+            "node": "Intent Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Payload": {
+      "main": [
+        [
+          {
+            "node": "Company List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intent Router": {
+      "main": [
+        [
+          {
+            "node": "Route Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter LLM (Router)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Intent Router",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Intent Router",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Intent Router",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Intent": {
+      "main": [
+        [
+          {
+            "node": "Send Help",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Company List",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stub: Apply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stub: Revise",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stub: Score",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stub: Intel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stub: Outreach",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stub: Salary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stub: Track",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stub: Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company List": {
+      "main": [
+        [
+          {
+            "node": "Fetch Greenhouse Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Greenhouse Jobs": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Jobs": {
+      "main": [
+        [
+          {
+            "node": "Read Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Resume": {
+      "main": [
+        [
+          {
+            "node": "Build Scorer Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Scorer Input": {
+      "main": [
+        [
+          {
+            "node": "JobScorer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JobScorer": {
+      "main": [
+        [
+          {
+            "node": "Format Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter LLM (Scorer)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "JobScorer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scorer Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "JobScorer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Digest": {
+      "main": [
+        [
+          {
+            "node": "Send Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "careerforge-n8n-v1"
+  },
+  "pinData": {},
+  "versionId": "1",
+  "tags": [
+    {
+      "name": "CareerForge",
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-01-01T00:00:00.000Z"
+    }
+  ]
+}
