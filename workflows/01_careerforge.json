@@ -3,13 +3,18 @@
   "nodes": [
     {
       "parameters": {
-        "updates": ["message"]
+        "updates": [
+          "message"
+        ]
       },
       "id": "cf-001",
       "name": "Telegram Trigger",
       "type": "n8n-nodes-base.telegramTrigger",
       "typeVersion": 1.1,
-      "position": [220, 460],
+      "position": [
+        220,
+        460
+      ],
       "webhookId": "careerforge-telegram",
       "credentials": {
         "telegramApi": {
@@ -33,7 +38,10 @@
       "name": "Schedule 8am ET",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [220, 700]
+      "position": [
+        220,
+        700
+      ]
     },
     {
       "parameters": {
@@ -50,7 +58,10 @@
       "name": "Schedule 1130am ET",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [220, 940]
+      "position": [
+        220,
+        940
+      ]
     },
     {
       "parameters": {
@@ -81,7 +92,10 @@
       "name": "Extract Input",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [460, 460]
+      "position": [
+        460,
+        460
+      ]
     },
     {
       "parameters": {
@@ -118,7 +132,10 @@
       "name": "Schedule Payload",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [460, 820]
+      "position": [
+        460,
+        820
+      ]
     },
     {
       "parameters": {
@@ -132,7 +149,10 @@
       "name": "Intent Router",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
-      "position": [740, 460]
+      "position": [
+        740,
+        460
+      ]
     },
     {
       "parameters": {
@@ -146,7 +166,10 @@
       "name": "OpenRouter LLM (Router)",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
-      "position": [640, 680],
+      "position": [
+        640,
+        680
+      ],
       "credentials": {
         "openAiApi": {
           "id": "OPENROUTER_CREDENTIAL_ID",
@@ -165,7 +188,10 @@
       "name": "Postgres Chat Memory",
       "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
       "typeVersion": 1.3,
-      "position": [760, 680],
+      "position": [
+        760,
+        680
+      ],
       "credentials": {
         "postgres": {
           "id": "POSTGRES_CREDENTIAL_ID",
@@ -182,7 +208,10 @@
       "name": "Structured Output Parser",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.2,
-      "position": [880, 680]
+      "position": [
+        880,
+        680
+      ]
     },
     {
       "parameters": {
@@ -190,12 +219,18 @@
           "values": [
             {
               "conditions": {
-                "options": { "version": 2, "caseSensitive": true },
+                "options": {
+                  "version": 2,
+                  "caseSensitive": true
+                },
                 "conditions": [
                   {
                     "leftValue": "={{ $json.output.intent }}",
                     "rightValue": "help",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ]
               },
@@ -204,12 +239,18 @@
             },
             {
               "conditions": {
-                "options": { "version": 2, "caseSensitive": true },
+                "options": {
+                  "version": 2,
+                  "caseSensitive": true
+                },
                 "conditions": [
                   {
                     "leftValue": "={{ $json.output.intent }}",
                     "rightValue": "find_jobs",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ]
               },
@@ -218,12 +259,18 @@
             },
             {
               "conditions": {
-                "options": { "version": 2, "caseSensitive": true },
+                "options": {
+                  "version": 2,
+                  "caseSensitive": true
+                },
                 "conditions": [
                   {
                     "leftValue": "={{ $json.output.intent }}",
                     "rightValue": "apply",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ]
               },
@@ -232,12 +279,18 @@
             },
             {
               "conditions": {
-                "options": { "version": 2, "caseSensitive": true },
+                "options": {
+                  "version": 2,
+                  "caseSensitive": true
+                },
                 "conditions": [
                   {
                     "leftValue": "={{ $json.output.intent }}",
                     "rightValue": "revise",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ]
               },
@@ -246,12 +299,18 @@
             },
             {
               "conditions": {
-                "options": { "version": 2, "caseSensitive": true },
+                "options": {
+                  "version": 2,
+                  "caseSensitive": true
+                },
                 "conditions": [
                   {
                     "leftValue": "={{ $json.output.intent }}",
                     "rightValue": "score",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ]
               },
@@ -260,12 +319,18 @@
             },
             {
               "conditions": {
-                "options": { "version": 2, "caseSensitive": true },
+                "options": {
+                  "version": 2,
+                  "caseSensitive": true
+                },
                 "conditions": [
                   {
                     "leftValue": "={{ $json.output.intent }}",
                     "rightValue": "intel",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ]
               },
@@ -274,12 +339,18 @@
             },
             {
               "conditions": {
-                "options": { "version": 2, "caseSensitive": true },
+                "options": {
+                  "version": 2,
+                  "caseSensitive": true
+                },
                 "conditions": [
                   {
                     "leftValue": "={{ $json.output.intent }}",
                     "rightValue": "outreach",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ]
               },
@@ -288,12 +359,18 @@
             },
             {
               "conditions": {
-                "options": { "version": 2, "caseSensitive": true },
+                "options": {
+                  "version": 2,
+                  "caseSensitive": true
+                },
                 "conditions": [
                   {
                     "leftValue": "={{ $json.output.intent }}",
                     "rightValue": "salary",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ]
               },
@@ -302,12 +379,18 @@
             },
             {
               "conditions": {
-                "options": { "version": 2, "caseSensitive": true },
+                "options": {
+                  "version": 2,
+                  "caseSensitive": true
+                },
                 "conditions": [
                   {
                     "leftValue": "={{ $json.output.intent }}",
                     "rightValue": "track",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ]
               },
@@ -316,12 +399,18 @@
             },
             {
               "conditions": {
-                "options": { "version": 2, "caseSensitive": true },
+                "options": {
+                  "version": 2,
+                  "caseSensitive": true
+                },
                 "conditions": [
                   {
                     "leftValue": "={{ $json.output.intent }}",
                     "rightValue": "status",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ]
               },
@@ -338,7 +427,10 @@
       "name": "Route Intent",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
-      "position": [1020, 460]
+      "position": [
+        1020,
+        460
+      ]
     },
     {
       "parameters": {
@@ -352,7 +444,10 @@
       "name": "Send Help",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [1320, 60],
+      "position": [
+        1320,
+        60
+      ],
       "credentials": {
         "telegramApi": {
           "id": "TELEGRAM_CREDENTIAL_ID",
@@ -368,7 +463,10 @@
       "name": "Company List",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1320, 340]
+      "position": [
+        1320,
+        340
+      ]
     },
     {
       "parameters": {
@@ -400,7 +498,10 @@
       "name": "Fetch Greenhouse Jobs",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1540, 340],
+      "position": [
+        1540,
+        340
+      ],
       "onError": "continueRegularOutput"
     },
     {
@@ -411,7 +512,10 @@
       "name": "Aggregate Jobs",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1760, 340]
+      "position": [
+        1760,
+        340
+      ]
     },
     {
       "parameters": {
@@ -421,7 +525,10 @@
       "name": "Read Resume",
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
-      "position": [1980, 340]
+      "position": [
+        1980,
+        340
+      ]
     },
     {
       "parameters": {
@@ -431,7 +538,10 @@
       "name": "Build Scorer Input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2200, 340]
+      "position": [
+        2200,
+        340
+      ]
     },
     {
       "parameters": {
@@ -441,11 +551,14 @@
       "name": "JobScorer",
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.4,
-      "position": [2420, 340]
+      "position": [
+        2420,
+        340
+      ]
     },
     {
       "parameters": {
-        "model": "google/gemini-3-flash-lite",
+        "model": "google/gemini-3.1-flash-lite-preview",
         "options": {
           "baseURL": "https://openrouter.ai/api/v1",
           "temperature": 0
@@ -455,7 +568,10 @@
       "name": "OpenRouter LLM (Scorer)",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
-      "position": [2360, 560],
+      "position": [
+        2360,
+        560
+      ],
       "credentials": {
         "openAiApi": {
           "id": "OPENROUTER_CREDENTIAL_ID",
@@ -472,7 +588,10 @@
       "name": "Scorer Output Parser",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.2,
-      "position": [2500, 560]
+      "position": [
+        2500,
+        560
+      ]
     },
     {
       "parameters": {
@@ -482,7 +601,10 @@
       "name": "Format Digest",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2640, 340]
+      "position": [
+        2640,
+        340
+      ]
     },
     {
       "parameters": {
@@ -497,167 +619,10 @@
       "name": "Send Digest",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [2860, 340],
-      "credentials": {
-        "telegramApi": {
-          "id": "TELEGRAM_CREDENTIAL_ID",
-          "name": "CareerForge Bot"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Extract Input').item.json.chat_id }}",
-        "text": "🚧 *Apply* — This feature is coming soon!\n\nReply with a job number after receiving a digest, and I'll generate a tailored resume + cover letter.",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "cf-040",
-      "name": "Stub: Apply",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [1320, 580],
-      "credentials": {
-        "telegramApi": {
-          "id": "TELEGRAM_CREDENTIAL_ID",
-          "name": "CareerForge Bot"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Extract Input').item.json.chat_id }}",
-        "text": "🚧 *Revise* — This feature is coming soon!\n\nAfter generating a resume, you'll be able to say things like \"make it shorter\" or \"add more Python\".",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "cf-041",
-      "name": "Stub: Revise",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [1320, 740],
-      "credentials": {
-        "telegramApi": {
-          "id": "TELEGRAM_CREDENTIAL_ID",
-          "name": "CareerForge Bot"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Extract Input').item.json.chat_id }}",
-        "text": "🚧 *Score* — This feature is coming soon!\n\nYou'll be able to score your resume fit against any job description.",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "cf-042",
-      "name": "Stub: Score",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [1320, 900],
-      "credentials": {
-        "telegramApi": {
-          "id": "TELEGRAM_CREDENTIAL_ID",
-          "name": "CareerForge Bot"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Extract Input').item.json.chat_id }}",
-        "text": "🚧 *Company Intel* — This feature is coming soon!\n\nYou'll be able to get health reports on any company — layoffs, funding, reviews, and more.",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "cf-043",
-      "name": "Stub: Intel",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [1320, 1060],
-      "credentials": {
-        "telegramApi": {
-          "id": "TELEGRAM_CREDENTIAL_ID",
-          "name": "CareerForge Bot"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Extract Input').item.json.chat_id }}",
-        "text": "🚧 *Outreach* — This feature is coming soon!\n\nYou'll be able to find contacts at any company and generate cold outreach messages.",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "cf-044",
-      "name": "Stub: Outreach",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [1320, 1220],
-      "credentials": {
-        "telegramApi": {
-          "id": "TELEGRAM_CREDENTIAL_ID",
-          "name": "CareerForge Bot"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Extract Input').item.json.chat_id }}",
-        "text": "🚧 *Salary* — This feature is coming soon!\n\nYou'll be able to look up compensation data and get negotiation advice.",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "cf-045",
-      "name": "Stub: Salary",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [1320, 1380],
-      "credentials": {
-        "telegramApi": {
-          "id": "TELEGRAM_CREDENTIAL_ID",
-          "name": "CareerForge Bot"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Extract Input').item.json.chat_id }}",
-        "text": "🚧 *Track* — This feature is coming soon!\n\nYou'll be able to log and track your job applications.",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "cf-046",
-      "name": "Stub: Track",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [1320, 1540],
-      "credentials": {
-        "telegramApi": {
-          "id": "TELEGRAM_CREDENTIAL_ID",
-          "name": "CareerForge Bot"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Extract Input').item.json.chat_id }}",
-        "text": "🚧 *Status* — This feature is coming soon!\n\nYou'll be able to view all your tracked applications and their status.",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "cf-047",
-      "name": "Stub: Status",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [1320, 1700],
+      "position": [
+        2860,
+        340
+      ],
       "credentials": {
         "telegramApi": {
           "id": "TELEGRAM_CREDENTIAL_ID",
@@ -675,7 +640,1687 @@
       "name": "Send Fallback",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [1320, 1860],
+      "position": [
+        1320,
+        3400
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Input').item.json.chat_id }}",
+        "text": "⚙️ *Generating your tailored resume + cover letter...* (~45 sec)",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-050",
+      "name": "Send Apply Ack",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1320,
+        580
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $('Extract Input').item.json.chat_id;\nconst entities = $('Route Intent').item.json.output?.entities || $('Route Intent').item.json.output || {};\nconst jobNumber = entities.job_number;\nif (!jobNumber) {\n  return [{ json: { chat_id: chatId, error: 'No job number provided. Reply with a number (1-5) after a job search.' } }];\n}\nconst lastJobs = staticData.last_jobs || {};\nconst job = lastJobs[jobNumber];\nif (!job) {\n  return [{ json: { chat_id: chatId, error: 'Job #' + jobNumber + ' not found. Run a job search first (/find jobs).' } }];\n}\nconst parts = job.job_id.split('-');\nconst greenhouseId = parts.pop();\nconst companySlug = parts.join('-');\nreturn [{ json: { chat_id: chatId, job_number: jobNumber, job, company_slug: companySlug, greenhouse_id: greenhouseId, error: null } }];"
+      },
+      "id": "cf-051",
+      "name": "Retrieve Job",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty"
+              }
+            }
+          ]
+        }
+      },
+      "id": "cf-052",
+      "name": "IF: Job Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1760,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ \"❌ \" + $json.error }}",
+        "additionalFields": {}
+      },
+      "id": "cf-053",
+      "name": "Send Job Not Found",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1760,
+        780
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://boards-api.greenhouse.io/v1/boards/{{ $json.company_slug }}/jobs/{{ $json.greenhouse_id }}",
+        "options": {
+          "timeout": 15000
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "true"
+            }
+          ]
+        },
+        "retry": {
+          "maxRetries": 3,
+          "retryInterval": 5000
+        }
+      },
+      "id": "cf-054",
+      "name": "Fetch Full JD",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1980,
+        580
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const retrieveData = $('Retrieve Job').item.json;\nconst ghResponse = $input.first().json;\nlet jobDescription = retrieveData.job.description_snippet || '';\nif (ghResponse && ghResponse.content) {\n  jobDescription = ghResponse.content\n    .replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>').replace(/&quot;/g, '\"').replace(/&#39;/g, \"'\")\n    .replace(/&nbsp;/g, ' ').replace(/\\s+/g, ' ').trim().substring(0, 8000);\n}\nconst job = retrieveData.job;\nreturn [{ json: {\n  chat_id: retrieveData.chat_id, job_number: retrieveData.job_number,\n  job_title: job.title || 'Unknown Role', company: job.company || 'unknown',\n  company_slug: retrieveData.company_slug, location: job.location || 'Unknown',\n  job_url: job.url || '', job_description: jobDescription,\n  fit_score_from_digest: job.fit_score || null\n}}];"
+      },
+      "id": "cf-055",
+      "name": "Prepare Job Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "/data/user-data/master_resume.txt"
+      },
+      "id": "cf-056",
+      "name": "Read Master Resume (Apply)",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        2420,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const jobCtx = $('Prepare Job Context').item.json;\nconst binaryData = $input.first().binary;\nlet resumeText = '';\nif (binaryData && binaryData.data) {\n  resumeText = Buffer.from(binaryData.data.data, 'base64').toString('utf-8');\n} else if ($input.first().json.data) {\n  resumeText = $input.first().json.data;\n} else {\n  return [{ json: { ...jobCtx, resume_text: '', personal: {}, error: 'Master resume not found. Place master_resume.txt in /data/user-data/ first.' }}];\n}\nconst personal = {};\nconst fieldPattern = /^(name|email|phone|linkedin|github|portfolio|location|work_authorization):\\s*(.+)/gim;\nlet match;\nwhile ((match = fieldPattern.exec(resumeText)) !== null) {\n  personal[match[1].toLowerCase()] = match[2].trim();\n}\nreturn [{ json: { ...jobCtx, resume_text: resumeText, personal } }];"
+      },
+      "id": "cf-057",
+      "name": "Parse Personal Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "prompt": "=# SeniorityDetector\n\n## Role\n\nYou are a seniority classification model. You read a user's master resume and determine their professional seniority level. This determines which LaTeX resume skeleton CareerForge uses — each seniority level has a structurally different layout optimized for that career stage.\n\n## Input\n\n- `master_resume`: The full text of the user's master_resume.txt file\n\n## Output Schema\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\n```json\n{\n  \"mode\": \"fresher | experienced | senior\",\n  \"total_years_experience\": 4,\n  \"reasoning\": \"1 sentence: why this mode\"\n}\n```\n\n## Rules\n\n### Classification Thresholds\n\n1. **fresher** — Less than 2 years of professional work experience, OR currently a student, OR graduated less than 12 months ago. Internships count as 0.5 years each (capped at 1 year total). Teaching assistant and research assistant roles at a university do NOT count toward professional experience.\n2. **experienced** — 2 to 10 years of professional work experience (inclusive).\n3. **senior** — More than 10 years of professional work experience, OR current/most recent title includes any of: \"Staff\", \"Principal\", \"Director\", \"VP\", \"Vice President\", \"Head of\", \"Chief\", \"Distinguished\", \"Fellow\", \"Manager\", \"Lead\" (when it implies people management, not tech lead). Title-based override applies even if total years is under 10.\n\n### Calculating Total Years\n\n- Use the `dates` fields from EXPERIENCES entries. Calculate the span from earliest start date to latest end date (or present).\n- Overlapping roles (two jobs at the same time) count once — do not double-count.\n- \"Present\" or no end date means the role is current. Use today's date for the calculation.\n- Round `total_years_experience` to the nearest integer.\n\n### Edge Cases\n\n- If the resume has no EXPERIENCES section or no parseable dates, default to `fresher` with `total_years_experience: 0` and note the reason.\n- If the user has explicitly set `mode:` in the SENIORITY section of their master resume, respect that override and return it. Still calculate `total_years_experience` for reference but use their stated mode.\n- A user with 9 years experience and the title \"Staff Engineer\" → `senior` (title override).\n- A user with 12 years experience but title \"Software Engineer\" → `senior` (years override).\n- Career gaps do not reduce total years. Calculate from first role start to last role end regardless of gaps.\n- Contract and freelance roles count as full professional experience.\n\n### Output Constraints\n\n- `mode` must be exactly one of: `fresher`, `experienced`, `senior`\n- `total_years_experience` must be a non-negative integer\n- `reasoning` must be a single sentence explaining the classification, referencing either the year count or the title that triggered the decision\n\n---\n\nMaster Resume:\n{{ $json.resume_text }}"
+      },
+      "id": "cf-058",
+      "name": "SeniorityDetector",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        2860,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "model": "deepseek/deepseek-chat-v3.1:free",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1",
+          "temperature": 0
+        }
+      },
+      "id": "cf-059",
+      "name": "OpenRouter LLM (Seniority)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2800,
+        800
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"mode\":{\"type\":\"string\",\"enum\":[\"fresher\",\"experienced\",\"senior\"]},\"total_years_experience\":{\"type\":\"integer\"},\"reasoning\":{\"type\":\"string\"}},\"required\":[\"mode\",\"total_years_experience\",\"reasoning\"]}"
+      },
+      "id": "cf-060",
+      "name": "Seniority Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        2940,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst ctx = $('Parse Personal Info').item.json;\nconst seniorityOutput = $input.first().json.output || { mode: 'experienced' };\nconst mode = seniorityOutput.mode || 'experienced';\nconst skeletonMap = {\n  fresher: '/data/templates/resume_skeleton_fresher.tex',\n  experienced: '/data/templates/resume_skeleton_experienced.tex',\n  senior: '/data/templates/resume_skeleton_senior.tex'\n};\nlet resumeSkeleton = '', coverSkeleton = '';\ntry { resumeSkeleton = fs.readFileSync(skeletonMap[mode] || skeletonMap.experienced, 'utf-8'); }\ncatch (e) { try { resumeSkeleton = fs.readFileSync(skeletonMap.experienced, 'utf-8'); } catch (e2) {} }\ntry { coverSkeleton = fs.readFileSync('/data/templates/cover_skeleton.tex', 'utf-8'); } catch (e) {}\nreturn [{ json: { ...ctx, seniority_mode: mode, total_years_experience: seniorityOutput.total_years_experience || 0, resume_skeleton: resumeSkeleton, cover_skeleton: coverSkeleton }}];"
+      },
+      "id": "cf-061",
+      "name": "Load Skeletons",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3080,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "prompt": "=# ForgeScore v3\n\n## Role\n\nYou are an objective resume-vs-job-description scoring engine. You evaluate how well a candidate's resume aligns with a specific job description across 6 dimensions, identify gaps and strengths, and recommend whether to apply.\n\n## Input\n\n- `master_resume`: The candidate's complete career data (master_resume.txt)\n- `job_description`: The target job description text\n- `job_title`: The title of the target role\n- `company`: The company name\n\n## Output Schema\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\n```json\n{\n  \"overall_score\": 7.5,\n  \"dimensions\": {\n    \"skills_match\": 8,\n    \"experience_relevance\": 7,\n    \"metric_impact\": 9,\n    \"seniority_fit\": 6,\n    \"keyword_coverage\": 8,\n    \"leadership_signals\": 5\n  },\n  \"gaps\": [\n    \"No direct mention of Kubernetes deployment experience\",\n    \"Missing leadership metrics for the Senior title\"\n  ],\n  \"strengths\": [\n    \"Strong retrieval infrastructure signal\",\n    \"Multiple quantified achievements\"\n  ],\n  \"recommendation\": \"Apply | Caution | Skip\"\n}\n```\n\n## Rules\n\n### 1. Scoring Rubric (100-Point Internal Scale)\n\nScore each dimension on a 0-10 scale. The `overall_score` is the weighted average:\n\n| Dimension | Weight | What it measures |\n|-----------|--------|-----------------|\n| `skills_match` | 25% | How many of the JD's required and preferred tools/languages/frameworks appear in the resume |\n| `experience_relevance` | 25% | How closely the candidate's role descriptions, industries, and domain match the JD's core duties |\n| `metric_impact` | 15% | Quality and specificity of quantified achievements — real numbers, scale indicators, business outcomes |\n| `seniority_fit` | 15% | Whether the candidate's experience level matches the role's seniority expectations (years, scope, title) |\n| `keyword_coverage` | 10% | Raw keyword overlap between resume and JD — the ATS filter simulation |\n| `leadership_signals` | 10% | Evidence of mentoring, team leadership, cross-functional work, or people management (weighted higher for senior roles) |\n\nCalculate: `overall_score = (skills * 0.25) + (experience * 0.25) + (metric * 0.15) + (seniority * 0.15) + (keyword * 0.10) + (leadership * 0.10)`\n\nRound `overall_score` to one decimal place. Round dimension scores to integers.\n\n### 2. Scoring Calibration\n\nBe strict. These benchmarks define the scale:\n\n- **9-10**: Near-perfect match. Candidate could write the JD themselves. Rare.\n- **7-8**: Strong match. Candidate meets most requirements, minor gaps easily addressed.\n- **5-6**: Partial match. Significant gaps exist but candidate has transferable strengths.\n- **3-4**: Weak match. Candidate would need to stretch considerably. Major skill gaps.\n- **0-2**: Mismatch. Different domain, wrong seniority, or no relevant overlap.\n\nA score above 8.5 should mean the candidate matches every hard requirement and most preferred qualifications. Do not grade generously.\n\n### 3. Recommendation Thresholds\n\n- `overall_score >= 6.0` → `\"Apply\"`\n- `overall_score >= 4.0 and < 6.0` → `\"Caution\"` (downstream workflow asks user if they want to continue)\n- `overall_score < 4.0` → `\"Skip\"`\n\n### 4. Gaps and Strengths\n\n- Return 2-4 entries in `gaps`. Each should name a specific JD requirement that is missing or weak in the resume. Be concrete — \"No Kubernetes experience\" not \"Could improve cloud skills\".\n- Return 2-4 entries in `strengths`. Each should name a specific alignment between resume evidence and JD requirements. Reference the actual metric or achievement.\n- Order both arrays by significance — most important gap/strength first.\n\n### 5. No Hallucinations\n\nBase scoring solely on what is present in the master resume and job description. Do not assume skills the candidate might have but didn't list. Do not infer metrics that aren't stated. Missing information is a gap, not an assumption.\n\n### 6. Seniority Fit Scoring\n\n- If the JD implies \"Senior\" and the candidate has 2 years experience → low seniority_fit\n- If the JD implies \"Junior/Entry\" and the candidate has 10+ years → moderate seniority_fit (overqualification is a real concern for hiring managers)\n- Match the JD's expectations for scope, team size, and autonomy against the resume's evidence\n\n---\n\nMaster Resume:\n{{ $json.resume_text }}\n\nJob Description:\n{{ $json.job_description }}\n\nJob Title: {{ $json.job_title }}\nCompany: {{ $json.company }}"
+      },
+      "id": "cf-062",
+      "name": "ForgeScore",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        3300,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "model": "deepseek/deepseek-chat-v3.1:free",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1",
+          "temperature": 0
+        }
+      },
+      "id": "cf-063",
+      "name": "OpenRouter LLM (ForgeScore)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3240,
+        800
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"overall_score\":{\"type\":\"number\"},\"dimensions\":{\"type\":\"object\",\"properties\":{\"skills_match\":{\"type\":\"integer\"},\"experience_relevance\":{\"type\":\"integer\"},\"metric_impact\":{\"type\":\"integer\"},\"seniority_fit\":{\"type\":\"integer\"},\"keyword_coverage\":{\"type\":\"integer\"},\"leadership_signals\":{\"type\":\"integer\"}}},\"gaps\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"strengths\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"recommendation\":{\"type\":\"string\",\"enum\":[\"Apply\",\"Caution\",\"Skip\"]}},\"required\":[\"overall_score\",\"dimensions\",\"gaps\",\"strengths\",\"recommendation\"]}"
+      },
+      "id": "cf-064",
+      "name": "ForgeScore Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        3380,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Load Skeletons').item.json;\nconst scoreOutput = $input.first().json.output || { overall_score: 5.0, recommendation: 'Caution', gaps: ['Unable to score'], strengths: [] };\nreturn [{ json: {\n  ...ctx,\n  forge_score: scoreOutput,\n  overall_score: scoreOutput.overall_score || 5.0,\n  recommendation: scoreOutput.recommendation || 'Caution',\n  gaps: scoreOutput.gaps || [],\n  strengths: scoreOutput.strengths || []\n}}];"
+      },
+      "id": "cf-065",
+      "name": "Prepare Apply Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3520,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.overall_score }}",
+              "rightValue": "4",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ]
+        }
+      },
+      "id": "cf-066",
+      "name": "Score Gate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3740,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ \"⛔ *Low fit score: \" + $json.overall_score + \"/10* \\u2014 Skipping generation.\\n\\n*Gaps:*\\n\" + $json.gaps.map(function(g) { return \"\\u2022 \" + g; }).join(\"\\n\") + \"\\n\\n_Try a different job that matches your background better._\" }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-067",
+      "name": "Send Skip",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3740,
+        800
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.overall_score }}",
+              "rightValue": "6",
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ]
+        }
+      },
+      "id": "cf-068",
+      "name": "Caution Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3960,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ \"\\u26A0\\uFE0F *Moderate fit: \" + $json.overall_score + \"/10*\\n\\n*Gaps:*\\n\" + $json.gaps.map(function(g) { return \"\\u2022 \" + g; }).join(\"\\n\") + \"\\n\\nGenerating anyway \\u2014 review carefully before sending.\" }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-069",
+      "name": "Send Caution",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3960,
+        380
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "prompt": "=# ResumeForge v3\n\n## Role\n\nYou are an expert ATS resume generator. You receive a candidate's master resume, a job description, and a seniority mode. You select the optimal combination of experiences, projects, education, and skills, then return them as **structured JSON**. A downstream code node will deterministically fill a LaTeX skeleton from your JSON — you never output LaTeX.\n\n## Input\n\n- `master_resume`: The candidate's complete career data (master_resume.txt)\n- `job_description`: The target job description text\n- `seniority_mode`: One of `fresher`, `experienced`, `senior` (provided by SeniorityDetector)\n- `job_title`: The title of the target role\n- `company`: The company name\n\n## Output Schema\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\n```json\n{\n  \"sections\": [\n    {\n      \"heading\": \"Experience\",\n      \"items\": [\n        {\n          \"type\": \"role\",\n          \"role\": \"Senior ML Engineer\",\n          \"company\": \"Anthropic\",\n          \"location\": \"San Francisco, CA\",\n          \"dates\": \"Jun 2023 - Present\",\n          \"bullets\": [\n            {\n              \"keyword\": \"Retrieval Infrastructure\",\n              \"text\": \"Built FAISS-based retrieval pipeline serving 2M queries/day with <50ms p99 latency using PyTorch and Ray\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"heading\": \"Projects\",\n      \"items\": [\n        {\n          \"type\": \"project\",\n          \"name\": \"OpenRAG\",\n          \"tech\": \"Python, LangChain, Pinecone\",\n          \"url\": \"github.com/sarah/openrag\",\n          \"bullets\": [\n            {\n              \"keyword\": \"RAG Framework\",\n              \"text\": \"Built open-source RAG framework supporting 4 vector backends with unified query API; 1.2K GitHub stars\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"heading\": \"Skills\",\n      \"items\": [\n        {\n          \"type\": \"skill_line\",\n          \"category\": \"Programming Languages\",\n          \"skills\": \"Python, TypeScript, Go, Rust\"\n        }\n      ]\n    },\n    {\n      \"heading\": \"Education\",\n      \"items\": [\n        {\n          \"type\": \"education\",\n          \"degree\": \"M.S.\",\n          \"major\": \"Computer Science\",\n          \"institution\": \"Stanford University\",\n          \"location\": \"Stanford, CA\",\n          \"dates\": \"2020 - 2022\",\n          \"gpa\": null,\n          \"coursework\": null\n        }\n      ]\n    }\n  ]\n}\n```\n\nOn error (master resume missing critical fields or under 200 characters):\n\n```json\n{\n  \"error\": \"Master resume incomplete\",\n  \"missing\": [\"experiences\", \"skills\"]\n}\n```\n\n## Rules\n\n### 1. No Hallucinations\n\nEvery value in every field must be directly traceable to the master resume. You may rephrase bullet text for keyword alignment with the job description, but you must preserve every metric, tool name, team size, and quantified result exactly as written in the source. If a number appears in the master resume, it must appear identically in your output. Do not invent companies, roles, dates, tools, or achievements.\n\n### 2. Bullet Character Limit\n\nThe `text` field of every bullet must be **110 characters or fewer**. This excludes the `keyword` field — the keyword is rendered separately as a bold prefix by the LaTeX skeleton. Count only the `text` value.\n\nIf a master resume bullet exceeds 110 characters after rephrasing, shorten it by removing filler words or splitting into two bullets (if within budget). Never drop a metric to meet the limit.\n\n### 3. Entry Budget by Seniority\n\nThe total number of Experience roles + Project entries must not exceed 6.\n\n| Mode | Experience roles | Projects | Total max |\n|------|-----------------|----------|-----------|\n| fresher | 2-3 | 2-3 | 6 |\n| experienced | 2-4 | 1-3 | 6 |\n| senior | 3-5 | 0-1 | 6 |\n\nSelect the roles and projects with the highest relevance to the job description. When two entries are equally relevant, prefer the more recent one.\n\n### 4. Bullet Budget by Position\n\n- Most recent role: max 4 bullets\n- 2nd most recent role: max 3 bullets\n- Older roles: max 2 bullets\n- Projects: max 2 bullets each\n\n### 5. TA/RA Metric Guardrails\n\n- **Teaching Assistant roles**: NEVER fabricate percentage metrics (no \"improved grades by 15%\"). Use only scope and volume metrics that are verifiable: number of students, sessions per week, office hours per week, courses supported. If the master resume contains no TA metrics, use descriptive scope (\"120 students across 3 sections\").\n- **Research Assistant roles**: Real research outcome metrics (accuracy improvements, dataset sizes, publication counts) are permitted if and only if they appear in the master resume.\n\n### 6. Keyword Alignment\n\nEach bullet's `keyword` field should reflect a skill, competency, or requirement from the job description. Map the candidate's achievements to JD language. Examples:\n- JD says \"distributed systems\" and candidate built a multi-node pipeline → keyword: \"Distributed Systems\"\n- JD says \"cross-functional collaboration\" and candidate led a project with design + PM → keyword: \"Cross-functional Leadership\"\n\nDo not force a keyword where there's no natural mapping. If a bullet's strength is a metric that doesn't map to a specific JD term, use a descriptive keyword from the candidate's own domain (e.g., \"Performance Optimization\").\n\n### 7. Skills Section\n\n- 4-6 skill categories maximum\n- Reorder categories by relevance to the job description — the most relevant category comes first\n- Within each category, reorder individual skills by JD relevance — the most relevant skill comes first\n- Do not add skills that are not in the master resume\n\n### 8. Education Rules by Seniority\n\n| Mode | Format |\n|------|--------|\n| fresher | Full entry: degree, major, institution, location, dates, GPA (if >= 3.5), relevant coursework |\n| experienced | Compact: degree, major, institution, location. Set `dates`, `gpa`, and `coursework` to null |\n| senior | Minimal: degree, institution. Set `major`, `location`, `dates`, `gpa`, and `coursework` to null |\n\n### 9. Section Ordering\n\nAlways return sections in this order:\n1. Experience\n2. Projects (omit entirely if senior mode and no projects selected)\n3. Skills\n4. Education\n\n### 10. Output Hygiene\n\n- Do not include sections with empty `items` arrays — omit the section entirely\n- All string values must be plain text — no LaTeX commands, no markdown, no HTML\n- Dates should use the format from the master resume (e.g., \"Jan 2022 - Present\")\n- URLs in project entries should not include `https://` prefix (e.g., \"github.com/user/repo\")\n- If `url` is not in the master resume for a project, set it to null\n\n---\n\nMaster Resume:\n{{ $json.resume_text }}\n\nJob Description:\n{{ $json.job_description }}\n\nSeniority Mode: {{ $json.seniority_mode }}\n\nJob Title: {{ $json.job_title }}\nCompany: {{ $json.company }}"
+      },
+      "id": "cf-070",
+      "name": "ResumeForge",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        4300,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-sonnet-4.6",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1",
+          "temperature": 0.3,
+          "maxTokens": 4096
+        }
+      },
+      "id": "cf-071",
+      "name": "OpenRouter LLM (Resume)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        4240,
+        160
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"sections\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"heading\":{\"type\":\"string\"},\"items\":{\"type\":\"array\"}},\"required\":[\"heading\",\"items\"]}}},\"required\":[\"sections\"]}"
+      },
+      "id": "cf-072",
+      "name": "Resume Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        4380,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// Build Resume LaTeX — JSON → LaTeX with production-tested helpers\n// Ported verbatim from Career_Forge_Web/server/resumeforge.ts + latex.ts\n// ═══════════════════════════════════════════════════════════════\n\n// ─── Helper: escapeLatexText (resumeforge.ts:15-27) ───\nfunction escapeLatexText(input) {\n  if (typeof input !== 'string') return '';\n  return input\n    .replace(/\\\\/g, '\\\\textbackslash{}')\n    .replace(/&/g, '\\\\&')\n    .replace(/%/g, '\\\\%')\n    .replace(/\\$/g, '\\\\$')\n    .replace(/#/g, '\\\\#')\n    .replace(/_/g, '\\\\_')\n    .replace(/\\{/g, '\\\\{')\n    .replace(/\\}/g, '\\\\}')\n    .replace(/\\^/g, '\\\\textasciicircum{}')\n    .replace(/~/g, '\\\\textasciitilde{}');\n}\n\n// ─── Helper: extractBetweenMarkers (resumeforge.ts:29-45) ───\nfunction extractBetweenMarkers(text, startMarker, endMarker) {\n  const lines = text.replace(/\\r\\n/g, '\\n').split('\\n');\n  const startIdx = lines.findIndex(l => l.trim() === startMarker);\n  if (startIdx === -1) return null;\n  const endIdx = lines.findIndex((l, i) => i > startIdx && l.trim() === endMarker);\n  if (endIdx === -1) return null;\n  return lines.slice(startIdx + 1, endIdx).join('\\n').trim();\n}\n\n// ─── Helper: wrapResumeWithSkeleton (resumeforge.ts:47-87) ───\nfunction wrapResumeWithSkeleton(params) {\n  const { skeleton, headerLatex, contentLatex } = params;\n  if (!skeleton) {\n    return '\\\\documentclass[letterpaper,11pt]{article}\\n\\\\begin{document}\\n' + headerLatex + '\\n\\n' + contentLatex + '\\n\\\\end{document}\\n';\n  }\n  const lines = skeleton.replace(/\\r\\n/g, '\\n').split('\\n');\n  const hs = lines.findIndex(l => l.trim() === '%%% HEADER_START');\n  const he = lines.findIndex((l, i) => i > hs && l.trim() === '%%% HEADER_END');\n  if (hs !== -1 && he !== -1) {\n    lines.splice(hs + 1, he - hs - 1, headerLatex.trim());\n  }\n  const cs = lines.findIndex(l => l.trim() === '%%% CONTENT_START');\n  const ce = lines.findIndex((l, i) => i > cs && l.trim() === '%%% CONTENT_END');\n  if (cs !== -1 && ce !== -1) {\n    lines.splice(cs + 1, ce - cs - 1, contentLatex.trim());\n    return lines.join('\\n');\n  }\n  const endDocIdx = lines.findIndex(l => l.includes('\\\\end{document}'));\n  if (endDocIdx !== -1) {\n    lines.splice(endDocIdx, 0, contentLatex.trim());\n  } else {\n    lines.push(contentLatex.trim());\n  }\n  return lines.join('\\n');\n}\n\n// ─── Helper: sanitizeResumeContentBlock (resumeforge.ts:89-211) ───\nfunction sanitizeResumeContentBlock(content) {\n  const lines = content.replace(/\\r\\n/g, '\\n').split('\\n');\n  const banned = [\n    '\\\\documentclass', '\\\\usepackage', '\\\\begin{document}', '\\\\end{document}',\n    '\\\\ResumeHeader', '\\\\setlength', '\\\\addtolength', '\\\\pagestyle',\n    '\\\\urlstyle', '\\\\geometry', '\\\\begin{center}', '\\\\end{center}',\n    '\\\\begin{tabularx}', '\\\\end{tabularx}', '%%% HEADER_START', '%%% HEADER_END'\n  ];\n  const bannedRe = new RegExp(\n    '(' + banned.map(s => s.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')).join('|') + ')'\n  );\n  let cleaned = lines.filter(l => !bannedRe.test(l)).join('\\n').trim();\n\n  function normalizeSkillsBlock(tex) {\n    const ls = tex.replace(/\\r\\n/g, '\\n').split('\\n');\n    const isSkillsHeader = l => /\\\\section\\{(?:Skills|Technical Skills)\\}/.test(l);\n    for (let i = 0; i < ls.length; i++) {\n      if (!isSkillsHeader(ls[i])) continue;\n      let j = i + 1;\n      while (j < ls.length && !/\\\\section\\{/.test(ls[j])) j++;\n      const block = ls.slice(i + 1, j);\n      const hasStart = block.some(l => l.trim() === '\\\\resumeSkillsStart');\n      const hasEnd = block.some(l => l.trim() === '\\\\resumeSkillsEnd');\n      const rewritten = [];\n      if (!hasStart) rewritten.push('\\\\resumeSkillsStart');\n      for (const raw of block) {\n        const line = raw.trim();\n        if (!line) continue;\n        if (line === '\\\\resumeSubHeadingListStart') continue;\n        if (line === '\\\\resumeSubHeadingListEnd') continue;\n        const noItem = line.replace(/^\\\\item\\s+/, '');\n        const m = noItem.match(/^\\\\textbf\\{([^}]+):\\}\\s*(.+?)(?:\\\\\\\\)?$/);\n        if (m) { rewritten.push('\\\\resumeSkillLine{' + m[1].trim() + '}{' + m[2].trim() + '}'); continue; }\n        if (noItem.startsWith('\\\\resumeSkillLine{')) { rewritten.push(noItem); continue; }\n        rewritten.push(noItem);\n      }\n      if (!hasEnd) rewritten.push('\\\\resumeSkillsEnd');\n      ls.splice(i + 1, j - (i + 1), ...rewritten);\n      i = i + rewritten.length;\n    }\n    return ls.join('\\n');\n  }\n\n  function balanceSimpleMacroPairs(tex) {\n    const starts = (tex.match(/\\\\resumeSkillsStart\\b/g) || []).length;\n    const ends = (tex.match(/\\\\resumeSkillsEnd\\b/g) || []).length;\n    if (starts > ends) return tex + '\\n' + '\\\\resumeSkillsEnd\\n'.repeat(starts - ends);\n    if (ends > starts) {\n      let out = tex; let extra = ends - starts;\n      while (extra > 0) { out = out.replace(/\\\\resumeSkillsEnd\\b/, ''); extra--; }\n      return out;\n    }\n    return tex;\n  }\n\n  const normalized = cleaned\n    .replace(/\\\\rupee\\s*/g, 'INR~')\n    .replace(/\\$\\s*\\\\rightarrow\\s*\\$/g, '\\\\(\\\\rightarrow\\\\)')\n    .replace(/\\$\\s*\\\\to\\s*\\$/g, '\\\\(\\\\to\\\\)')\n    .trim();\n\n  return balanceSimpleMacroPairs(normalizeSkillsBlock(normalized)).trim();\n}\n\n// ─── Helper: normalizeLatexForPdflatex (latex.ts:125-153) ───\nfunction normalizeLatexForPdflatex(input) {\n  if (!input) return input;\n  let s = input.replace(/\\r\\n/g, '\\n');\n  s = s.replace(/[\\u201C\\u201D]/g, '\"').replace(/[\\u2018\\u2019]/g, \"'\")\n    .replace(/\\u2026/g, '...').replace(/[\\u2013\\u2014]/g, '--').replace(/\\u00A0/g, ' ');\n  s = s.replace(/\\u20B9/g, 'INR ').replace(/\\u20AC/g, 'EUR ').replace(/\\u00A3/g, 'GBP ')\n    .replace(/(?<!\\\\)\\$/g, '\\\\$');\n  s = s.replace(/[^\\x09\\x0A\\x0D\\x20-\\x7E]/g, '');\n  return s;\n}\n\n// ─── Main: Convert ResumeForge JSON → LaTeX ───\nconst resumeJson = $input.first().json.output || $input.first().json;\nconst ctx = $('Prepare Apply Context').item.json;\nconst skeleton = ctx.resume_skeleton;\nconst personal = ctx.personal || {};\n\n// Build header LaTeX by replacing skeleton header placeholders\nconst headerTemplate = extractBetweenMarkers(skeleton, '%%% HEADER_START', '%%% HEADER_END') || '';\nconst headerLatex = headerTemplate\n  .replace('{{NAME}}', escapeLatexText(personal.name || 'Candidate'))\n  .replace('{{PHONE}}', escapeLatexText(personal.phone || ''))\n  .replace('{{EMAIL}}', personal.email || '')\n  .replace('{{LINKEDIN}}', personal.linkedin || '')\n  .replace('{{GITHUB}}', personal.github || '')\n  .replace('{{LOCATION}}', escapeLatexText(personal.location || ''))\n  .replace('{{WORK_AUTH}}', escapeLatexText(personal.work_authorization || ''));\n\n// Convert JSON sections to LaTeX\nconst sections = resumeJson.sections || [];\nconst contentParts = [];\n\nfor (const section of sections) {\n  const heading = section.heading || '';\n  const items = section.items || [];\n\n  if (heading === 'Skills' || heading === 'Technical Skills') {\n    contentParts.push('\\\\section{Technical Skills}');\n    contentParts.push('\\\\resumeSubHeadingListStart');\n    for (const item of items) {\n      if (item.type === 'skill_line') {\n        contentParts.push('  \\\\resumeSkillLine{' + escapeLatexText(item.category || '') + '}{' + escapeLatexText(item.skills || '') + '}');\n      }\n    }\n    contentParts.push('\\\\resumeSubHeadingListEnd');\n  } else if (heading === 'Education') {\n    contentParts.push('\\\\section{Education}');\n    contentParts.push('\\\\resumeSubHeadingListStart');\n    for (const item of items) {\n      if (item.type === 'education') {\n        const degree = [item.degree, item.major].filter(Boolean).join(' in ');\n        contentParts.push('  \\\\resumeSubheading{' + escapeLatexText(item.institution || '') + '}{' + escapeLatexText(item.location || '') + '}{' + escapeLatexText(degree) + '}{' + escapeLatexText(item.dates || '') + '}');\n        if (item.gpa) contentParts.push('  \\\\resumeItem{GPA: ' + escapeLatexText(item.gpa) + '}');\n        if (item.coursework) contentParts.push('  \\\\resumeItem{Coursework: ' + escapeLatexText(item.coursework) + '}');\n      }\n    }\n    contentParts.push('\\\\resumeSubHeadingListEnd');\n  } else if (heading === 'Experience') {\n    contentParts.push('\\\\section{Experience}');\n    contentParts.push('\\\\resumeSubHeadingListStart');\n    for (const item of items) {\n      if (item.type === 'role') {\n        contentParts.push('  \\\\resumeSubheading{' + escapeLatexText(item.role || '') + '}{' + escapeLatexText(item.dates || '') + '}{' + escapeLatexText(item.company || '') + '}{' + escapeLatexText(item.location || '') + '}');\n        if (item.bullets && item.bullets.length > 0) {\n          contentParts.push('  \\\\resumeItemListStart');\n          for (const bullet of item.bullets) {\n            const kw = bullet.keyword ? '\\\\textbf{' + escapeLatexText(bullet.keyword) + ':} ' : '';\n            contentParts.push('    \\\\resumeItem{' + kw + escapeLatexText(bullet.text || '') + '}');\n          }\n          contentParts.push('  \\\\resumeItemListEnd');\n        }\n      }\n    }\n    contentParts.push('\\\\resumeSubHeadingListEnd');\n  } else if (heading === 'Projects') {\n    contentParts.push('\\\\section{Projects}');\n    contentParts.push('\\\\resumeSubHeadingListStart');\n    for (const item of items) {\n      if (item.type === 'project') {\n        const techStr = item.tech ? ' $|$ ' + escapeLatexText(item.tech) : '';\n        const rightCol = item.url ? escapeLatexText(item.url) : '';\n        contentParts.push('  \\\\resumeProjectHeading{\\\\textbf{' + escapeLatexText(item.name || '') + '}' + techStr + '}{' + rightCol + '}');\n        if (item.bullets && item.bullets.length > 0) {\n          contentParts.push('  \\\\resumeItemListStart');\n          for (const bullet of item.bullets) {\n            const kw = bullet.keyword ? '\\\\textbf{' + escapeLatexText(bullet.keyword) + ':} ' : '';\n            contentParts.push('    \\\\resumeItem{' + kw + escapeLatexText(bullet.text || '') + '}');\n          }\n          contentParts.push('  \\\\resumeItemListEnd');\n        }\n      }\n    }\n    contentParts.push('\\\\resumeSubHeadingListEnd');\n  }\n}\n\nconst contentLatex = contentParts.join('\\n');\nconst sanitized = sanitizeResumeContentBlock(contentLatex);\nconst fullLatex = wrapResumeWithSkeleton({ skeleton, headerLatex, contentLatex: sanitized });\nconst normalized = normalizeLatexForPdflatex(fullLatex);\n\nreturn [{ json: { latex: normalized, chat_id: ctx.chat_id, job_title: ctx.job_title, company: ctx.company } }];\n"
+      },
+      "id": "cf-073",
+      "name": "Build Resume LaTeX",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4520,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://latex-service:5679/compile",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "text/plain",
+        "body": "={{ $json.latex }}",
+        "options": {
+          "timeout": 300000,
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        },
+        "retry": {
+          "maxRetries": 3,
+          "retryInterval": 5000
+        }
+      },
+      "id": "cf-074",
+      "name": "Compile Resume PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4740,
+        380
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "sendDocument",
+        "chatId": "={{ $('Prepare Apply Context').item.json.chat_id }}",
+        "binaryData": true,
+        "binaryPropertyName": "data",
+        "additionalFields": {
+          "caption": "={{ '\\u2705 Resume \\u2014 ' + $('Prepare Apply Context').item.json.job_title + ' at ' + $('Prepare Apply Context').item.json.company + ' (ForgeScore: ' + $('Prepare Apply Context').item.json.overall_score + '/10)' }}",
+          "fileName": "={{ $('Prepare Apply Context').item.json.company.replace(/\\s+/g, '_') + '_' + $('Prepare Apply Context').item.json.job_title.replace(/\\s+/g, '_') + '_resume_' + $now.format('yyyyMMdd') + '.pdf' }}",
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "cf-075",
+      "name": "Send Resume PDF",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        4960,
+        380
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "prompt": "=# CoverForge v3\n\n## Role\n\nYou are an expert cover letter writer. You receive a candidate's master resume, a job description, and company context. You generate a tailored cover letter as **structured JSON**. A downstream code node will deterministically fill a LaTeX skeleton from your JSON — you never output LaTeX.\n\n## Input\n\n- `master_resume`: The candidate's complete career data (master_resume.txt)\n- `job_description`: The target job description text\n- `company`: The company name\n- `job_title`: The title of the target role\n- `candidate_location`: The candidate's city from their master resume\n- `company_location`: The company's HQ city (if known, otherwise null)\n\n## Output Schema\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\n```json\n{\n  \"title\": \"Software Engineer — Anthropic\",\n  \"salutation\": \"Dear Anthropic Hiring Team,\",\n  \"hook\": \"Two sentences opening that references the company's recent work or a specific team focus.\",\n  \"bullets\": [\n    {\n      \"keyword\": \"Retrieval Infrastructure\",\n      \"text\": \"At Nexus AI, I built a FAISS-based retrieval pipeline serving 2M queries/day — the exact kind of inference-latency challenge your team mentioned in the job description.\"\n    },\n    {\n      \"keyword\": \"Real-time Systems\",\n      \"text\": \"I led the migration from batch to real-time feature serving, cutting feature freshness from 6 hours to 45 seconds — directly relevant to your need for low-latency ML infrastructure.\"\n    },\n    {\n      \"keyword\": \"Team Growth\",\n      \"text\": \"I've mentored 2 junior engineers through to promotion in under 8 months, and I'm drawn to Anthropic's emphasis on growing strong engineering teams.\"\n    }\n  ],\n  \"cta\": \"I'd love to discuss how my retrieval infrastructure experience maps to your team's challenges. Happy to do a 30-minute video call whenever works.\",\n  \"word_count\": 387\n}\n```\n\n## Rules\n\n### 1. Word Count Target\n\nThe combined word count of `hook` + all 3 bullet `text` fields + `cta` must be **350-450 words**. Report the actual count in `word_count`. If you're under 350, expand the hook or add a connecting sentence. If over 450, tighten the bullets.\n\n### 2. Exactly 3 Bullets\n\nAlways return exactly 3 entries in the `bullets` array. Each bullet must:\n- Reference a specific requirement, priority, or technology from the job description\n- Provide a concrete, metric-backed achievement from the master resume as evidence\n- Connect the two explicitly — don't just state the achievement; explain why it's relevant to this role\n\n### 3. No Hallucinated Company Details\n\nIf company research or context is not provided, keep the hook and bullets candidate-focused. Do not invent company facts, recent news, product details, or team structure. A vague reference to \"your team\" is acceptable; a fabricated reference to \"your recent Series C\" is not.\n\n### 4. No Cliches\n\nBanned phrases — do not use any of these or close variants:\n- \"passionate about\"\n- \"excited to apply\"\n- \"I am writing to express my interest\"\n- \"dynamic environment\"\n- \"synergy\" / \"leverage\"\n- \"I believe I would be a great fit\"\n- \"thrilled at the opportunity\"\n\nLead with specific evidence, not feelings. The hook should open with an observation about the company or role, not a statement about your emotions.\n\n### 5. Distance-Aware CTA\n\nThe `cta` field must adapt based on geographic proximity:\n- **Same city** (candidate and company in the same metro area): Offer coffee — \"Coffee in [city] this week, or a 30-minute video call?\"\n- **Same country, different city**: Video call only — \"Happy to do a 30-minute video call whenever works.\"\n- **Different country or company location unknown**: Time-zone-aware video — \"Happy to do a 30-minute video call — flexible on time zones.\"\n\nIf `company_location` is null, default to the video call variant.\n\n### 6. No Fabricated Metrics\n\nEvery metric, tool name, team size, and quantified result in the bullets must come directly from the master resume. You may rephrase for flow but must preserve numbers exactly. If the master resume says \"2M queries/day\", your bullet must say \"2M queries/day\" — not \"millions of queries\" or \"2M+ queries\".\n\n### 7. Keyword Alignment\n\nEach bullet's `keyword` should map to a specific requirement from the job description, following the same logic as ResumeForge — match the JD's language, not just the candidate's.\n\n### 8. Title Format\n\nThe `title` field follows the pattern: `{Job Title} — {Company}`. Use the exact job title and company name from the input.\n\n### 9. Salutation\n\n- If a hiring manager name is known (from company research or JD): \"Dear [Name],\"\n- Otherwise: \"Dear [Company] Hiring Team,\"\n- Never use \"To Whom It May Concern\" or \"Dear Sir/Madam\"\n\n### 10. Output Hygiene\n\n- All string values must be plain text — no LaTeX commands, no markdown, no HTML\n- Use em-dashes (—) for parenthetical asides, not double hyphens (--)\n- Bullets should read as natural paragraphs, not resume-style fragments. Full sentences, first person.\n\n---\n\nMaster Resume:\n{{ $json.resume_text }}\n\nJob Description:\n{{ $json.job_description }}\n\nCompany: {{ $json.company }}\nJob Title: {{ $json.job_title }}\n\nCandidate Location: {{ $json.personal.location || 'Unknown' }}\nCompany Location: {{ $json.location || 'Unknown' }}"
+      },
+      "id": "cf-076",
+      "name": "CoverForge",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        4300,
+        780
+      ]
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-sonnet-4.6",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1",
+          "temperature": 0.3,
+          "maxTokens": 2048
+        }
+      },
+      "id": "cf-077",
+      "name": "OpenRouter LLM (Cover)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        4240,
+        1000
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"title\":{\"type\":\"string\"},\"salutation\":{\"type\":\"string\"},\"hook\":{\"type\":\"string\"},\"bullets\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"keyword\":{\"type\":\"string\"},\"text\":{\"type\":\"string\"}},\"required\":[\"keyword\",\"text\"]}},\"cta\":{\"type\":\"string\"},\"word_count\":{\"type\":\"integer\"}},\"required\":[\"title\",\"salutation\",\"hook\",\"bullets\",\"cta\"]}"
+      },
+      "id": "cf-078",
+      "name": "Cover Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        4380,
+        1000
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// Build Cover Letter LaTeX — JSON → LaTeX\n// ═══════════════════════════════════════════════════════════════\n\nfunction escapeLatexText(input) {\n  if (typeof input !== 'string') return '';\n  return input\n    .replace(/\\\\/g, '\\\\textbackslash{}')\n    .replace(/&/g, '\\\\&')\n    .replace(/%/g, '\\\\%')\n    .replace(/\\$/g, '\\\\$')\n    .replace(/#/g, '\\\\#')\n    .replace(/_/g, '\\\\_')\n    .replace(/\\{/g, '\\\\{')\n    .replace(/\\}/g, '\\\\}')\n    .replace(/\\^/g, '\\\\textasciicircum{}')\n    .replace(/~/g, '\\\\textasciitilde{}');\n}\n\nfunction wrapResumeWithSkeleton(params) {\n  const { skeleton, headerLatex, contentLatex } = params;\n  if (!skeleton) return contentLatex;\n  const lines = skeleton.replace(/\\r\\n/g, '\\n').split('\\n');\n  const hs = lines.findIndex(l => l.trim() === '%%% HEADER_START');\n  const he = lines.findIndex((l, i) => i > hs && l.trim() === '%%% HEADER_END');\n  if (hs !== -1 && he !== -1) lines.splice(hs + 1, he - hs - 1, headerLatex.trim());\n  const cs = lines.findIndex(l => l.trim() === '%%% CONTENT_START');\n  const ce = lines.findIndex((l, i) => i > cs && l.trim() === '%%% CONTENT_END');\n  if (cs !== -1 && ce !== -1) { lines.splice(cs + 1, ce - cs - 1, contentLatex.trim()); return lines.join('\\n'); }\n  const endDocIdx = lines.findIndex(l => l.includes('\\\\end{document}'));\n  if (endDocIdx !== -1) lines.splice(endDocIdx, 0, contentLatex.trim());\n  else lines.push(contentLatex.trim());\n  return lines.join('\\n');\n}\n\nfunction normalizeLatexForPdflatex(input) {\n  if (!input) return input;\n  let s = input.replace(/\\r\\n/g, '\\n');\n  s = s.replace(/[\\u201C\\u201D]/g, '\"').replace(/[\\u2018\\u2019]/g, \"'\")\n    .replace(/\\u2026/g, '...').replace(/[\\u2013\\u2014]/g, '--').replace(/\\u00A0/g, ' ');\n  s = s.replace(/\\u20B9/g, 'INR ').replace(/\\u20AC/g, 'EUR ').replace(/\\u00A3/g, 'GBP ')\n    .replace(/(?<!\\\\)\\$/g, '\\\\$');\n  s = s.replace(/[^\\x09\\x0A\\x0D\\x20-\\x7E]/g, '');\n  return s;\n}\n\n// ─── Main ───\nconst coverJson = $input.first().json.output || $input.first().json;\nconst ctx = $('Prepare Apply Context').item.json;\nconst coverSkeleton = ctx.cover_skeleton;\nconst personal = ctx.personal || {};\n\n// Build cover content LaTeX\nconst contentLines = [];\ncontentLines.push('\\\\begin{lettercontent}');\ncontentLines.push('\\\\begin{center}');\ncontentLines.push('{\\\\large\\\\textbf{' + escapeLatexText(coverJson.title || ctx.job_title + ' \\\\textemdash{} ' + ctx.company) + '}}');\ncontentLines.push('\\\\end{center}');\ncontentLines.push('\\\\vspace{4mm}');\ncontentLines.push('');\ncontentLines.push(escapeLatexText(coverJson.salutation || 'Dear Hiring Team,'));\ncontentLines.push('');\ncontentLines.push(escapeLatexText(coverJson.hook || ''));\ncontentLines.push('');\ncontentLines.push('\\\\begin{itemize}[leftmargin=0.2in]');\nconst bullets = coverJson.bullets || [];\nfor (const bullet of bullets) {\n  contentLines.push('  \\\\item \\\\textbf{' + escapeLatexText(bullet.keyword || '') + ':} ' + escapeLatexText(bullet.text || ''));\n}\ncontentLines.push('\\\\end{itemize}');\ncontentLines.push('');\ncontentLines.push(escapeLatexText(coverJson.cta || ''));\ncontentLines.push('\\\\end{lettercontent}');\n\nconst contentLatex = contentLines.join('\\n');\n\n// Inject into skeleton using marker-based injection\nlet fullLatex = wrapResumeWithSkeleton({\n  skeleton: coverSkeleton,\n  headerLatex: '% Header omitted for cover letter',\n  contentLatex: contentLatex\n});\n\n// Replace footer placeholders\nfullLatex = fullLatex\n  .replace('{{NAME}}', escapeLatexText(personal.name || 'Candidate'))\n  .replace('{{PHONE}}', escapeLatexText(personal.phone || ''))\n  .replace('{{EMAIL}}', personal.email || '')\n  .replace('{{LINKEDIN}}', personal.linkedin || '');\n\nconst normalized = normalizeLatexForPdflatex(fullLatex);\n\nreturn [{ json: { latex: normalized, chat_id: ctx.chat_id, job_title: ctx.job_title, company: ctx.company } }];\n"
+      },
+      "id": "cf-079",
+      "name": "Build Cover LaTeX",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4520,
+        780
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://latex-service:5679/compile",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "text/plain",
+        "body": "={{ $json.latex }}",
+        "options": {
+          "timeout": 300000,
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        },
+        "retry": {
+          "maxRetries": 3,
+          "retryInterval": 5000
+        }
+      },
+      "id": "cf-080",
+      "name": "Compile Cover PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4740,
+        780
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "sendDocument",
+        "chatId": "={{ $('Prepare Apply Context').item.json.chat_id }}",
+        "binaryData": true,
+        "binaryPropertyName": "data",
+        "additionalFields": {
+          "caption": "={{ '\\u2705 Cover Letter \\u2014 ' + $('Prepare Apply Context').item.json.job_title + ' at ' + $('Prepare Apply Context').item.json.company }}",
+          "fileName": "={{ $('Prepare Apply Context').item.json.company.replace(/\\s+/g, '_') + '_' + $('Prepare Apply Context').item.json.job_title.replace(/\\s+/g, '_') + '_cover_' + $now.format('yyyyMMdd') + '.pdf' }}",
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "cf-081",
+      "name": "Send Cover PDF",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        4960,
+        780
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "cf-082",
+      "name": "Merge PDFs",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        5180,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst ctx = $('Prepare Apply Context').first().json;\nstaticData.last_apply = {\n  job_id: ctx.job_number,\n  job_title: ctx.job_title,\n  company: ctx.company,\n  seniority_mode: ctx.seniority_mode,\n  resume_json: $('ResumeForge').first().json.output || null,\n  cover_json: $('CoverForge').first().json.output || null,\n  forge_score: ctx.forge_score || null,\n  skeleton_mode: ctx.seniority_mode,\n  resume_text: ctx.resume_text || '',\n  personal: ctx.personal || {},\n  resume_skeleton: ctx.resume_skeleton || '',\n  cover_skeleton: ctx.cover_skeleton || '',\n  job_description: ctx.job_description || '',\n  location: ctx.location || '',\n  timestamp: new Date().toISOString()\n};\nreturn [{ json: {\n  chat_id: ctx.chat_id,\n  message: \"\\u2705 *Done!* Resume and cover letter delivered.\\n\\nReply with changes ('shorter', 'more Python', 'swap bullet 2') or 'track' to save this application.\"\n}}];"
+      },
+      "id": "cf-083",
+      "name": "Store Apply Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5400,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-084",
+      "name": "Send Done",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        5620,
+        580
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $('Extract Input').item.json.chat_id;\nconst lastApply = staticData.last_apply;\nif (!lastApply) {\n  return [{ json: { chat_id: chatId, message: \"\\u274C Nothing to track. Apply to a job first.\" } }];\n}\nif (!staticData.tracked_applications) staticData.tracked_applications = [];\nconst entry = {\n  job_id: lastApply.job_id,\n  job_title: lastApply.job_title,\n  company: lastApply.company,\n  status: 'applied',\n  score: lastApply.forge_score ? lastApply.forge_score.overall_score : null,\n  applied_at: new Date().toISOString()\n};\n// Avoid duplicates\nconst exists = staticData.tracked_applications.some(a => a.job_id === entry.job_id);\nif (exists) {\n  return [{ json: { chat_id: chatId, message: \"\\u2139\\uFE0F Already tracking *\" + entry.job_title + \"* at *\" + entry.company + \"*.\" } }];\n}\nstaticData.tracked_applications.push(entry);\nreturn [{ json: { chat_id: chatId, message: \"\\u2705 Tracking *\" + entry.job_title + \"* at *\" + entry.company + \"*.\\n\\nUse /status to see all tracked applications.\" } }];"
+      },
+      "id": "cf-100",
+      "name": "Track Application",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-101",
+      "name": "Send Track Ack",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1540,
+        1100
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $('Extract Input').item.json.chat_id;\nconst apps = staticData.tracked_applications || [];\nif (apps.length === 0) {\n  return [{ json: { chat_id: chatId, message: \"\\u{1F4CB} No tracked applications yet. Apply to a job and then reply 'track' to start tracking.\" } }];\n}\nconst lines = apps.map((a, i) => {\n  const statusIcon = a.status === 'applied' ? '\\u{1F7E1}' : a.status === 'interviewing' ? '\\u{1F7E2}' : '\\u26AA';\n  const score = a.score ? ' (Score: ' + a.score + ')' : '';\n  const date = a.applied_at ? new Date(a.applied_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';\n  return (i + 1) + '. ' + statusIcon + ' *' + a.job_title + '* at *' + a.company + '*' + score + (date ? ' \\u2014 ' + date : '');\n});\nreturn [{ json: { chat_id: chatId, message: \"\\u{1F4CB} *Tracked Applications:*\\n\\n\" + lines.join('\\n') } }];"
+      },
+      "id": "cf-102",
+      "name": "List Applications",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        1260
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-103",
+      "name": "Send Status",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1540,
+        1260
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $('Extract Input').item.json.chat_id;\nconst lastApply = staticData.last_apply;\nif (!lastApply || !lastApply.resume_text || !lastApply.job_description) {\n  return [{ json: { chat_id: chatId, error: 'No resume/job context. Apply to a job first, then use /score.', resume_text: '', job_description: '', job_title: '', company: '' } }];\n}\nreturn [{ json: {\n  chat_id: chatId,\n  error: '',\n  resume_text: lastApply.resume_text,\n  job_description: lastApply.job_description,\n  job_title: lastApply.job_title,\n  company: lastApply.company\n}}];"
+      },
+      "id": "cf-104",
+      "name": "Load Score Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        1420
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "score-check",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "cf-105",
+      "name": "IF: Has Score Data?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1540,
+        1420
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ \"\\u274C \" + $json.error }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-106",
+      "name": "Send No Score Context",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1540,
+        1620
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "prompt": "=# ForgeScore v3\n\n## Role\n\nYou are an objective resume-vs-job-description scoring engine. You evaluate how well a candidate's resume aligns with a specific job description across 6 dimensions, identify gaps and strengths, and recommend whether to apply.\n\n## Input\n\n- `master_resume`: The candidate's complete career data (master_resume.txt)\n- `job_description`: The target job description text\n- `job_title`: The title of the target role\n- `company`: The company name\n\n## Output Schema\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\n```json\n{\n  \"overall_score\": 7.5,\n  \"dimensions\": {\n    \"skills_match\": 8,\n    \"experience_relevance\": 7,\n    \"metric_impact\": 9,\n    \"seniority_fit\": 6,\n    \"keyword_coverage\": 8,\n    \"leadership_signals\": 5\n  },\n  \"gaps\": [\n    \"No direct mention of Kubernetes deployment experience\",\n    \"Missing leadership metrics for the Senior title\"\n  ],\n  \"strengths\": [\n    \"Strong retrieval infrastructure signal\",\n    \"Multiple quantified achievements\"\n  ],\n  \"recommendation\": \"Apply | Caution | Skip\"\n}\n```\n\n## Rules\n\n### 1. Scoring Rubric (100-Point Internal Scale)\n\nScore each dimension on a 0-10 scale. The `overall_score` is the weighted average:\n\n| Dimension | Weight | What it measures |\n|-----------|--------|-----------------|\n| `skills_match` | 25% | How many of the JD's required and preferred tools/languages/frameworks appear in the resume |\n| `experience_relevance` | 25% | How closely the candidate's role descriptions, industries, and domain match the JD's core duties |\n| `metric_impact` | 15% | Quality and specificity of quantified achievements — real numbers, scale indicators, business outcomes |\n| `seniority_fit` | 15% | Whether the candidate's experience level matches the role's seniority expectations (years, scope, title) |\n| `keyword_coverage` | 10% | Raw keyword overlap between resume and JD — the ATS filter simulation |\n| `leadership_signals` | 10% | Evidence of mentoring, team leadership, cross-functional work, or people management (weighted higher for senior roles) |\n\nCalculate: `overall_score = (skills * 0.25) + (experience * 0.25) + (metric * 0.15) + (seniority * 0.15) + (keyword * 0.10) + (leadership * 0.10)`\n\nRound `overall_score` to one decimal place. Round dimension scores to integers.\n\n### 2. Scoring Calibration\n\nBe strict. These benchmarks define the scale:\n\n- **9-10**: Near-perfect match. Candidate could write the JD themselves. Rare.\n- **7-8**: Strong match. Candidate meets most requirements, minor gaps easily addressed.\n- **5-6**: Partial match. Significant gaps exist but candidate has transferable strengths.\n- **3-4**: Weak match. Candidate would need to stretch considerably. Major skill gaps.\n- **0-2**: Mismatch. Different domain, wrong seniority, or no relevant overlap.\n\nA score above 8.5 should mean the candidate matches every hard requirement and most preferred qualifications. Do not grade generously.\n\n### 3. Recommendation Thresholds\n\n- `overall_score >= 6.0` → `\"Apply\"`\n- `overall_score >= 4.0 and < 6.0` → `\"Caution\"` (downstream workflow asks user if they want to continue)\n- `overall_score < 4.0` → `\"Skip\"`\n\n### 4. Gaps and Strengths\n\n- Return 2-4 entries in `gaps`. Each should name a specific JD requirement that is missing or weak in the resume. Be concrete — \"No Kubernetes experience\" not \"Could improve cloud skills\".\n- Return 2-4 entries in `strengths`. Each should name a specific alignment between resume evidence and JD requirements. Reference the actual metric or achievement.\n- Order both arrays by significance — most important gap/strength first.\n\n### 5. No Hallucinations\n\nBase scoring solely on what is present in the master resume and job description. Do not assume skills the candidate might have but didn't list. Do not infer metrics that aren't stated. Missing information is a gap, not an assumption.\n\n### 6. Seniority Fit Scoring\n\n- If the JD implies \"Senior\" and the candidate has 2 years experience → low seniority_fit\n- If the JD implies \"Junior/Entry\" and the candidate has 10+ years → moderate seniority_fit (overqualification is a real concern for hiring managers)\n- Match the JD's expectations for scope, team size, and autonomy against the resume's evidence\n\n---\n\nMaster Resume:\n{{ $json.resume_text }}\n\nJob Description:\n{{ $json.job_description }}\n\nJob Title: {{ $json.job_title }}\nCompany: {{ $json.company }}"
+      },
+      "id": "cf-107",
+      "name": "ScoreOnly",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        1760,
+        1420
+      ]
+    },
+    {
+      "parameters": {
+        "model": "deepseek/deepseek-chat-v3.1:free",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1",
+          "temperature": 0
+        }
+      },
+      "id": "cf-108",
+      "name": "OpenRouter LLM (ScoreOnly)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1700,
+        1620
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"overall_score\":{\"type\":\"number\"},\"dimensions\":{\"type\":\"object\",\"properties\":{\"skills_match\":{\"type\":\"integer\"},\"experience_relevance\":{\"type\":\"integer\"},\"metric_impact\":{\"type\":\"integer\"},\"seniority_fit\":{\"type\":\"integer\"},\"keyword_coverage\":{\"type\":\"integer\"},\"leadership_signals\":{\"type\":\"integer\"}}},\"gaps\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"strengths\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"recommendation\":{\"type\":\"string\",\"enum\":[\"Apply\",\"Caution\",\"Skip\"]}},\"required\":[\"overall_score\",\"dimensions\",\"gaps\",\"strengths\",\"recommendation\"]}"
+      },
+      "id": "cf-109",
+      "name": "ScoreOnly Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1840,
+        1620
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $input.first().json.output || {};\nconst ctx = $('Load Score Context').item.json;\nconst d = s.dimensions || {};\nconst recIcon = s.recommendation === 'Apply' ? '\\u2705' : s.recommendation === 'Caution' ? '\\u26A0\\uFE0F' : '\\u26D4';\nconst bar = (score) => {\n  const filled = Math.round((score || 0));\n  return '\\u2588'.repeat(filled) + '\\u2591'.repeat(10 - filled) + ' ' + (score || 0) + '/10';\n};\nconst msg = recIcon + ' *ForgeScore: ' + (s.overall_score || '?') + '/10* \\u2014 ' + (s.recommendation || 'Unknown') + '\\n' +\n  '_' + ctx.job_title + ' at ' + ctx.company + '_\\n\\n' +\n  '*Dimensions:*\\n' +\n  'Skills Match:        ' + bar(d.skills_match) + '\\n' +\n  'Experience:          ' + bar(d.experience_relevance) + '\\n' +\n  'Impact/Metrics:      ' + bar(d.metric_impact) + '\\n' +\n  'Seniority Fit:       ' + bar(d.seniority_fit) + '\\n' +\n  'Keyword Coverage:    ' + bar(d.keyword_coverage) + '\\n' +\n  'Leadership:          ' + bar(d.leadership_signals) + '\\n\\n' +\n  (s.strengths && s.strengths.length ? '*Strengths:*\\n' + s.strengths.map(g => '\\u2705 ' + g).join('\\n') + '\\n\\n' : '') +\n  (s.gaps && s.gaps.length ? '*Gaps:*\\n' + s.gaps.map(g => '\\u26A0\\uFE0F ' + g).join('\\n') : '');\nreturn [{ json: { chat_id: ctx.chat_id, message: msg } }];"
+      },
+      "id": "cf-110",
+      "name": "Format Score Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        1420
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-111",
+      "name": "Send Score",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2200,
+        1420
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const chatId = $('Extract Input').item.json.chat_id;\nconst entities = $('Route Intent').item.json.output ? ($('Route Intent').item.json.output.entities || {}) : {};\nconst staticData = $getWorkflowStaticData('global');\nconst lastApply = staticData.last_apply || {};\nconst role = entities.role || lastApply.job_title || 'Software Engineer';\nconst company = entities.company || lastApply.company || '';\nreturn [{ json: { chat_id: chatId, role, company, query: 'salary ' + role + (company ? ' at ' + company : '') + ' compensation total comp ' + new Date().getFullYear() } }];"
+      },
+      "id": "cf-112",
+      "name": "Extract Salary Params",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        1780
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const https = require('https');\nconst ctx = $input.first().json;\nconst query = ctx.query;\nconst serperKey = $env.SERPER_API_KEY || '';\n\nfunction httpPost(url, headers, body) {\n  return new Promise((resolve) => {\n    try {\n      const u = new URL(url);\n      const opts = { hostname: u.hostname, path: u.pathname, method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' } };\n      const req = https.request(opts, res => {\n        let data = ''; res.on('data', c => data += c);\n        res.on('end', () => { try { resolve(JSON.parse(data)); } catch { resolve({}); } });\n      });\n      req.on('error', () => resolve({}));\n      req.setTimeout(15000, () => { req.destroy(); resolve({}); });\n      req.write(JSON.stringify(body));\n      req.end();\n    } catch { resolve({}); }\n  });\n}\n\nlet searchText = 'No salary data found. Provide general estimates for the role.';\n\nif (serperKey) {\n  const resp = await httpPost('https://google.serper.dev/search', { 'X-API-KEY': serperKey }, { q: query, num: 10 });\n  const results = (resp.organic || []).slice(0, 8);\n  if (results.length > 0) {\n    searchText = results.map(r => r.title + ': ' + (r.snippet || '')).join('\\n\\n');\n  }\n} else {\n  // Try You.com\n  const youKey = $env.YOUCOM_API_KEY || '';\n  if (youKey) {\n    const youUrl = 'https://api.ydc-index.io/search?query=' + encodeURIComponent(query);\n    const resp = await new Promise((resolve) => {\n      const u = new URL(youUrl);\n      const opts = { hostname: u.hostname, path: u.pathname + u.search, method: 'GET', headers: { 'X-API-Key': youKey } };\n      const req = https.request(opts, res => {\n        let data = ''; res.on('data', c => data += c);\n        res.on('end', () => { try { resolve(JSON.parse(data)); } catch { resolve({}); } });\n      });\n      req.on('error', () => resolve({}));\n      req.setTimeout(15000, () => { req.destroy(); resolve({}); });\n      req.end();\n    });\n    const hits = (resp.hits || []).slice(0, 8);\n    if (hits.length > 0) {\n      searchText = hits.map(h => h.title + ': ' + (h.description || h.snippets?.[0] || '')).join('\\n\\n');\n    }\n  }\n}\n\nreturn [{ json: { ...ctx, search_results: searchText } }];"
+      },
+      "id": "cf-113",
+      "name": "Search Salary Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        1780
+      ]
+    },
+    {
+      "parameters": {
+        "prompt": "=Summarize the salary information for the role of {{ $json.role }}{{ $json.company ? ' at ' + $json.company : '' }}. Return strict JSON only.\n\nSearch Results:\n{{ $json.search_results }}\n\nProvide realistic salary ranges based on the search data. If data is limited, note that."
+      },
+      "id": "cf-114",
+      "name": "SalarySummarize",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        1760,
+        1780
+      ]
+    },
+    {
+      "parameters": {
+        "model": "deepseek/deepseek-chat-v3.1:free",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1",
+          "temperature": 0
+        }
+      },
+      "id": "cf-115",
+      "name": "OpenRouter LLM (Salary)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1700,
+        1980
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"salary_range\":{\"type\":\"string\"},\"total_comp\":{\"type\":\"string\"},\"negotiation_tips\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"confidence\":{\"type\":\"string\",\"enum\":[\"high\",\"medium\",\"low\"]},\"sources_note\":{\"type\":\"string\"}},\"required\":[\"salary_range\",\"total_comp\",\"negotiation_tips\",\"confidence\",\"sources_note\"]}"
+      },
+      "id": "cf-116",
+      "name": "Salary Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1840,
+        1980
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $input.first().json.output || {};\nconst ctx = $('Extract Salary Params').item.json;\nconst tips = (s.negotiation_tips || []).map(t => '\\u2022 ' + t).join('\\n');\nconst confIcon = s.confidence === 'high' ? '\\u{1F7E2}' : s.confidence === 'medium' ? '\\u{1F7E1}' : '\\u{1F534}';\nconst msg = '\\u{1F4B0} *Salary Intel: ' + ctx.role + (ctx.company ? ' at ' + ctx.company : '') + '*\\n\\n' +\n  '\\u{1F4B5} *Base Range:* ' + (s.salary_range || 'Unknown') + '\\n' +\n  '\\u{1F4CA} *Total Comp:* ' + (s.total_comp || 'Unknown') + '\\n\\n' +\n  '*Negotiation Tips:*\\n' + (tips || '\\u2022 Research market rates before negotiating') + '\\n\\n' +\n  confIcon + ' _Confidence: ' + (s.confidence || 'low') + ' | ' + (s.sources_note || 'General estimates') + '_';\nreturn [{ json: { chat_id: ctx.chat_id, message: msg } }];"
+      },
+      "id": "cf-117",
+      "name": "Format Salary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        1780
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-118",
+      "name": "Send Salary",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2200,
+        1780
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $('Extract Input').item.json.chat_id;\nconst lastApply = staticData.last_apply;\nif (!lastApply || (!lastApply.resume_json && !lastApply.cover_json)) {\n  return [{ json: { chat_id: chatId, error: 'Nothing to revise. Apply to a job first (reply with a job number after a search).' } }];\n}\nreturn [{ json: {\n  chat_id: chatId,\n  change_request: $('Extract Input').item.json.message_text || '',\n  last_apply: lastApply,\n  error: ''\n}}];"
+      },
+      "id": "cf-120",
+      "name": "Load Revise Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        2140
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "revise-check",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "cf-121",
+      "name": "IF: Has Last Apply?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1540,
+        2140
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ \"\\u274C \" + $json.error }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-122",
+      "name": "Send No Revise Context",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1540,
+        2340
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $input.first().json;\nconst msg = ctx.change_request.toLowerCase();\nconst isCover = /cover\\s*letter|\\bcover\\b|\\bcl\\b/.test(msg);\nconst type = isCover ? 'cover' : 'resume';\nconst previousJson = type === 'cover' ? ctx.last_apply.cover_json : ctx.last_apply.resume_json;\nreturn [{ json: {\n  chat_id: ctx.chat_id,\n  change_request: ctx.change_request,\n  revise_type: type,\n  previous_json: previousJson || {},\n  resume_text: ctx.last_apply.resume_text || '',\n  job_description: ctx.last_apply.job_description || '',\n  job_title: ctx.last_apply.job_title || '',\n  company: ctx.last_apply.company || '',\n  personal: ctx.last_apply.personal || {},\n  resume_skeleton: ctx.last_apply.resume_skeleton || '',\n  cover_skeleton: ctx.last_apply.cover_skeleton || '',\n  seniority_mode: ctx.last_apply.seniority_mode || 'experienced',\n  location: ctx.last_apply.location || ''\n}}];"
+      },
+      "id": "cf-123",
+      "name": "Detect Revise Type",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        2140
+      ]
+    },
+    {
+      "parameters": {
+        "prompt": "=You are a {{ $json.revise_type === 'cover' ? 'cover letter' : 'resume' }} refinement agent. Follow ONLY the applicable rules section below.\n\n=== RESUME REFINEMENT RULES (apply ONLY when revise_type = \"resume\") ===\n\n# ResumeRefine\n\n## Role\n\nYou are a resume refinement agent. You receive a previously generated resume JSON (from ResumeForge) and a user's natural-language change request. You return an updated JSON in the exact same schema, plus a summary of what changed. You have access to chat memory to understand the conversation context.\n\n## Input\n\n- `previous_resume_json`: The full JSON output from the last ResumeForge or ResumeRefine call (same schema as ResumeForge v3 output)\n- `change_request`: The user's natural-language instruction (e.g., \"make it shorter\", \"emphasize Python more\", \"swap the first two experiences\")\n- `master_resume`: The candidate's master_resume.txt (for adding content not in the current version)\n- `job_description`: The original job description (for keyword context)\n- Chat memory: Previous conversation turns\n\n## Output Schema\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\n```json\n{\n  \"sections\": [\n    // ... same schema as ResumeForge v3 output\n  ],\n  \"changes_summary\": \"Shortened bullets to 95 chars avg (was 108). Moved Python skill to front. Added RAG keyword to 2 bullets.\"\n}\n```\n\nThe `sections` array must conform exactly to the ResumeForge v3 schema — same `type` values, same field names, same structure. The only addition is the top-level `changes_summary` field.\n\n## Rules\n\n### 1. Preserve Structure Unless Asked to Change It\n\nDo not reorder sections, swap roles, or remove entries unless the user explicitly asks. \"Make it shorter\" means shorten bullet text, not cut entries. \"Remove the internship\" means remove that specific entry.\n\n### 2. Interpret Common Requests\n\n| User says | What to do |\n|-----------|-----------|\n| \"shorter\" / \"more concise\" | Reduce bullet `text` length. Target 80-95 chars per bullet. Remove filler words, compress phrasing. Never drop a metric. |\n| \"longer\" / \"more detail\" | Expand bullets with additional context from master_resume. Stay within 110-char limit. |\n| \"more [skill]\" / \"emphasize [tech]\" | Find the most relevant existing bullets and rework the `keyword` and `text` to foreground that technology. Move it higher in skills lists. |\n| \"less [skill]\" / \"de-emphasize [tech]\" | Reduce prominence — move skill lower in lists, swap keywords on bullets where possible. |\n| \"add [topic]\" | Find the most relevant existing bullet in the master resume and enhance it. Do NOT fabricate a new experience entry. If no relevant bullet exists, say so in `changes_summary`. |\n| \"remove [entry]\" | Remove the specified role, project, or bullet. Adjust the structure but keep all other entries intact. |\n| \"swap\" / \"reorder\" | Reorder the specified entries. |\n| \"more technical\" | Increase the density of tool names and technical specifics in bullets. |\n| \"more impact\" / \"more metrics\" | Lead with the quantified result rather than the action. |\n\n### 3. No Hallucinations\n\nThe same rule as ResumeForge applies: every metric, tool, company, and date must come from the master resume. Refinement is rephrasing existing content, not inventing new content.\n\n### 4. Bullet Character Limit\n\nThe 110-character limit on `text` fields still applies after refinement. If the user asks to \"add more detail\" and a bullet would exceed 110 chars, either split the content across the keyword prefix and text, or note the constraint in `changes_summary`.\n\n### 5. Entry Budget\n\nThe 6-entry maximum (roles + projects) still applies. If the user asks to add an entry and the budget is full, suggest which existing entry to drop in `changes_summary` — do not silently exceed the limit.\n\n### 6. Changes Summary\n\nThe `changes_summary` field must be a single concise paragraph (1-3 sentences) describing exactly what changed. Include before/after metrics where relevant (e.g., average bullet length, number of entries, skill order changes). This is shown to the user in Telegram so keep it readable.\n\n### 7. No-Op Handling\n\nIf the user's request doesn't require any changes (e.g., \"looks good\", \"perfect\"), return the previous JSON unchanged with `changes_summary: \"No changes made.\"`.\n\n=== COVER LETTER REFINEMENT RULES (apply ONLY when revise_type = \"cover\") ===\n\n# CoverRefine\n\n## Role\n\nYou are a cover letter refinement agent. You receive a previously generated cover letter JSON (from CoverForge) and a user's natural-language change request. You return an updated JSON in the exact same schema, plus a summary of what changed. You have access to chat memory to understand the conversation context.\n\n## Input\n\n- `previous_cover_json`: The full JSON output from the last CoverForge or CoverRefine call (same schema as CoverForge v3 output)\n- `change_request`: The user's natural-language instruction (e.g., \"make it shorter\", \"change the hook\", \"more formal tone\")\n- `master_resume`: The candidate's master_resume.txt (for adding content not in the current version)\n- `job_description`: The original job description (for keyword context)\n- `candidate_location`: The candidate's city\n- `company_location`: The company's HQ city (if known)\n- Chat memory: Previous conversation turns\n\n## Output Schema\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\n```json\n{\n  \"title\": \"Software Engineer — Anthropic\",\n  \"salutation\": \"Dear Anthropic Hiring Team,\",\n  \"hook\": \"...\",\n  \"bullets\": [\n    {\n      \"keyword\": \"...\",\n      \"text\": \"...\"\n    },\n    {\n      \"keyword\": \"...\",\n      \"text\": \"...\"\n    },\n    {\n      \"keyword\": \"...\",\n      \"text\": \"...\"\n    }\n  ],\n  \"cta\": \"...\",\n  \"word_count\": 387,\n  \"changes_summary\": \"Rewrote hook to reference Anthropic's recent Claude release. Shortened bullet 2 by 15 words. Swapped CTA to coffee (same city).\"\n}\n```\n\nThe output must conform exactly to the CoverForge v3 schema. The only addition is the `changes_summary` field.\n\n## Rules\n\n### 1. Preserve Structure Unless Asked to Change It\n\nThe cover letter always has exactly: title, salutation, hook, 3 bullets, cta. Do not change this structure. Refinement operates on the content within that structure.\n\n### 2. Interpret Common Requests\n\n| User says | What to do |\n|-----------|-----------|\n| \"shorter\" / \"more concise\" | Tighten all sections. Cut filler from hook and bullets. Target lower end of 350-450 word range. |\n| \"longer\" / \"more detail\" | Expand bullets with additional evidence from master_resume. Target upper end of 350-450 word range. |\n| \"change the hook\" / \"different opening\" | Rewrite the hook with a different angle — different company fact or different framing of the candidate's fit. |\n| \"more formal\" | Remove contractions, conversational phrasing, and first-person casual tone. Keep evidence-based structure. |\n| \"more casual\" / \"more conversational\" | Add natural phrasing, contractions where appropriate. Avoid stiffness. Still no cliches. |\n| \"different bullet about [topic]\" | Replace the least relevant bullet with one focused on the requested topic, sourced from master_resume. |\n| \"swap bullet [N]\" / \"replace the [keyword] bullet\" | Replace the specified bullet while keeping the other two intact. |\n| \"fix the CTA\" / \"change the closing\" | Rewrite the CTA. Apply distance-aware logic from CoverForge rules. |\n\n### 3. No Hallucinations\n\nSame rule as CoverForge: every metric, tool, and achievement must come from the master resume. Every company fact must come from provided context. Do not fabricate.\n\n### 4. Word Count Target\n\nThe 350-450 word target still applies after refinement. Report the updated count in `word_count`. If a change pushes the total outside the range, compensate by adjusting other sections.\n\n### 5. No Cliches\n\nThe CoverForge banned phrases list still applies after refinement. Do not introduce any banned phrases even if the user asks to \"make it warmer\" or \"add more enthusiasm\". Express enthusiasm through specific evidence, not adjectives.\n\n### 6. Distance-Aware CTA\n\nIf the user asks to change the CTA, reapply the distance logic:\n- Same city → coffee offer\n- Different city, same country → 30-min video\n- Different country or unknown → video, flexible on time zones\n\n### 7. Always 3 Bullets\n\nNever reduce below 3 or add beyond 3. If the user says \"add another bullet\", explain in `changes_summary` that the format requires exactly 3 and offer to replace the weakest one instead.\n\n### 8. Changes Summary\n\n1-3 sentences describing what changed. Specific enough for the user to understand without diffing the JSON. Shown directly in Telegram.\n\n### 9. No-Op Handling\n\nIf the user's request doesn't require changes (e.g., \"looks good\", \"send it\"), return the previous JSON unchanged with `changes_summary: \"No changes made.\"`.\n\n=== END OF RULES ===\n\nIMPORTANT: Apply ONLY the {{ $json.revise_type === 'cover' ? 'COVER LETTER REFINEMENT' : 'RESUME REFINEMENT' }} rules above. Ignore the other section entirely.\n\n---\n\nPrevious {{ $json.revise_type === 'cover' ? 'cover letter' : 'resume' }} JSON:\n{{ JSON.stringify($json.previous_json) }}\n\nUser's change request: {{ $json.change_request }}\n\nMaster Resume:\n{{ $json.resume_text }}\n\nJob Description:\n{{ $json.job_description }}\n\nJob Title: {{ $json.job_title }}\nCompany: {{ $json.company }}"
+      },
+      "id": "cf-124",
+      "name": "ReviseForge",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        1980,
+        2140
+      ]
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-sonnet-4.6",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1",
+          "temperature": 0.3,
+          "maxTokens": 4096
+        }
+      },
+      "id": "cf-125",
+      "name": "OpenRouter LLM (Revise)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1920,
+        2340
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"sections\":{\"type\":\"array\"},\"title\":{\"type\":\"string\"},\"salutation\":{\"type\":\"string\"},\"hook\":{\"type\":\"string\"},\"bullets\":{\"type\":\"array\"},\"cta\":{\"type\":\"string\"},\"word_count\":{\"type\":\"integer\"},\"changes_summary\":{\"type\":\"string\"}},\"required\":[\"changes_summary\"]}"
+      },
+      "id": "cf-126",
+      "name": "Revise Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        2060,
+        2340
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// Build Revised LaTeX — Handles BOTH resume and cover letter\n// Checks revise_type from upstream Detect Revise Type node\n// ═══════════════════════════════════════════════════════════════\n\n// ─── Shared Helpers ───\n\nfunction escapeLatexText(input) {\n  if (typeof input !== 'string') return '';\n  return input\n    .replace(/\\\\/g, '\\\\textbackslash{}')\n    .replace(/&/g, '\\\\&')\n    .replace(/%/g, '\\\\%')\n    .replace(/\\$/g, '\\\\$')\n    .replace(/#/g, '\\\\#')\n    .replace(/_/g, '\\\\_')\n    .replace(/\\{/g, '\\\\{')\n    .replace(/\\}/g, '\\\\}')\n    .replace(/\\^/g, '\\\\textasciicircum{}')\n    .replace(/~/g, '\\\\textasciitilde{}');\n}\n\nfunction extractBetweenMarkers(text, startMarker, endMarker) {\n  const lines = text.replace(/\\r\\n/g, '\\n').split('\\n');\n  const startIdx = lines.findIndex(l => l.trim() === startMarker);\n  if (startIdx === -1) return null;\n  const endIdx = lines.findIndex((l, i) => i > startIdx && l.trim() === endMarker);\n  if (endIdx === -1) return null;\n  return lines.slice(startIdx + 1, endIdx).join('\\n').trim();\n}\n\nfunction wrapResumeWithSkeleton(params) {\n  const { skeleton, headerLatex, contentLatex } = params;\n  if (!skeleton) {\n    return '\\\\documentclass[letterpaper,11pt]{article}\\n\\\\begin{document}\\n' + headerLatex + '\\n\\n' + contentLatex + '\\n\\\\end{document}\\n';\n  }\n  const lines = skeleton.replace(/\\r\\n/g, '\\n').split('\\n');\n  const hs = lines.findIndex(l => l.trim() === '%%% HEADER_START');\n  const he = lines.findIndex((l, i) => i > hs && l.trim() === '%%% HEADER_END');\n  if (hs !== -1 && he !== -1) {\n    lines.splice(hs + 1, he - hs - 1, headerLatex.trim());\n  }\n  const cs = lines.findIndex(l => l.trim() === '%%% CONTENT_START');\n  const ce = lines.findIndex((l, i) => i > cs && l.trim() === '%%% CONTENT_END');\n  if (cs !== -1 && ce !== -1) {\n    lines.splice(cs + 1, ce - cs - 1, contentLatex.trim());\n    return lines.join('\\n');\n  }\n  const endDocIdx = lines.findIndex(l => l.includes('\\\\end{document}'));\n  if (endDocIdx !== -1) {\n    lines.splice(endDocIdx, 0, contentLatex.trim());\n  } else {\n    lines.push(contentLatex.trim());\n  }\n  return lines.join('\\n');\n}\n\nfunction sanitizeResumeContentBlock(content) {\n  const lines = content.replace(/\\r\\n/g, '\\n').split('\\n');\n  const banned = [\n    '\\\\documentclass', '\\\\usepackage', '\\\\begin{document}', '\\\\end{document}',\n    '\\\\ResumeHeader', '\\\\setlength', '\\\\addtolength', '\\\\pagestyle',\n    '\\\\urlstyle', '\\\\geometry', '\\\\begin{center}', '\\\\end{center}',\n    '\\\\begin{tabularx}', '\\\\end{tabularx}', '%%% HEADER_START', '%%% HEADER_END'\n  ];\n  const bannedRe = new RegExp(\n    '(' + banned.map(s => s.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')).join('|') + ')'\n  );\n  let cleaned = lines.filter(l => !bannedRe.test(l)).join('\\n').trim();\n\n  function normalizeSkillsBlock(tex) {\n    const ls = tex.replace(/\\r\\n/g, '\\n').split('\\n');\n    const isSkillsHeader = l => /\\\\section\\{(?:Skills|Technical Skills)\\}/.test(l);\n    for (let i = 0; i < ls.length; i++) {\n      if (!isSkillsHeader(ls[i])) continue;\n      let j = i + 1;\n      while (j < ls.length && !/\\\\section\\{/.test(ls[j])) j++;\n      const block = ls.slice(i + 1, j);\n      const hasStart = block.some(l => l.trim() === '\\\\resumeSkillsStart');\n      const hasEnd = block.some(l => l.trim() === '\\\\resumeSkillsEnd');\n      const rewritten = [];\n      if (!hasStart) rewritten.push('\\\\resumeSkillsStart');\n      for (const raw of block) {\n        const line = raw.trim();\n        if (!line) continue;\n        if (line === '\\\\resumeSubHeadingListStart') continue;\n        if (line === '\\\\resumeSubHeadingListEnd') continue;\n        const noItem = line.replace(/^\\\\item\\s+/, '');\n        const m = noItem.match(/^\\\\textbf\\{([^}]+):\\}\\s*(.+?)(?:\\\\\\\\)?$/);\n        if (m) { rewritten.push('\\\\resumeSkillLine{' + m[1].trim() + '}{' + m[2].trim() + '}'); continue; }\n        if (noItem.startsWith('\\\\resumeSkillLine{')) { rewritten.push(noItem); continue; }\n        rewritten.push(noItem);\n      }\n      if (!hasEnd) rewritten.push('\\\\resumeSkillsEnd');\n      ls.splice(i + 1, j - (i + 1), ...rewritten);\n      i = i + rewritten.length;\n    }\n    return ls.join('\\n');\n  }\n\n  function balanceSimpleMacroPairs(tex) {\n    const starts = (tex.match(/\\\\resumeSkillsStart\\b/g) || []).length;\n    const ends = (tex.match(/\\\\resumeSkillsEnd\\b/g) || []).length;\n    if (starts > ends) return tex + '\\n' + '\\\\resumeSkillsEnd\\n'.repeat(starts - ends);\n    if (ends > starts) {\n      let out = tex; let extra = ends - starts;\n      while (extra > 0) { out = out.replace(/\\\\resumeSkillsEnd\\b/, ''); extra--; }\n      return out;\n    }\n    return tex;\n  }\n\n  const normalized = cleaned\n    .replace(/\\\\rupee\\s*/g, 'INR~')\n    .replace(/\\$\\s*\\\\rightarrow\\s*\\$/g, '\\\\(\\\\rightarrow\\\\)')\n    .replace(/\\$\\s*\\\\to\\s*\\$/g, '\\\\(\\\\to\\\\)')\n    .trim();\n\n  return balanceSimpleMacroPairs(normalizeSkillsBlock(normalized)).trim();\n}\n\nfunction normalizeLatexForPdflatex(input) {\n  if (!input) return input;\n  let s = input.replace(/\\r\\n/g, '\\n');\n  s = s.replace(/[\\u201C\\u201D]/g, '\"').replace(/[\\u2018\\u2019]/g, \"'\")\n    .replace(/\\u2026/g, '...').replace(/[\\u2013\\u2014]/g, '--').replace(/\\u00A0/g, ' ');\n  s = s.replace(/\\u20B9/g, 'INR ').replace(/\\u20AC/g, 'EUR ').replace(/\\u00A3/g, 'GBP ')\n    .replace(/(?<!\\\\)\\$/g, '\\\\$');\n  s = s.replace(/[^\\x09\\x0A\\x0D\\x20-\\x7E]/g, '');\n  return s;\n}\n\n// ─── Main: Type Switch ───\nconst ctx = $('Detect Revise Type').item.json;\nconst reviseType = ctx.revise_type;\nconst revisedJson = $input.first().json.output || {};\nconst personal = ctx.personal || {};\n\nif (reviseType === 'cover') {\n  // ─── Cover Letter LaTeX Builder ───\n  const coverSkeleton = ctx.cover_skeleton;\n\n  const contentLines = [];\n  contentLines.push('\\\\begin{lettercontent}');\n  contentLines.push('\\\\begin{center}');\n  contentLines.push('{\\\\large\\\\textbf{' + escapeLatexText(revisedJson.title || ctx.job_title + ' \\\\textemdash{} ' + ctx.company) + '}}');\n  contentLines.push('\\\\end{center}');\n  contentLines.push('\\\\vspace{4mm}');\n  contentLines.push('');\n  contentLines.push(escapeLatexText(revisedJson.salutation || 'Dear Hiring Team,'));\n  contentLines.push('');\n  contentLines.push(escapeLatexText(revisedJson.hook || ''));\n  contentLines.push('');\n  contentLines.push('\\\\begin{itemize}[leftmargin=0.2in]');\n  const bullets = revisedJson.bullets || [];\n  for (const bullet of bullets) {\n    contentLines.push('  \\\\item \\\\textbf{' + escapeLatexText(bullet.keyword || '') + ':} ' + escapeLatexText(bullet.text || ''));\n  }\n  contentLines.push('\\\\end{itemize}');\n  contentLines.push('');\n  contentLines.push(escapeLatexText(revisedJson.cta || ''));\n  contentLines.push('\\\\end{lettercontent}');\n\n  const contentLatex = contentLines.join('\\n');\n  let fullLatex = wrapResumeWithSkeleton({\n    skeleton: coverSkeleton,\n    headerLatex: '% Header omitted for cover letter',\n    contentLatex: contentLatex\n  });\n\n  fullLatex = fullLatex\n    .replace('{{NAME}}', escapeLatexText(personal.name || 'Candidate'))\n    .replace('{{PHONE}}', escapeLatexText(personal.phone || ''))\n    .replace('{{EMAIL}}', personal.email || '')\n    .replace('{{LINKEDIN}}', personal.linkedin || '');\n\n  const normalized = normalizeLatexForPdflatex(fullLatex);\n  return [{ json: { latex: normalized, chat_id: ctx.chat_id, job_title: ctx.job_title, company: ctx.company, revise_type: 'cover', changes_summary: revisedJson.changes_summary || '' } }];\n\n} else {\n  // ─── Resume LaTeX Builder ───\n  const skeleton = ctx.resume_skeleton;\n\n  const headerTemplate = extractBetweenMarkers(skeleton, '%%% HEADER_START', '%%% HEADER_END') || '';\n  const headerLatex = headerTemplate\n    .replace('{{NAME}}', escapeLatexText(personal.name || 'Candidate'))\n    .replace('{{PHONE}}', escapeLatexText(personal.phone || ''))\n    .replace('{{EMAIL}}', personal.email || '')\n    .replace('{{LINKEDIN}}', personal.linkedin || '')\n    .replace('{{GITHUB}}', personal.github || '')\n    .replace('{{LOCATION}}', escapeLatexText(personal.location || ''))\n    .replace('{{WORK_AUTH}}', escapeLatexText(personal.work_authorization || ''));\n\n  const sections = revisedJson.sections || [];\n  const contentParts = [];\n\n  for (const section of sections) {\n    const heading = section.heading || '';\n    const items = section.items || [];\n\n    if (heading === 'Skills' || heading === 'Technical Skills') {\n      contentParts.push('\\\\section{Technical Skills}');\n      contentParts.push('\\\\resumeSubHeadingListStart');\n      for (const item of items) {\n        if (item.type === 'skill_line') {\n          contentParts.push('  \\\\resumeSkillLine{' + escapeLatexText(item.category || '') + '}{' + escapeLatexText(item.skills || '') + '}');\n        }\n      }\n      contentParts.push('\\\\resumeSubHeadingListEnd');\n    } else if (heading === 'Education') {\n      contentParts.push('\\\\section{Education}');\n      contentParts.push('\\\\resumeSubHeadingListStart');\n      for (const item of items) {\n        if (item.type === 'education') {\n          const degree = [item.degree, item.major].filter(Boolean).join(' in ');\n          contentParts.push('  \\\\resumeSubheading{' + escapeLatexText(item.institution || '') + '}{' + escapeLatexText(item.location || '') + '}{' + escapeLatexText(degree) + '}{' + escapeLatexText(item.dates || '') + '}');\n          if (item.gpa) contentParts.push('  \\\\resumeItem{GPA: ' + escapeLatexText(item.gpa) + '}');\n          if (item.coursework) contentParts.push('  \\\\resumeItem{Coursework: ' + escapeLatexText(item.coursework) + '}');\n        }\n      }\n      contentParts.push('\\\\resumeSubHeadingListEnd');\n    } else if (heading === 'Experience') {\n      contentParts.push('\\\\section{Experience}');\n      contentParts.push('\\\\resumeSubHeadingListStart');\n      for (const item of items) {\n        if (item.type === 'role') {\n          contentParts.push('  \\\\resumeSubheading{' + escapeLatexText(item.role || '') + '}{' + escapeLatexText(item.dates || '') + '}{' + escapeLatexText(item.company || '') + '}{' + escapeLatexText(item.location || '') + '}');\n          if (item.bullets && item.bullets.length > 0) {\n            contentParts.push('  \\\\resumeItemListStart');\n            for (const bullet of item.bullets) {\n              const kw = bullet.keyword ? '\\\\textbf{' + escapeLatexText(bullet.keyword) + ':} ' : '';\n              contentParts.push('    \\\\resumeItem{' + kw + escapeLatexText(bullet.text || '') + '}');\n            }\n            contentParts.push('  \\\\resumeItemListEnd');\n          }\n        }\n      }\n      contentParts.push('\\\\resumeSubHeadingListEnd');\n    } else if (heading === 'Projects') {\n      contentParts.push('\\\\section{Projects}');\n      contentParts.push('\\\\resumeSubHeadingListStart');\n      for (const item of items) {\n        if (item.type === 'project') {\n          const techStr = item.tech ? ' $|$ ' + escapeLatexText(item.tech) : '';\n          const rightCol = item.url ? escapeLatexText(item.url) : '';\n          contentParts.push('  \\\\resumeProjectHeading{\\\\textbf{' + escapeLatexText(item.name || '') + '}' + techStr + '}{' + rightCol + '}');\n          if (item.bullets && item.bullets.length > 0) {\n            contentParts.push('  \\\\resumeItemListStart');\n            for (const bullet of item.bullets) {\n              const kw = bullet.keyword ? '\\\\textbf{' + escapeLatexText(bullet.keyword) + ':} ' : '';\n              contentParts.push('    \\\\resumeItem{' + kw + escapeLatexText(bullet.text || '') + '}');\n            }\n            contentParts.push('  \\\\resumeItemListEnd');\n          }\n        }\n      }\n      contentParts.push('\\\\resumeSubHeadingListEnd');\n    }\n  }\n\n  const contentLatex = contentParts.join('\\n');\n  const sanitized = sanitizeResumeContentBlock(contentLatex);\n  const fullLatex = wrapResumeWithSkeleton({ skeleton, headerLatex, contentLatex: sanitized });\n  const normalized = normalizeLatexForPdflatex(fullLatex);\n\n  return [{ json: { latex: normalized, chat_id: ctx.chat_id, job_title: ctx.job_title, company: ctx.company, revise_type: 'resume', changes_summary: revisedJson.changes_summary || '' } }];\n}\n"
+      },
+      "id": "cf-127",
+      "name": "Build Revised LaTeX",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        2140
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://latex-service:5679/compile",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "text/plain",
+        "body": "={{ $json.latex }}",
+        "options": {
+          "timeout": 300000,
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "cf-128",
+      "name": "Compile Revised PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2420,
+        2140
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "operation": "sendDocument",
+        "chatId": "={{ $('Detect Revise Type').item.json.chat_id }}",
+        "binaryData": true,
+        "binaryPropertyName": "data",
+        "additionalFields": {
+          "caption": "={{ '\\u270F\\uFE0F Revised ' + $('Build Revised LaTeX').item.json.revise_type + ' \\u2014 ' + $('Detect Revise Type').item.json.job_title + ' at ' + $('Detect Revise Type').item.json.company }}",
+          "fileName": "={{ $('Detect Revise Type').item.json.company.replace(/\\s+/g, '_') + '_' + $('Detect Revise Type').item.json.job_title.replace(/\\s+/g, '_') + '_revised_' + $('Build Revised LaTeX').item.json.revise_type + '_' + $now.format('yyyyMMdd') + '.pdf' }}",
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "cf-129",
+      "name": "Send Revised PDF",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2640,
+        2140
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst ctx = $('Detect Revise Type').item.json;\nconst revised = $('ReviseForge').item.json.output || {};\nconst type = ctx.revise_type;\nif (type === 'cover') {\n  staticData.last_apply.cover_json = revised;\n} else {\n  staticData.last_apply.resume_json = revised;\n}\nstaticData.last_apply.timestamp = new Date().toISOString();\nconst summary = revised.changes_summary || 'Updated.';\nreturn [{ json: {\n  chat_id: ctx.chat_id,\n  message: \"\\u270F\\uFE0F *Updated!* \" + summary + \"\\n\\nMore tweaks? Just describe what you want changed.\"\n}}];"
+      },
+      "id": "cf-130",
+      "name": "Update Last Apply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2860,
+        2140
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-131",
+      "name": "Send Revise Done",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3080,
+        2140
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const chatId = $('Extract Input').item.json.chat_id;\nconst routerOutput = $('Route Intent').item.json.output || {};\nconst entities = routerOutput.entities || {};\nconst intent = routerOutput.intent || 'outreach';\nconst msgText = $('Extract Input').item.json.message_text || '';\n\n// Check for \"draft N\" sub-intent\nconst draftMatch = msgText.match(/draft\\s*(\\d+)/i);\nif (draftMatch && intent === 'outreach') {\n  return [{ json: {\n    chat_id: chatId,\n    research_type: 'draft',\n    draft_number: parseInt(draftMatch[1]),\n    company: entities.company || null,\n    role: entities.role || null,\n    queries: []\n  }}];\n}\n\nconst company = entities.company || 'Unknown';\nconst role = entities.role || 'Software Engineer';\nconst location = entities.location || '';\nconst year = new Date().getFullYear();\n\nlet queries = [];\nif (intent === 'intel') {\n  queries = [\n    company + ' latest news ' + year,\n    company + ' layoffs ' + (year - 1) + ' ' + year,\n    company + ' glassdoor reviews',\n    company + ' H1B sponsorship visa',\n    company + ' funding round valuation',\n    company + ' company culture engineering'\n  ];\n} else {\n  queries = [\n    company + ' ' + role + ' recruiter hiring manager LinkedIn',\n    company + ' ' + role + ' engineer team lead site:linkedin.com/in',\n    company + ' ' + role + (location ? ' ' + location : '') + ' hiring team'\n  ];\n}\n\nreturn [{ json: {\n  chat_id: chatId,\n  research_type: intent,\n  company, role, location, queries,\n  draft_number: null\n}}];"
+      },
+      "id": "cf-140",
+      "name": "Prepare Research",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        2500
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "draft-check",
+              "leftValue": "={{ $json.research_type }}",
+              "rightValue": "draft",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "cf-141",
+      "name": "IF: Draft Request?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1540,
+        2500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// Web Search — Multi-provider search via require('https')\n// Checks env vars, calls all configured providers, normalizes results\n// ═══════════════════════════════════════════════════════════════\n\nconst https = require('https');\nconst ctx = $input.first().json;\nconst queries = ctx.queries || [];\n\nfunction httpReq(method, url, headers, body) {\n  return new Promise((resolve) => {\n    try {\n      const u = new URL(url);\n      const opts = {\n        hostname: u.hostname,\n        path: u.pathname + u.search,\n        method,\n        headers: { ...headers, 'Content-Type': 'application/json' }\n      };\n      const req = https.request(opts, res => {\n        let data = '';\n        res.on('data', c => data += c);\n        res.on('end', () => {\n          try { resolve(JSON.parse(data)); } catch { resolve({}); }\n        });\n      });\n      req.on('error', () => resolve({}));\n      req.setTimeout(15000, () => { req.destroy(); resolve({}); });\n      if (body) req.write(JSON.stringify(body));\n      req.end();\n    } catch { resolve({}); }\n  });\n}\n\nconst allResults = [];\nconst serperKey = $env.SERPER_API_KEY || '';\nconst youcomKey = $env.YOUCOM_API_KEY || '';\nconst firecrawlKey = $env.FIRECRAWL_API_KEY || '';\n\nif (!serperKey && !youcomKey && !firecrawlKey) {\n  return [{ json: {\n    ...ctx,\n    search_results: [],\n    search_error: 'No search providers configured. Set SERPER_API_KEY, YOUCOM_API_KEY, or FIRECRAWL_API_KEY in n8n environment variables.'\n  }}];\n}\n\n// Serper (most reliable, simplest API)\nif (serperKey) {\n  for (const q of queries) {\n    try {\n      const resp = await httpReq('POST', 'https://google.serper.dev/search',\n        { 'X-API-KEY': serperKey }, { q, num: 10 });\n      const results = (resp.organic || []).map(r => ({\n        url: r.link, title: r.title || '', snippet: r.snippet || '', content: ''\n      }));\n      allResults.push({ source: 'serper', query: q, results });\n    } catch { /* skip failed query */ }\n  }\n}\n\n// You.com (includes full page content via livecrawl)\nif (youcomKey) {\n  for (const q of queries) {\n    try {\n      const resp = await httpReq('GET',\n        'https://api.ydc-index.io/search?query=' + encodeURIComponent(q) + '&num_web_results=10',\n        { 'X-API-Key': youcomKey }, null);\n      const results = (resp.hits || []).slice(0, 10).map(r => ({\n        url: r.url || '', title: r.title || '',\n        snippet: r.description || (r.snippets ? r.snippets[0] : '') || '',\n        content: (r.snippets || []).join('\\n') || ''\n      }));\n      allResults.push({ source: 'youcom', query: q, results });\n    } catch { /* skip failed query */ }\n  }\n}\n\n// Firecrawl (full markdown content)\nif (firecrawlKey) {\n  for (const q of queries) {\n    try {\n      const resp = await httpReq('POST', 'https://api.firecrawl.dev/v1/search',\n        { 'Authorization': 'Bearer ' + firecrawlKey }, { query: q, limit: 10 });\n      const results = (resp.data || []).map(r => ({\n        url: r.url || '', title: (r.metadata && r.metadata.title) || '',\n        snippet: (r.metadata && r.metadata.description) || '',\n        content: r.markdown || ''\n      }));\n      allResults.push({ source: 'firecrawl', query: q, results });\n    } catch { /* skip failed query */ }\n  }\n}\n\nreturn [{ json: {\n  ...ctx,\n  search_results: allResults,\n  search_error: allResults.length === 0 ? 'All search queries failed. Check API keys and quotas.' : null\n}}];\n"
+      },
+      "id": "cf-142",
+      "name": "Web Search",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        2500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// RRF Merge — Reciprocal Rank Fusion for multi-provider search\n// Adapted from PLAN.md section 6.1\n// ═══════════════════════════════════════════════════════════════\n\nconst k = 60;  // RRF smoothing constant (standard)\nconst topN = 15;\nconst ctx = $input.first().json;\nconst allResults = ctx.search_results || [];\n\n// Handle search errors\nif (ctx.search_error) {\n  return [{ json: { ...ctx, merged_results: [], result_count: 0 } }];\n}\n\nfunction normalizeUrl(url) {\n  try {\n    const u = new URL(url);\n    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fbclid', 'gclid']\n      .forEach(p => u.searchParams.delete(p));\n    return (u.origin + u.pathname.replace(/\\/$/, '') + u.search).toLowerCase();\n  } catch {\n    return url.toLowerCase();\n  }\n}\n\nconst fused = new Map();\n\nfor (const batch of allResults) {\n  const source = batch.source;\n  (batch.results || []).forEach((result, rank) => {\n    if (!result.url) return;\n    const key = normalizeUrl(result.url);\n\n    const existing = fused.get(key) || {\n      url: result.url,\n      title: '',\n      snippet: '',\n      content: '',\n      sources: [],\n      score: 0\n    };\n\n    // RRF formula: 1 / (k + rank + 1)\n    existing.score += 1 / (k + rank + 1);\n\n    // Track which providers found this result\n    if (!existing.sources.includes(source)) {\n      existing.sources.push(source);\n    }\n\n    // Prefer the longest content version from any provider\n    if ((result.content || '').length > existing.content.length) {\n      existing.content = result.content;\n    }\n    // Prefer non-empty title\n    if (!existing.title && result.title) {\n      existing.title = result.title;\n    }\n    // Prefer longer snippet\n    if ((result.snippet || '').length > existing.snippet.length) {\n      existing.snippet = result.snippet;\n    }\n\n    fused.set(key, existing);\n  });\n}\n\n// Sort by score desc, take top N\nconst merged = Array.from(fused.values())\n  .sort((a, b) => b.score - a.score)\n  .slice(0, topN);\n\nreturn [{ json: {\n  ...ctx,\n  merged_results: merged,\n  result_count: merged.length\n}}];\n"
+      },
+      "id": "cf-143",
+      "name": "RRF Merge",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        2500
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "intel-check",
+              "leftValue": "={{ $json.research_type }}",
+              "rightValue": "intel",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "cf-144",
+      "name": "IF: Intel or Outreach?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2200,
+        2500
+      ]
+    },
+    {
+      "parameters": {
+        "prompt": "=# CompanyIntel\n\n## Role\n\nYou are a company health analysis engine. You receive aggregated search results about a target company covering news, reviews, layoffs, funding, H1B sponsorship, and culture. You synthesize them into a structured company health report that helps a job seeker decide whether to apply.\n\n## Input\n\n- `company`: The target company name\n- `search_results`: Aggregated search results (post-RRF merge) covering multiple query facets: recent news, layoff history, Glassdoor reviews, H1B sponsorship, funding rounds, company culture\n\n## Output Schema\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\n```json\n{\n  \"company\": \"Anthropic\",\n  \"health_score\": 85,\n  \"recommendation\": \"Apply | Caution | Avoid\",\n  \"summary\": \"2-3 sentence overview\",\n  \"layoffs\": {\n    \"has_recent_layoffs\": false,\n    \"details\": \"No layoffs in past 12 months\",\n    \"timeline\": []\n  },\n  \"sentiment\": {\n    \"glassdoor_rating\": 4.3,\n    \"overall_mood\": \"Positive\",\n    \"positives\": [\"Strong engineering culture\", \"Competitive compensation\"],\n    \"negatives\": [\"High bar can feel stressful\", \"Fast-paced environment\"],\n    \"breakdown\": {\n      \"work_life_balance\": 4.0,\n      \"compensation\": 4.6,\n      \"career_growth\": 4.2,\n      \"management\": 4.1\n    }\n  },\n  \"h1b\": {\n    \"sponsors\": true,\n    \"recent_approvals\": \"~30 approvals in 2024\",\n    \"trend\": \"Increasing | Stable | Decreasing | Unknown\"\n  },\n  \"funding\": {\n    \"stage\": \"Series E\",\n    \"last_round\": \"$2B at $18.4B valuation\",\n    \"runway\": \"Strong\"\n  },\n  \"culture\": {\n    \"type\": \"Research-first, mission-driven\",\n    \"values\": [\"Safety\", \"Empirical research\", \"Collaboration\"]\n  },\n  \"red_flags\": [],\n  \"green_flags\": [\"Active open source\", \"Clear promotion criteria\", \"Growing headcount\"]\n}\n```\n\n## Rules\n\n### 1. Source-Only Analysis\n\nUse ONLY the information present in the provided search results. Do not supplement with prior knowledge about the company. If a data point is not found in the sources, explicitly mark it as unknown rather than guessing:\n- `glassdoor_rating`: set to `null` if not found\n- `h1b.sponsors`: set to `false` if no evidence found (err on the side of caution for the job seeker)\n- `h1b.trend`: set to `\"Unknown\"` if insufficient data\n- `funding.stage`: set to `\"Unknown\"` if not found\n- `funding.runway`: set to `\"Unknown\"` if not found\n\n### 2. Health Score (0-100)\n\nA composite score reflecting overall company health from a job seeker's perspective:\n\n| Range | Meaning |\n|-------|---------|\n| 70-100 | Healthy — safe to apply, strong signals |\n| 40-69 | Caution — mixed signals, some concerns worth noting |\n| 0-39 | Avoid — significant red flags (recent layoffs, financial distress, toxic culture reports) |\n\nWeight factors approximately:\n- Financial stability / funding runway: 25%\n- Employee sentiment (Glassdoor, reviews): 25%\n- Growth signals (hiring, headcount expansion): 20%\n- Layoff history: 15%\n- H1B / immigration friendliness: 15% (higher weight if candidate requires sponsorship — but you don't know this, so keep it moderate)\n\n### 3. Recommendation Thresholds\n\n- `health_score >= 70` → `\"Apply\"`\n- `health_score >= 40 and < 70` → `\"Caution\"`\n- `health_score < 40` → `\"Avoid\"`\n\n### 4. Layoff Analysis\n\n- `has_recent_layoffs`: true if any layoff event within the past 12 months is mentioned in sources\n- `details`: 1-2 sentence summary of layoff scope and timing\n- `timeline`: Array of layoff events found, each as a string: `\"Jan 2025: ~200 employees (15% of workforce)\"`. Empty array if none found.\n\n### 5. Sentiment Analysis\n\n- Extract Glassdoor rating if mentioned in sources (numeric, e.g., 4.3). Set to `null` for private companies without Glassdoor presence.\n- `overall_mood`: one of `\"Positive\"`, `\"Mixed\"`, `\"Negative\"` — summarizing the balance of employee sentiment in sources\n- `positives` and `negatives`: 2-4 entries each, drawn from review themes in the sources. Keep each entry under 50 characters.\n- `breakdown`: Extract sub-ratings if available in sources. Set individual fields to `null` if not found.\n\n### 6. H1B Sponsorship\n\n- `sponsors`: `true` only if sources explicitly confirm H1B sponsorship or show recent H1B approvals\n- `recent_approvals`: Summarize approval counts if found in sources (e.g., from H1B employer data). Set to `null` if not found.\n- `trend`: Determine from multi-year data if available. Default to `\"Unknown\"`.\n\n### 7. Funding\n\n- For public companies: note \"Public\" for `stage`, market cap for `last_round` if available, `\"Strong\"` or `\"Stable\"` for `runway`\n- For private companies: extract most recent funding round from sources\n- For companies with no funding data in sources: set all fields to `\"Unknown\"`\n\n### 8. Red Flags and Green Flags\n\n- `red_flags`: 0-4 entries. Concrete warning signs: recent layoffs, hiring freezes, lawsuit mentions, negative review patterns, leadership exodus, financial distress signals. Each entry under 60 characters.\n- `green_flags`: 0-4 entries. Positive signals: active hiring, revenue growth, positive press, open source contributions, clear promotion paths, strong retention. Each entry under 60 characters.\n- Only include flags that are directly supported by the search results.\n\n### 9. Summary\n\nThe `summary` field should be 2-3 sentences giving the executive overview. Lead with the most decision-relevant fact (e.g., \"Anthropic is well-funded and actively hiring ML engineers\" or \"Recent 30% layoff raises questions about team stability\"). End with the recommendation framing.\n\n---\n\nCompany: {{ $json.company }}\n\nSearch Results:\n{{ $json.merged_results.map(r => '## ' + r.title + '\\nURL: ' + r.url + '\\n' + r.snippet + (r.content ? '\\n' + r.content.substring(0, 500) : '')).join('\\n\\n---\\n\\n') }}"
+      },
+      "id": "cf-145",
+      "name": "CompanyIntel",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        2420,
+        2500
+      ]
+    },
+    {
+      "parameters": {
+        "model": "deepseek/deepseek-chat-v3.1:free",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1",
+          "temperature": 0
+        }
+      },
+      "id": "cf-146",
+      "name": "OpenRouter LLM (Intel)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2360,
+        2300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"company\":{\"type\":\"string\"},\"health_score\":{\"type\":\"integer\"},\"recommendation\":{\"type\":\"string\",\"enum\":[\"Apply\",\"Caution\",\"Avoid\"]},\"summary\":{\"type\":\"string\"},\"layoffs\":{\"type\":\"object\",\"properties\":{\"has_recent_layoffs\":{\"type\":\"boolean\"},\"details\":{\"type\":\"string\"}}},\"sentiment\":{\"type\":\"object\",\"properties\":{\"glassdoor_rating\":{},\"overall_mood\":{\"type\":\"string\"},\"positives\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"negatives\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}},\"h1b\":{\"type\":\"object\",\"properties\":{\"sponsors\":{\"type\":\"boolean\"},\"recent_approvals\":{\"type\":\"string\"}}},\"funding\":{\"type\":\"object\",\"properties\":{\"stage\":{\"type\":\"string\"},\"last_round\":{\"type\":\"string\"}}},\"red_flags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"green_flags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"required\":[\"company\",\"health_score\",\"recommendation\",\"summary\",\"red_flags\",\"green_flags\"]}"
+      },
+      "id": "cf-147",
+      "name": "Intel Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        2500,
+        2300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json.output || {};\nconst ctx = $('RRF Merge').item.json;\nconst recIcon = r.recommendation === 'Apply' ? '\\u2705' : r.recommendation === 'Caution' ? '\\u26A0\\uFE0F' : '\\u{1F6D1}';\nconst sections = [\n  recIcon + ' *' + (r.company || ctx.company) + ' \\u2014 Health Score: ' + (r.health_score || '?') + '/100*',\n  '_' + (r.summary || 'No summary available.') + '_',\n  '',\n  '\\u{1F4CA} *Sentiment:* ' + (r.sentiment && r.sentiment.overall_mood || 'Unknown') +\n    (r.sentiment && r.sentiment.glassdoor_rating ? ' (Glassdoor: ' + r.sentiment.glassdoor_rating + ')' : ''),\n];\nif (r.sentiment && r.sentiment.positives && r.sentiment.positives.length) {\n  sections.push(r.sentiment.positives.map(p => '  \\u2705 ' + p).join('\\n'));\n}\nif (r.sentiment && r.sentiment.negatives && r.sentiment.negatives.length) {\n  sections.push(r.sentiment.negatives.map(p => '  \\u274C ' + p).join('\\n'));\n}\nsections.push('');\nsections.push('\\u{1F534} *Layoffs:* ' + (r.layoffs && r.layoffs.has_recent_layoffs ? 'Yes \\u2014 ' + r.layoffs.details : 'None recent'));\nsections.push('\\u{1F4B0} *Funding:* ' + (r.funding && r.funding.stage || 'Unknown') + (r.funding && r.funding.last_round ? ' (' + r.funding.last_round + ')' : ''));\nsections.push('\\u{1F6C2} *H1B:* ' + (r.h1b && r.h1b.sponsors ? 'Yes' + (r.h1b.recent_approvals ? ' (' + r.h1b.recent_approvals + ')' : '') : 'Unknown'));\nsections.push('');\nif (r.green_flags && r.green_flags.length) {\n  sections.push('\\u{1F7E2} *Green Flags:*\\n' + r.green_flags.map(f => '\\u2022 ' + f).join('\\n'));\n}\nif (r.red_flags && r.red_flags.length) {\n  sections.push('\\u{1F534} *Red Flags:*\\n' + r.red_flags.map(f => '\\u2022 ' + f).join('\\n'));\n}\nreturn [{ json: { chat_id: ctx.chat_id, message: sections.filter(Boolean).join('\\n') } }];"
+      },
+      "id": "cf-148",
+      "name": "Format Intel Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        2500
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-149",
+      "name": "Send Intel",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2860,
+        2500
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "prompt": "=# ContactFinder\n\n## Role\n\nYou are a contact extraction engine. You receive aggregated search results (post-RRF merge) about a target company and role, and extract named contacts who could be relevant for cold outreach. You return structured data about each contact — never invent people or URLs.\n\n## Input\n\n- `search_results`: Top 15 deduplicated search results, each with `url`, `title`, `snippet`, and optionally `content` (from the RRF merge node)\n- `company`: The target company name\n- `target_roles`: The candidate's target role titles (e.g., \"ML Engineer\", \"Applied Scientist\")\n- `candidate_location`: The candidate's city/region\n\n## Output Schema\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\n```json\n{\n  \"contacts\": [\n    {\n      \"name\": \"Sarah Chen\",\n      \"role\": \"University Recruiter, ML\",\n      \"type\": \"Recruiter | Hiring Manager | IC | Director | VP\",\n      \"linkedin_url\": \"https://linkedin.com/in/sarahchen\",\n      \"location\": \"SF\",\n      \"priority\": \"High | Medium | Low\",\n      \"confidence\": \"High | Medium | Low\",\n      \"reason\": \"Actively posting about ML hiring last week\",\n      \"sources\": [\"firecrawl\", \"youcom\"]\n    }\n  ],\n  \"top_priority\": [\n    {\n      \"name\": \"Sarah Chen\",\n      \"reason\": \"Closest-fit recruiter + recent hiring activity\"\n    }\n  ],\n  \"search_tips\": [\n    \"Try adding 'NYC' to your search if most results are SF-only\"\n  ]\n}\n```\n\n## Rules\n\n### 1. Only Real People From Provided Sources\n\nThis is the most important rule. You must ONLY include contacts whose **full names** appear explicitly in the provided search results (`title`, `snippet`, or `content` fields). If a search result mentions \"an engineering manager at Anthropic\" without naming them, do not include that person. If no named people appear in the sources, return `\"contacts\": []`.\n\n### 2. Never Fabricate LinkedIn URLs\n\nOnly include a `linkedin_url` if the exact URL appears in the search results. If a person's name appears in a search result but no LinkedIn URL is provided, set `linkedin_url` to `null`. Do not construct URLs by guessing the person's LinkedIn handle.\n\n### 3. Priority Ranking\n\nAssign priority based on reachability and relevance to the candidate's job search:\n\n| Type | Priority | Reasoning |\n|------|----------|-----------|\n| Recruiter (technical/university) | High | Gatekeepers, respond to cold outreach most often |\n| Hiring Manager (Eng Manager, Team Lead on target team) | High | Direct decision-maker for the role |\n| IC on the target team (Senior/Staff Engineer) | Medium | Can refer internally, good for technical conversations |\n| Director / VP | Low | Hard to reach cold, but high-value if connected |\n| CEO / Founder | Low | Only relevant if company size < 50 employees |\n\n### 4. Confidence Scoring\n\n- **High**: Full name + title + company confirmed in source. LinkedIn URL present.\n- **Medium**: Full name + company confirmed, but title inferred or LinkedIn URL missing.\n- **Low**: Name appears in source but association with the company or role is ambiguous.\n\n### 5. Contact Budget\n\nReturn a maximum of 5 contacts. If more than 5 named people appear in sources, select the 5 with the highest priority and confidence. If fewer than 5 are found, return however many exist — do not pad.\n\n### 6. Top Priority Selection\n\nThe `top_priority` array should contain the 1-2 contacts you'd recommend the candidate reach out to first. Each entry needs a `reason` explaining why (e.g., \"Recruiter + same city + recent hiring post\").\n\n### 7. Search Tips\n\nReturn 1-3 actionable tips in `search_tips` to help the candidate refine their search if results were sparse. Examples:\n- \"Try adding your city name to narrow results geographically\"\n- \"Search for '{company} engineering blog' to find IC authors\"\n- \"Results are recruiter-heavy — try 'engineering manager {company} {team}' for hiring managers\"\n\nIf results were rich and diverse, return an empty array: `\"search_tips\": []`.\n\n### 8. Source Attribution\n\nThe `sources` field on each contact must list which search providers surfaced that person (e.g., `[\"firecrawl\", \"serper\"]`). This is populated from the `source` field in the RRF-merged results. A contact appearing in multiple providers increases confidence.\n\n### 9. Location Extraction\n\nExtract the contact's location from the search result if available (usually from LinkedIn snippet or profile data). Use short metro-area format: \"SF\", \"NYC\", \"Seattle\", \"London\". Set to `null` if not determinable.\n\n---\n\nCompany: {{ $json.company }}\nTarget Role: {{ $json.role }}\n\nSearch Results:\n{{ $json.merged_results.map(r => '## ' + r.title + '\\nURL: ' + r.url + '\\n' + r.snippet + (r.content ? '\\n' + r.content.substring(0, 500) : '')).join('\\n\\n---\\n\\n') }}"
+      },
+      "id": "cf-150",
+      "name": "ContactFinder",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        2420,
+        2740
+      ]
+    },
+    {
+      "parameters": {
+        "model": "deepseek/deepseek-chat-v3.1:free",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1",
+          "temperature": 0
+        }
+      },
+      "id": "cf-151",
+      "name": "OpenRouter LLM (ContactFinder)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2360,
+        2940
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"contacts\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"role\":{\"type\":\"string\"},\"type\":{\"type\":\"string\"},\"linkedin_url\":{},\"location\":{},\"priority\":{\"type\":\"string\"},\"confidence\":{\"type\":\"string\"},\"reason\":{\"type\":\"string\"},\"sources\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"required\":[\"name\",\"role\",\"priority\",\"confidence\",\"reason\"]}},\"search_tips\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"required\":[\"contacts\"]}"
+      },
+      "id": "cf-152",
+      "name": "ContactFinder Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        2500,
+        2940
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json.output || {};\nconst ctx = $('RRF Merge').item.json;\nconst staticData = $getWorkflowStaticData('global');\nconst contacts = result.contacts || [];\n\n// Store contacts for later \"draft N\" retrieval\nstaticData.last_contacts = {\n  contacts: contacts,\n  company: ctx.company,\n  role: ctx.role,\n  timestamp: new Date().toISOString()\n};\n\nif (contacts.length === 0) {\n  const tips = (result.search_tips || []).map(t => '\\u2022 ' + t).join('\\n');\n  return [{ json: { chat_id: ctx.chat_id, message: '\\u{1F4E7} *No contacts found for ' + ctx.company + '.*\\n\\n' + (tips ? '*Search Tips:*\\n' + tips : 'Try a more specific role or check the company name.') } }];\n}\n\nconst lines = contacts.map((c, i) => {\n  const priIcon = c.priority === 'High' ? '\\u{1F525}' : c.priority === 'Medium' ? '\\u2B50' : '\\u{1F4CC}';\n  const linkedIn = c.linkedin_url ? ' [LinkedIn](' + c.linkedin_url + ')' : '';\n  return (i + 1) + '. ' + priIcon + ' *' + c.name + '* \\u2014 ' + c.role +\n    '\\n   ' + c.type + ' | ' + (c.location || '?') + ' | Confidence: ' + c.confidence +\n    linkedIn +\n    '\\n   _' + c.reason + '_';\n});\n\nconst msg = '\\u{1F4E7} *Contacts at ' + ctx.company + ':*\\n\\n' + lines.join('\\n\\n') +\n  '\\n\\n\\u{1F4A1} Reply \"draft 1\" to generate outreach templates for contact #1.';\nreturn [{ json: { chat_id: ctx.chat_id, message: msg } }];"
+      },
+      "id": "cf-153",
+      "name": "Format Contacts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        2740
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-154",
+      "name": "Send Contacts",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2860,
+        2740
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $('Extract Input').item.json.chat_id;\nconst ctx = $('Prepare Research').item.json;\nconst draftNum = ctx.draft_number;\nconst lastContacts = staticData.last_contacts;\n\nif (!lastContacts || !lastContacts.contacts || lastContacts.contacts.length === 0) {\n  return [{ json: { chat_id: chatId, error: 'No contacts to draft for. Run /outreach first to find contacts.' } }];\n}\n\nconst idx = draftNum - 1;\nif (idx < 0 || idx >= lastContacts.contacts.length) {\n  return [{ json: { chat_id: chatId, error: 'Contact #' + draftNum + ' not found. You have ' + lastContacts.contacts.length + ' contacts. Try \"draft 1\" through \"draft ' + lastContacts.contacts.length + '\".' } }];\n}\n\nconst contact = lastContacts.contacts[idx];\nconst resumeData = staticData.last_apply || {};\nreturn [{ json: {\n  chat_id: chatId,\n  contact: contact,\n  company: lastContacts.company,\n  role: lastContacts.role,\n  candidate_name: (resumeData.personal && resumeData.personal.name) || 'Candidate',\n  candidate_location: (resumeData.personal && resumeData.personal.location) || '',\n  relevant_achievement: resumeData.resume_text ? resumeData.resume_text.substring(0, 500) : '',\n  error: ''\n}}];"
+      },
+      "id": "cf-155",
+      "name": "Load Draft Contact",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        2980
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "contact-check",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "cf-156",
+      "name": "IF: Contact Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1980,
+        2980
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ \"\\u274C \" + $json.error }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-157",
+      "name": "Send No Contact",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1980,
+        3180
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "CareerForge Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "prompt": "=# OutreachWriter\n\n## Role\n\nYou are a cold outreach drafting engine. You receive a selected contact's details, the candidate's background, and location context. You generate 4 outreach variants — a LinkedIn connection note, a LinkedIn message, an email, and a follow-up message. Each is calibrated for length limits and geographic proximity.\n\n## Input\n\n- `contact`: The selected contact object from ContactFinder (name, role, type, company, linkedin_url, location)\n- `candidate_name`: The candidate's name\n- `candidate_role`: The candidate's target role title\n- `candidate_location`: The candidate's city\n- `contact_location`: The contact's city (from ContactFinder, may be null)\n- `company`: The target company name\n- `relevant_achievement`: 1-2 key metric-backed bullets from the candidate's master resume most relevant to the contact's team/role\n\n## Output Schema\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\n```json\n{\n  \"subject\": \"Retrieval Infrastructure role at Anthropic\",\n  \"linkedin_message\": \"Hi Sarah — saw your recent post about ML hiring. I've spent the last 2 years building FAISS retrieval at scale (2M QPS, sub-50ms p99). Would love to connect re: your openings.\",\n  \"email_body\": \"Hi Sarah,\\n\\n[specific hook from their recent work]\\n\\n[one sentence on fit]\\n\\n[one metric-heavy bullet from resume]\\n\\n[location-aware CTA]\\n\\nBest,\\n[Name]\",\n  \"followup_message\": \"Hi Sarah — following up on my note last week about the ML roles. Totally get if timing's off, happy to check back later or connect directly on LinkedIn for future openings.\"\n}\n```\n\n## Rules\n\n### 1. LinkedIn Message: Under 300 Characters\n\nThe `linkedin_message` field must be **300 characters or fewer** — this is the LinkedIn connection request note limit. Every character counts. Structure:\n1. Personal hook (reference something they posted, their team's work, or a shared context) — 1 clause\n2. Your value prop — 1 metric-backed clause\n3. Soft ask — \"Would love to connect\" or similar\n\nDo not waste characters on \"My name is\" or \"I hope this finds you well\".\n\n### 2. Email: 100-150 Words\n\nThe `email_body` field must be **100-150 words**. Structure:\n1. **Line 1**: Personal hook — reference their recent post, their team's shipped work, a talk they gave, or their company's open source. Must be specific and real (from search results context).\n2. **Line 2**: One sentence connecting your background to their team's work.\n3. **Line 3**: One metric-heavy bullet from the candidate's resume — the single most relevant achievement.\n4. **Line 4**: Location-aware CTA (see Rule 4).\n5. **Sign-off**: \"Best, [Name]\"\n\n### 3. Never Flatter\n\nDo not open with compliments about how amazing the company is or how impressed you are. Lead with a **specific reference** — something they posted on LinkedIn, their team's recent blog post, an open-source project they maintain, a conference talk. If no specific reference is available from the search context, lead with a factual observation about their team's technical work as described in the job description.\n\nBanned openers:\n- \"I'm a huge fan of...\"\n- \"I've been following [company] for years...\"\n- \"Your work is truly inspiring...\"\n- \"I'm confident I'd be a great fit...\"\n\n### 4. Location-Aware CTA\n\nAdapt the closing based on geographic proximity between candidate and contact:\n\n| Scenario | CTA |\n|----------|-----|\n| Same city (candidate and contact in same metro) | \"Would love to grab a coffee in [city] this week to chat about the role.\" |\n| Same country, different city | \"Happy to do a 30-minute video call whenever works for you.\" |\n| Different country, or contact location unknown | \"Happy to do a 30-minute video call — flexible on time zones.\" |\n\n### 5. Subject Line\n\nThe `subject` field should be direct and specific: `\"{Role} role at {Company}\"` or `\"{Relevant skill} + {Company}\"`. No clickbait, no questions, no emojis. Under 60 characters.\n\n### 6. Follow-up Message\n\nThe `followup_message` is sent 5-7 days after the initial outreach if there's no response. It must:\n- Be shorter than the original (2-3 sentences max)\n- Reference the original message (\"following up on my note last week\")\n- Offer a graceful exit (\"totally get if timing's off\")\n- Keep the door open (\"happy to check back later or connect for future openings\")\n- NOT repeat the full pitch or resume details\n\n### 7. No Fabricated Details\n\nEvery metric, project name, and technical detail must come from the candidate's master resume. Every reference to the contact's work must come from the provided search results or contact context. Do not invent LinkedIn posts, blog articles, or conference talks.\n\n### 8. Tone\n\nWrite like an engineer reaching out to another engineer — direct, specific, zero corporate-speak. First person, active voice. Contractions are fine. The goal is to sound like a real person, not a template.\n\n---\n\nContact: {{ $json.contact.name }} — {{ $json.contact.role }} at {{ $json.company }}\nContact Location: {{ $json.contact.location || 'Unknown' }}\nContact Type: {{ $json.contact.type }}\n\nCandidate: {{ $json.candidate_name }}\nCandidate Location: {{ $json.candidate_location || 'Unknown' }}\nTarget Role: {{ $json.role }}\n\nRelevant Background:\n{{ $json.relevant_achievement }}"
+      },
+      "id": "cf-158",
+      "name": "OutreachWriter",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        2200,
+        2980
+      ]
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-sonnet-4.6",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1",
+          "temperature": 0.3,
+          "maxTokens": 2048
+        }
+      },
+      "id": "cf-159",
+      "name": "OpenRouter LLM (Writer)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2140,
+        3180
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"subject\":{\"type\":\"string\"},\"linkedin_message\":{\"type\":\"string\"},\"email_body\":{\"type\":\"string\"},\"followup_message\":{\"type\":\"string\"}},\"required\":[\"subject\",\"linkedin_message\",\"email_body\",\"followup_message\"]}"
+      },
+      "id": "cf-160",
+      "name": "Outreach Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        2280,
+        3180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const o = $input.first().json.output || {};\nconst ctx = $('Load Draft Contact').item.json;\nconst contact = ctx.contact || {};\nconst msg = '\\u{1F4E7} *Outreach for ' + contact.name + ' (' + contact.role + '):*\\n\\n' +\n  '\\u{1F4CC} *Subject:* ' + (o.subject || '') + '\\n\\n' +\n  '\\u{1F517} *LinkedIn Message* (< 300 chars):\\n```\\n' + (o.linkedin_message || '') + '\\n```\\n\\n' +\n  '\\u{1F4E9} *Email:*\\n```\\n' + (o.email_body || '') + '\\n```\\n\\n' +\n  '\\u{1F504} *Follow-up (5-7 days later):*\\n```\\n' + (o.followup_message || '') + '\\n```\\n\\n' +\n  '_Copy any section above and personalize before sending._';\nreturn [{ json: { chat_id: ctx.chat_id, message: msg } }];"
+      },
+      "id": "cf-161",
+      "name": "Format Outreach",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        2980
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "cf-162",
+      "name": "Send Outreach",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2640,
+        2980
+      ],
       "credentials": {
         "telegramApi": {
           "id": "TELEGRAM_CREDENTIAL_ID",
@@ -802,56 +2447,56 @@
         ],
         [
           {
-            "node": "Stub: Apply",
+            "node": "Send Apply Ack",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Stub: Revise",
+            "node": "Load Revise Context",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Stub: Score",
+            "node": "Load Score Context",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Stub: Intel",
+            "node": "Prepare Research",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Stub: Outreach",
+            "node": "Prepare Research",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Stub: Salary",
+            "node": "Extract Salary Params",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Stub: Track",
+            "node": "Track Application",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Stub: Status",
+            "node": "List Applications",
             "type": "main",
             "index": 0
           }
@@ -958,6 +2603,897 @@
         [
           {
             "node": "Send Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Apply Ack": {
+      "main": [
+        [
+          {
+            "node": "Retrieve Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve Job": {
+      "main": [
+        [
+          {
+            "node": "IF: Job Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Job Found?": {
+      "main": [
+        [
+          {
+            "node": "Fetch Full JD",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Job Not Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Full JD": {
+      "main": [
+        [
+          {
+            "node": "Prepare Job Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Job Context": {
+      "main": [
+        [
+          {
+            "node": "Read Master Resume (Apply)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Master Resume (Apply)": {
+      "main": [
+        [
+          {
+            "node": "Parse Personal Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Personal Info": {
+      "main": [
+        [
+          {
+            "node": "SeniorityDetector",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter LLM (Seniority)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "SeniorityDetector",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seniority Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "SeniorityDetector",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SeniorityDetector": {
+      "main": [
+        [
+          {
+            "node": "Load Skeletons",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Skeletons": {
+      "main": [
+        [
+          {
+            "node": "ForgeScore",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter LLM (ForgeScore)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "ForgeScore",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ForgeScore Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "ForgeScore",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ForgeScore": {
+      "main": [
+        [
+          {
+            "node": "Prepare Apply Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Apply Context": {
+      "main": [
+        [
+          {
+            "node": "Score Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score Gate": {
+      "main": [
+        [
+          {
+            "node": "Caution Check",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Skip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Caution Check": {
+      "main": [
+        [
+          {
+            "node": "Send Caution",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ResumeForge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "CoverForge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Caution": {
+      "main": [
+        [
+          {
+            "node": "ResumeForge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "CoverForge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter LLM (Resume)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "ResumeForge",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resume Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "ResumeForge",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ResumeForge": {
+      "main": [
+        [
+          {
+            "node": "Build Resume LaTeX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Resume LaTeX": {
+      "main": [
+        [
+          {
+            "node": "Compile Resume PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compile Resume PDF": {
+      "main": [
+        [
+          {
+            "node": "Send Resume PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Resume PDF": {
+      "main": [
+        [
+          {
+            "node": "Merge PDFs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter LLM (Cover)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "CoverForge",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cover Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "CoverForge",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CoverForge": {
+      "main": [
+        [
+          {
+            "node": "Build Cover LaTeX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Cover LaTeX": {
+      "main": [
+        [
+          {
+            "node": "Compile Cover PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compile Cover PDF": {
+      "main": [
+        [
+          {
+            "node": "Send Cover PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Cover PDF": {
+      "main": [
+        [
+          {
+            "node": "Merge PDFs",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge PDFs": {
+      "main": [
+        [
+          {
+            "node": "Store Apply Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Apply Context": {
+      "main": [
+        [
+          {
+            "node": "Send Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Track Application": {
+      "main": [
+        [
+          {
+            "node": "Send Track Ack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Applications": {
+      "main": [
+        [
+          {
+            "node": "Send Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Score Context": {
+      "main": [
+        [
+          {
+            "node": "IF: Has Score Data?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Has Score Data?": {
+      "main": [
+        [
+          {
+            "node": "ScoreOnly",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send No Score Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter LLM (ScoreOnly)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "ScoreOnly",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ScoreOnly Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "ScoreOnly",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ScoreOnly": {
+      "main": [
+        [
+          {
+            "node": "Format Score Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Score Message": {
+      "main": [
+        [
+          {
+            "node": "Send Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Salary Params": {
+      "main": [
+        [
+          {
+            "node": "Search Salary Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Salary Data": {
+      "main": [
+        [
+          {
+            "node": "SalarySummarize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter LLM (Salary)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "SalarySummarize",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salary Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "SalarySummarize",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SalarySummarize": {
+      "main": [
+        [
+          {
+            "node": "Format Salary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Salary": {
+      "main": [
+        [
+          {
+            "node": "Send Salary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Revise Context": {
+      "main": [
+        [
+          {
+            "node": "IF: Has Last Apply?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Has Last Apply?": {
+      "main": [
+        [
+          {
+            "node": "Detect Revise Type",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send No Revise Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detect Revise Type": {
+      "main": [
+        [
+          {
+            "node": "ReviseForge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter LLM (Revise)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "ReviseForge",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revise Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "ReviseForge",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReviseForge": {
+      "main": [
+        [
+          {
+            "node": "Build Revised LaTeX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Revised LaTeX": {
+      "main": [
+        [
+          {
+            "node": "Compile Revised PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compile Revised PDF": {
+      "main": [
+        [
+          {
+            "node": "Send Revised PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Revised PDF": {
+      "main": [
+        [
+          {
+            "node": "Update Last Apply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Last Apply": {
+      "main": [
+        [
+          {
+            "node": "Send Revise Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Research": {
+      "main": [
+        [
+          {
+            "node": "IF: Draft Request?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Draft Request?": {
+      "main": [
+        [
+          {
+            "node": "Load Draft Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Web Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Web Search": {
+      "main": [
+        [
+          {
+            "node": "RRF Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RRF Merge": {
+      "main": [
+        [
+          {
+            "node": "IF: Intel or Outreach?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Intel or Outreach?": {
+      "main": [
+        [
+          {
+            "node": "CompanyIntel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ContactFinder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter LLM (Intel)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "CompanyIntel",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intel Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "CompanyIntel",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CompanyIntel": {
+      "main": [
+        [
+          {
+            "node": "Format Intel Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Intel Report": {
+      "main": [
+        [
+          {
+            "node": "Send Intel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter LLM (ContactFinder)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "ContactFinder",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ContactFinder Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "ContactFinder",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ContactFinder": {
+      "main": [
+        [
+          {
+            "node": "Format Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Contacts": {
+      "main": [
+        [
+          {
+            "node": "Send Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Draft Contact": {
+      "main": [
+        [
+          {
+            "node": "IF: Contact Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Contact Found?": {
+      "main": [
+        [
+          {
+            "node": "OutreachWriter",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send No Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter LLM (Writer)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "OutreachWriter",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Outreach Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "OutreachWriter",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OutreachWriter": {
+      "main": [
+        [
+          {
+            "node": "Format Outreach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Outreach": {
+      "main": [
+        [
+          {
+            "node": "Send Outreach",
             "type": "main",
             "index": 0
           }
