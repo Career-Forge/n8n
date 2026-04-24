@@ -4,6 +4,13 @@
 .env.*
 !.env.example
 
+# Archive (legacy workflows, old docs, deprecated services)
+bak/
+
+# User data (contains PII)
+user-data/
+data/user-data/
+
 # n8n runtime databases (Docker volume data)
 *.sqlite
 *.sqlite-journal
@@ -12,12 +19,6 @@
 # Debug SQL queries
 docker/query*.sql
 docker/qlatest.sql
-
-# Old workflow versions (superseded, contain dev artifacts)
-workflows/06_telegram_bot.json
-workflows/06_telegram_bot_v2.json
-workflows/06_telegram_bot_v3.json
-workflows/07_careerforge_master_v1.json
 
 # Node
 node_modules/
@@ -41,8 +42,3 @@ logs/
 # Build artifacts
 dist/
 build/
-
-# Personal data in storage (resume contains PII)
-storage/master_resume/master_resume.txt
-storage/applications/
-storage/exports/

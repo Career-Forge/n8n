@@ -1,35 +1,89 @@
 # CareerForge n8n
 
-An AI-powered career automation system built entirely in n8n. Scrape job descriptions, score resume fit, tailor your resume with Claude, research companies, find contacts, and get a Telegram digest every morning -- all automated.
+A single Telegram bot that handles your entire job search — morning digests, tailored resume + cover letter PDFs, company intel, cold outreach, and application tracking. Built entirely in [n8n](https://n8n.io), self-hosted, runs for ~$2/month after a one-time $10 OpenRouter deposit.
 
-Built and demoed live at **n8n NYC Meetup, April 2026**.
-
----
-
-## Workflows
-
-| # | Workflow | What it does |
-|---|----------|--------------|
-| 01 | **Application Forge** | Scrapes a JD, scores resume fit (ForgeScore), tailors resume (ResumeForge), writes cover letter (CoverForge) |
-| 02 | **Job Discovery** | Parallel search via Serper.dev + You.com, deduplicates, scores fit, generates market intel |
-| 03 | **Company Intel** | 3-way parallel research -- news, company profile, contact search -- risk score + outreach drafts |
-| 04 | **Morning Digest** | Scheduled 8am Telegram message with top 3 jobs + market pulse |
-| 05 | **Master Orchestration** | Brian the Router (GPT-4.1-nano) routes any message to the right workflow |
-| 06 | **Telegram Bot** | Self-contained bot -- find jobs or generate application packages via Telegram |
+Demoed live at **n8n NYC Meetup, April 2026**.
 
 ---
 
-## Models
+## How It Works
 
-All LLM calls route through [OpenRouter](https://openrouter.ai) -- one API key, any model.
+```mermaid
+flowchart TD
+    TG["Telegram Message"] --> ROUTER["Intent Router<br/><i>Llama 3.3 70B :free</i>"]
+    CRON["Schedule Trigger<br/><i>8am + 11:30am ET</i>"] --> FIND
 
-| Node | Model |
-|------|-------|
-| JD Analyzer, ForgeScore, Risk Assessor, Market Intel | `google/gemini-2.0-flash-001` |
-| ResumeForge, CoverForge, Intel Synthesizer, Outreach Writer | `anthropic/claude-sonnet-4.6` |
-| Fit Scorer | `anthropic/claude-haiku-4-5` |
-| Brian the Router | `openai/gpt-4.1-nano` |
-| The Judge (output validation) | `google/gemini-2.0-flash-001` |
+    ROUTER --> |help| HELP["Help Text"]
+    ROUTER --> |find_jobs| FIND["Job Discovery<br/><i>Greenhouse API + JobScorer</i>"]
+    ROUTER --> |apply| APPLY["Resume + Cover PDF<br/><i>Claude Sonnet 4.6 + LaTeX</i>"]
+    ROUTER --> |revise| REVISE["Refine Last Output<br/><i>Chat Memory + Sonnet</i>"]
+    ROUTER --> |score| SCORE["ForgeScore<br/><i>Resume vs JD</i>"]
+    ROUTER --> |intel| INTEL["Company Intel<br/><i>Search Fan-out + RRF</i>"]
+    ROUTER --> |outreach| OUTREACH["Contact Finder<br/><i>Switch + RRF + Outreach Writer</i>"]
+    ROUTER --> |salary| SALARY["Salary Intel"]
+    ROUTER --> |track| TRACK["Application Tracker"]
+    ROUTER --> |status| STATUS["Pipeline Status"]
+
+    FIND --> TG_OUT["Telegram Response"]
+    APPLY --> PDF["PDF via LaTeX Service"]
+    PDF --> TG_DOC["Telegram sendDocument"]
+    REVISE --> PDF
+    SCORE --> TG_OUT
+    INTEL --> TG_OUT
+    OUTREACH --> TG_OUT
+    SALARY --> TG_OUT
+    TRACK --> TG_OUT
+    STATUS --> TG_OUT
+    HELP --> TG_OUT
+```
+
+---
+
+## Features
+
+| Intent | What it does | Example message |
+|--------|-------------|-----------------|
+| **find_jobs** | Searches Greenhouse ATS across 50 companies, scores fit, returns top 5 | "find AI jobs in NYC" |
+| **apply** | Generates tailored resume + cover letter PDFs via LaTeX | "3" (applies to job #3 from last search) |
+| **revise** | Iterates on the last resume/cover with chat memory | "make it shorter" |
+| **score** | Scores your resume against a job description (0-10) | "score my resume for this role" |
+| **intel** | Multi-source company health report (layoffs, funding, H1B, culture) | "intel about Databricks" |
+| **outreach** | Finds recruiters/hiring managers + generates outreach variants | "who should I contact at Anthropic" |
+| **salary** | Salary ranges + negotiation advice | "salary for ML Engineer at Stripe" |
+| **track** | Logs and lists your applications | "track" |
+| **status** | Pipeline status overview | "status" |
+| **help** | Command list | "help" |
+
+---
+
+## Cost
+
+| Service | Cost | What you get |
+|---------|------|-------------|
+| [OpenRouter](https://openrouter.ai) | $10 one-time deposit | 1,000 free model calls/day (forever) + paid models at ~$0.05/generation |
+| [Telegram Bot API](https://core.telegram.org/bots) | Free | Unlimited messages + 50MB file delivery |
+| [Firecrawl](https://firecrawl.dev) | Free (via OpenRouter plugin) | 100K scraping credits |
+| [You.com](https://api.you.com) | Free ($100 credits) | 20K searches with LiveCrawl |
+| [Serper](https://serper.dev) | Free (2,500 credits) | Google SERP fallback |
+| **Monthly total** | **~$2/mo** | Paid model calls only (resume + cover letter generation) |
+
+---
+
+## Model Routing
+
+Cheap/free models for classification and scoring. Paid models only where writing quality matters.
+
+| Task | Model | Cost |
+|------|-------|------|
+| Intent routing | `meta-llama/llama-3.3-70b-instruct:free` | Free |
+| Seniority detection | `deepseek/deepseek-chat-v3:free` | Free |
+| Job scoring | `google/gemini-3-flash-lite` | ~$0.001/batch |
+| ForgeScore | `deepseek/deepseek-chat-v3:free` | Free |
+| Contact extraction | `deepseek/deepseek-chat-v3:free` | Free |
+| Company intel synthesis | `deepseek/deepseek-chat-v3:free` | Free |
+| **ResumeForge** | `anthropic/claude-sonnet-4.6` | ~$0.05 |
+| **CoverForge** | `anthropic/claude-sonnet-4.6` | ~$0.05 |
+| **Outreach writer** | `anthropic/claude-sonnet-4.6` | ~$0.05 |
 
 ---
 
@@ -38,172 +92,168 @@ All LLM calls route through [OpenRouter](https://openrouter.ai) -- one API key, 
 ### Prerequisites
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) running
-- API keys (see below)
+- [ngrok](https://ngrok.com/) account (free tier works)
+- API keys: OpenRouter (required), Telegram Bot (required), at least one search provider
 
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/careerforge-n8n.git
-cd careerforge-n8n/docker
+git clone https://github.com/Career-Forge/n8n.git
+cd n8n/docker
 cp .env.example .env
 # Fill in your API keys in .env
 ```
 
-### 2. Start n8n
+### 2. Start services
 
 ```bash
 docker compose up -d
-# Open http://localhost:5678
-# Login: careerforge / demo1234  (change in .env)
+# n8n:          http://localhost:5678
+# LaTeX service: http://localhost:5679
 ```
 
-### 3. Install the Firecrawl community node
+### 3. Start ngrok tunnel
 
-In n8n: **Settings → Community Nodes → Install** → search `n8n-nodes-firecrawl`
-
-### 4. Import workflows
-
-Go to **Workflows → Create workflow → Import from file** and import in order:
-
+```bash
+ngrok http 5678
+# Copy the https://xxx.ngrok-free.app URL → set as WEBHOOK_URL in .env
+# Restart n8n: docker compose restart n8n
 ```
-workflows/01_application_forge.json
-workflows/02_job_discovery.json
-workflows/03_company_intel.json
-workflows/04_morning_job_digest.json
-workflows/05_master_orchestration.json
-workflows/06_telegram_bot_v4.json
-```
+
+### 4. Import the workflow
+
+In n8n: **Workflows > Import from file** > select `workflows/01_careerforge.json`
 
 ### 5. Set up credentials
 
-In **Settings → Credentials**, create a Header Auth credential for each:
+In n8n **Settings > Credentials**, create:
 
-| Name | Header | Value |
-|------|--------|-------|
-| `OpenRouter API` | `Authorization` | `Bearer YOUR_KEY` |
-| `Firecrawl API` | `Authorization` | `Bearer YOUR_KEY` |
-| `Serper API` | `X-API-KEY` | `YOUR_KEY` |
-| `You.com API` | `X-API-Key` | `YOUR_KEY` |
-| `Supabase API` | `apikey` | `YOUR_ANON_KEY` |
+| Credential | Type | Header | Value |
+|-----------|------|--------|-------|
+| OpenRouter API | Header Auth | `Authorization` | `Bearer sk-or-v1-...` |
+| Firecrawl API | Header Auth | `Authorization` | `Bearer fc-...` |
+| You.com API | Header Auth | `X-API-Key` | your key |
+| Serper API | Header Auth | `X-API-KEY` | your key |
+| Telegram Bot | Telegram credential | — | Bot token from @BotFather |
 
-For Telegram: use the built-in **Telegram** credential type with your bot token.
-
-### 6. Set workflow variables (WF04 + WF05 only)
-
-After importing, open WF04 and WF05 → **Settings → Variables** and set:
-
-```
-JOB_DISCOVERY_WORKFLOW_ID   = <ID from your imported WF02>
-APP_FORGE_WORKFLOW_ID       = <ID from your imported WF01>
-COMPANY_INTEL_WORKFLOW_ID   = <ID from your imported WF03>
-MORNING_DIGEST_WORKFLOW_ID  = <ID from your imported WF04>
-```
-
-Workflow IDs appear in the URL bar when you open each workflow.
-
-### 7. Add your master resume
-
-Open WF01 → `Merge JD + Resume Context` node → replace the placeholder resume text with your own.
-
-For a production setup, store your resume in Supabase under a `user_profiles` table with a `master_resume` text column -- the Supabase node in WF01 fetches it automatically.
-
-### 8. Activate
-
-Toggle each workflow to **Active**. Webhook URLs go live, the 8am digest schedule starts.
+Activate the workflow. Text your bot "help" to verify.
 
 ---
 
-## API Keys (all free tiers)
-
-| Service | Free tier | Used in |
-|---------|-----------|---------|
-| [OpenRouter](https://openrouter.ai) | Free credits on signup | All LLM calls |
-| [Firecrawl](https://firecrawl.dev) | 100k credits free | WF01, WF02 |
-| [Serper.dev](https://serper.dev) | 2,500 searches free | WF02, WF03 |
-| [You.com](https://api.you.com) | Free credits, no card | WF02, WF03 |
-| [Supabase](https://supabase.com) | Free tier sufficient | WF01 |
-| Telegram Bot | Free via @BotFather | WF04, WF05, WF06 |
-
----
-
-## Test it
-
-**Demo mode** (no scraping, no Supabase needed):
-
-```bash
-curl -X POST http://localhost:5678/webhook/application-forge \
-  -H "Content-Type: application/json" \
-  -d '{
-    "demo_mode": true,
-    "target_role": "Senior ML Engineer",
-    "target_company": "Anthropic"
-  }'
-```
-
-**Live mode** (real JD URL):
-
-```bash
-curl -X POST http://localhost:5678/webhook/application-forge \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jd_url": "https://jobs.lever.co/example/job-id",
-    "user_id": "your-user-id"
-  }'
-```
-
----
-
-## Architecture
-
-```
-POST /webhook/careerforge  or  Telegram message
-              │
-              ▼
-    Brian the Router (GPT-4.1-nano)
-    Classifies intent, extracts entities
-              │
-              ▼
-    ┌─────────┴──────────────────────┐
-    │      Switch by Intent           │
-    └──┬───────────┬──────────┬──────┘
-       ▼           ▼          ▼
-  Application   Job        Company
-    Forge     Discovery     Intel
-  (01)        (02)         (03)
-       │           │          │
-       └───────────┴──────────┘
-                   │
-                   ▼
-           The Judge (Gemini Flash)
-           Output quality check
-                   │
-                   ▼
-           Respond to user
-```
-
----
-
-## Project structure
+## Project Structure
 
 ```
 careerforge-n8n/
-├── workflows/          # n8n workflow JSON files
-├── docker/             # Docker Compose stack + .env.example
-├── latex-service/      # LaTeX PDF compilation (optional)
-├── chroma-api/         # ChromaDB sidecar for preferences (optional)
-└── scripts/            # Demo scripts
+|
+|-- README.md                          # This file
+|-- DEPLOYMENT.md                      # 4 hosting tiers (local to cloud)
+|-- API.md                             # External services + cost math
+|-- LICENSE                            # MIT
+|-- PLAN.md                            # Refactor execution plan
+|
+|-- docs/
+|   |-- QUICKSTART.md                  # Docker + ngrok 10-min setup
+|   |-- MASTER_RESUME_GUIDE.md         # Template walkthrough
+|   |-- CUSTOMIZE_PROMPTS.md           # Tune voice and style
+|   |-- ARCHITECTURE.md                # System diagrams + deep dive
+|   +-- diagrams/                      # Mermaid .mmd sources
+|
+|-- workflows/
+|   +-- 01_careerforge.json            # THE workflow (single file)
+|
+|-- templates/
+|   |-- master_resume_template.txt     # Fill-in-the-blank master resume
+|   |-- master_resume_example.txt      # Worked example (fictional persona)
+|   |-- resume_skeleton_fresher.tex    # LaTeX skeleton: <2 yrs experience
+|   |-- resume_skeleton_experienced.tex # LaTeX skeleton: 2-10 yrs
+|   |-- resume_skeleton_senior.tex     # LaTeX skeleton: 10+ yrs
+|   +-- cover_skeleton.tex             # LaTeX skeleton: cover letter
+|
+|-- prompts/
+|   |-- IntentRouter.md                # LLM intent classification
+|   |-- SeniorityDetector.md           # Auto-detect fresher/experienced/senior
+|   |-- ResumeForge_v3.md             # Tailored resume generation
+|   |-- CoverForge_v3.md              # Cover letter generation
+|   |-- ResumeRefine.md               # Iterative resume refinement
+|   |-- CoverRefine.md                # Iterative cover refinement
+|   |-- ForgeScore_v3.md              # Resume vs JD scoring (0-10)
+|   |-- JobScorer.md                   # Batch job ranking
+|   |-- ContactFinder.md              # Extract contacts from search results
+|   |-- OutreachWriter.md             # Multi-variant outreach generation
+|   +-- CompanyIntel.md               # Company health report
+|
+|-- services/
+|   +-- latex/
+|       |-- Dockerfile
+|       +-- app.py                     # Flask + pdflatex PDF compiler
+|
+|-- docker/
+|   |-- docker-compose.yml             # n8n + LaTeX service
+|   |-- .env.example                   # All API keys documented
+|   +-- README.md
+|
++-- scripts/
+    +-- DEMO_SCRIPT.md                 # Meetup demo walkthrough
 ```
 
 ---
 
-## License
+## How the Resume Pipeline Works
 
-MIT -- use it, fork it, build on it.
+1. You text a job number (e.g., "3") after a job search
+2. **SeniorityDetector** reads your master resume, picks the right LaTeX skeleton (fresher/experienced/senior)
+3. **ForgeScore** scores your fit (0-10). Below 6? You get a warning with specific gaps
+4. **ResumeForge** (Claude Sonnet 4.6) generates structured JSON — tailored bullets, keyword-aligned, metric-preserved
+5. A JS node deterministically fills the LaTeX skeleton with the JSON content
+6. **LaTeX service** compiles to PDF
+7. Same flow for **CoverForge** (runs in parallel)
+8. Both PDFs delivered via Telegram `sendDocument`
+9. Reply "make it shorter" or "more Python" to iterate — chat memory preserves context
 
 ---
 
-## Built by
+## Search Fan-out + RRF Merge
 
-**Pranav Kowadkar** -- [pkowadkar.com](https://pkowadkar.com) · [LinkedIn](https://linkedin.com/in/pkowadkar)
+The outreach and intel branches use a Switch node to fire configured search providers in parallel:
 
-Demoed at n8n NYC Meetup, April 2026. Spoke about multi-agent architectures at LLM Day NYC, March 2026.
+```
+Switch: Which providers are configured?
+  |-- Firecrawl (if FIRECRAWL_API_KEY set)
+  |-- You.com   (if YOUCOM_API_KEY set)
+  |-- Serper    (if SERPER_API_KEY set)
+  +-- Fallback  (none configured → helpful error)
+
+Results merge via Reciprocal Rank Fusion (RRF):
+  score(doc) = sum(1 / (k + rank_i)) across all providers
+
+Top 15 deduped results → LLM extraction
+```
+
+Configure 1, 2, or 3 providers. The system gracefully degrades — works with any combination.
+
+---
+
+## Status
+
+| Component | Status |
+|-----------|--------|
+| Intent router (10 intents) | In progress |
+| find_jobs (Greenhouse + scoring) | In progress |
+| apply (PDF pipeline) | In progress |
+| revise (chat memory iteration) | Planned |
+| score (ForgeScore standalone) | Planned |
+| intel (company health) | Planned |
+| outreach (contact finder + writer) | Planned |
+| salary / track / status | Planned |
+| LaTeX PDF service | Working |
+| Deployment configs | Planned |
+
+---
+
+## Contributing
+
+Issues and PRs welcome. See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for system design details.
+
+## License
+
+[MIT](LICENSE)
