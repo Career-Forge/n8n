@@ -70,6 +70,8 @@
   \textbf{#1}{: #2} \\ \vspace{2pt}
 }
 
+% Explicit bullet definitions — prevents $s*ss rendering artifact with lato font
+\renewcommand\labelitemi{\textbullet}
 \renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
 
 \newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
@@ -86,11 +88,10 @@
 %%% HEADER_START
 \begin{center}
     \textbf{\Huge \scshape {{NAME}}} \\ \vspace{4pt}
-    \small {{PHONE}} $|$ \href{mailto:{{EMAIL}}}{\underline{{{EMAIL}}}} $|$ 
-    \href{{{LINKEDIN}}}{\underline{LinkedIn}} $|$
-    \href{{{GITHUB}}}{\underline{GitHub}} $|$
-    {{LOCATION}} \\ \vspace{2pt}
-    \textit{Work Authorization: {{WORK_AUTH}}}
+    \small
+    {{PHONE}} $|$
+    \href{mailto:{{EMAIL}}}{\underline{{{EMAIL}}}} $|$
+    \href{{{LINKEDIN}}}{\underline{LinkedIn}}{{PORTFOLIO_LINE}}{{LOCATION_LINE}}
 \end{center}
 %%% HEADER_END
 

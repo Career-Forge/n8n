@@ -1,9 +1,17 @@
-FROM blang/latex:ubuntu
+FROM ubuntu:22.04
 
-# blang/latex already has full TeX Live + Ubuntu
-# Just add Python + Flask
+ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/apt/lists/*
+# Install TeX Live + Python + pip in one layer
+RUN apt-get update && apt-get install -y \
+    texlive-latex-base \
+    texlive-latex-extra \
+    texlive-fonts-recommended \
+    texlive-fonts-extra \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN pip3 install flask
 
 WORKDIR /app

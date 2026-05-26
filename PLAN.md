@@ -1686,3 +1686,839 @@ Flask+pdflatex service, Telegram Bot API.
 ```
 
 ````
+
+---
+
+# Part 9: V3 Overhaul — Real-time Fan-out Search + Telegraph UI
+
+> **Status:** Planning complete. Ready for agent execution.
+>
+> **What this is:** A ground-up redesign of the `find_jobs` execution model and output delivery,
+> preserving all existing intents (apply, revise, score, intel, outreach, salary, track, status).
+>
+> **Design philosophy:** Fan-out / Fan-in (Pattern #6 from LLM Day NYC 2026 talk).
+> All search tracks fire in parallel. Results merge via RRF. Output is a Telegraph HTML page
+> with a full job table — not 5 truncated Telegram messages.
+>
+> **For agents:** Execute Phases 1–4 in order. Each phase is independently committable.
+> Reference this section alongside Part 2 locked decisions. Do not re-litigate architecture.
+
+---
+
+## V3 Locked Decisions
+
+1. **Parallel execution via `Promise.allSettled` inside Code nodes** — not sequential n8n HTTP nodes per item.
+   The current split-slug → HTTP GH/LV/AB chain fires 79 sequential requests. This is the root cause of 2m+ hangs.
+   Fix: one Code node, all ATS calls in parallel, 5s timeout per call.
+
+2. **All 4 Firecrawl queries used** — not just `firecrawl_queries[0]`. Expand Query already generates 4 targeted
+   queries. Currently only the first is used. All 4 fire in parallel.
+
+3. **You.com Search API wired into find_jobs** — not just intel/outreach.
+   You.com supports `site:` operators + `page_age` freshness filter. Use it for ATS site-scoped searches.
+   Use the native n8n You.com node (verified community node, install via Settings → Community Nodes).
+
+4. **Serper parallel queries** — 6-8 `site:` queries fired via `Promise.allSettled` in one Code node.
+   Returns ~10 results per query = 60-80 job links in ~2s.
+
+5. **Telegraph for output** — `api.telegra.ph/createAccount` once (token stored in workflow `staticData`).
+   Every find_jobs run calls `createPage` with full HTML table. Telegram message sends the link + top 3 inline.
+
+6. **You.com Research API for intel/outreach** — replaces multi-query Serper fan-out.
+   One API call, multi-step reasoning internally, cited structured results. Uses $100 You.com credits properly.
+
+7. **Resource inventory (do not waste):**
+   - Firecrawl: 100,500 credits via OpenRouter (get API key from firecrawl.dev "via OpenRouter" team)
+   - You.com: $100 credits = ~20,000 Search API calls at $5/1000
+   - Serper: 2,500 queries (Google SERP fallback, use sparingly)
+   - Telegraph: Free, unlimited, no auth needed for anonymous pages
+
+---
+
+## V3 Architecture Diagram
+
+```
+Telegram "find AI Engineer jobs last 48hrs"
+          ↓
+    Expand Query (Llama 3.3 70B free)
+    Outputs: role_families[], excluded_roles[], firecrawl_queries[4],
+             remote_mode, location_canonical
+          ↓
+━━━━━━━━━━━━━━━━ FAN-OUT (all parallel) ━━━━━━━━━━━━━━━━
+    ↙           ↓              ↓              ↘
+[Track 1]   [Track 2]      [Track 3]       [Track 4]
+ Serper      You.com        Firecrawl       ATS APIs
+ Code node   Code node      Code node       Code node
+ 4 queries   6 queries      4 queries       Promise.all
+ site:ats    site:ats       from Expand     all companies
+ after:date  page_age       Query           5s timeout
+ ~40 links   ~60 results    ~120 results    ~80 jobs
+━━━━━━━━━━━━━━━━ FAN-IN ━━━━━━━━━━━━━━━━
+          ↓
+   Merge Sources (5 inputs: ATS+FC | You.com | Serper | WWR | No Remote Jobs)
+          ↓
+   Aggregate Jobs v6
+   - Dedupe by URL
+   - Role family filter (word-boundary)
+   - page_age recency filter: drop jobs older than 48hrs
+   - Location filter (skip if remote_mode)
+   - Sort: newest first
+   - Cap: top 40 jobs (up from 20)
+          ↓
+   Build Scorer Input (reads master_resume.txt)
+          ↓
+   JobScorer (batch)
+          ↓
+   Parse Scorer Output (4-strategy robust parser, unchanged)
+          ↓
+   Generate Telegraph Page  ← NEW (replaces Format Digest)
+   - Creates telegra.ph account once (token in staticData)
+   - Builds full dark-themed HTML table (all 40 jobs, fit badges, apply links)
+   - Returns URL + top 3 inline text
+          ↓
+   Send Digest (Telegram message: top 3 + telegra.ph link)
+```
+
+---
+
+## Phase 1: Parallel ATS Fetching
+
+**What changes:** Replace the Split GH Slugs → HTTP GH → Normalize Greenhouse chain
+(and LV, AB, Firecrawl equivalents) with a single Code node using `Promise.allSettled`.
+This is the highest-ROI change — gets you from 2m+ → ~15s with zero new credentials.
+
+**Nodes to DELETE from canvas (12 total):**
+- Split GH Slugs, HTTP GH, Normalize Greenhouse
+- Split LV Slugs, HTTP LV, Normalize Lever
+- Split AB Slugs, HTTP AB, Normalize Ashby
+- Prep Firecrawl, HTTP Firecrawl, Normalize Firecrawl
+
+**New node:** Name: `ATS + Firecrawl Parallel Fetch` | Type: Code
+
+```javascript
+// ATS + Firecrawl Parallel Fetch
+// Replaces 12 nodes with one parallel Code node.
+// Reads companies.json, fires all ATS APIs + all 4 Firecrawl queries in parallel.
+
+const https = require('https');
+const fs = require('fs');
+
+const ATS_TIMEOUT_MS = 5000;
+const MAX_JOBS_PER_COMPANY = 50;
+
+let companies = { greenhouse: [], lever: [], ashby: [] };
+for (const p of ['/home/node/.n8n-files/companies/companies.json', '/data/companies/companies.json']) {
+  try { companies = JSON.parse(fs.readFileSync(p, 'utf-8')); break; } catch(e) {}
+}
+if (!companies.greenhouse.length) {
+  companies = {
+    greenhouse: ["anthropic","openai","databricks","huggingface","cohere","scale","adept",
+      "perplexity","together","replicate","runwayml","characterai","elevenlabs","midjourney",
+      "harvey","cresta","anysphere","stripe","plaid","brex","affirm","chime","robinhood",
+      "coinbase","mercury","vercel","hashicorp","datadog","mongodb","gitlab","twilio",
+      "cloudflare","klaviyo","asana","retool","dropbox","figma","airbnb","discord",
+      "doordash","instacart","lyft","pinterest","reddit","duolingo"],
+    lever: ["netflix","shopify","eventbrite","attentive","benchling","blockchain","palantir",
+      "quora","matterport","kraken","sourcegraph","khan-academy","lookout","talkdesk","cruise","zendesk"],
+    ashby: ["linear","ramp","fig","modal","decagon","opendoor","posthog","vanta","mintlify",
+      "prefect","axios","chroma","langchain","pomerium","pinecone","openpipe","speak","abridge"]
+  };
+}
+
+const expandCtx = $('Parse Expand Query').first().json;
+const firecrawlKey = $env.FIRECRAWL_API_KEY || '';
+
+function fetchJSON(url, ms = ATS_TIMEOUT_MS) {
+  return new Promise(resolve => {
+    try {
+      const u = new URL(url);
+      const req = https.request(
+        { hostname: u.hostname, path: u.pathname + u.search, method: 'GET',
+          headers: { 'User-Agent': 'CareerForge/2.0', 'Accept': 'application/json' } },
+        res => { let d = ''; res.on('data', c => d += c); res.on('end', () => { try { resolve(JSON.parse(d)); } catch { resolve(null); } }); }
+      );
+      req.on('error', () => resolve(null));
+      req.setTimeout(ms, () => { req.destroy(); resolve(null); });
+      req.end();
+    } catch { resolve(null); }
+  });
+}
+
+function postJSON(url, body, headers = {}, ms = 30000) {
+  return new Promise(resolve => {
+    try {
+      const u = new URL(url);
+      const payload = JSON.stringify(body);
+      const req = https.request(
+        { hostname: u.hostname, path: u.pathname + u.search, method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload), ...headers } },
+        res => { let d = ''; res.on('data', c => d += c); res.on('end', () => { try { resolve(JSON.parse(d)); } catch { resolve(null); } }); }
+      );
+      req.on('error', () => resolve(null));
+      req.setTimeout(ms, () => { req.destroy(); resolve(null); });
+      req.write(payload); req.end();
+    } catch { resolve(null); }
+  });
+}
+
+function normalizeGreenhouse(slug, data) {
+  return (data?.jobs || data?.body?.jobs || []).slice(0, MAX_JOBS_PER_COMPANY).map(j => ({
+    job_id: `gh-${slug}-${j.id}`, title: j.title || '', company: slug,
+    location: j.location?.name || '', department: j.departments?.[0]?.name || '',
+    url: j.absolute_url || '',
+    description_snippet: (j.content || '').replace(/<[^>]*>/g, '').substring(0, 500),
+    updated_at: j.updated_at || '', source: 'greenhouse'
+  }));
+}
+
+function normalizeLever(slug, data) {
+  const arr = Array.isArray(data) ? data : Array.isArray(data?.body) ? data.body : [];
+  return arr.slice(0, MAX_JOBS_PER_COMPANY).map(j => ({
+    job_id: `lever-${slug}-${j.id}`, title: j.text || '', company: slug,
+    location: j.categories?.location || '', department: j.categories?.department || '',
+    url: j.hostedUrl || j.applyUrl || '',
+    description_snippet: (j.descriptionPlain || '').substring(0, 500),
+    updated_at: j.createdAt ? new Date(j.createdAt).toISOString() : '', source: 'lever'
+  }));
+}
+
+function normalizeAshby(slug, data) {
+  return (data?.jobs || data?.body?.jobs || [])
+    .filter(j => j.isListed !== false).slice(0, MAX_JOBS_PER_COMPANY).map(j => ({
+      job_id: `ashby-${slug}-${(j.jobUrl || '').split('/').pop() || Math.random().toString(36).slice(2)}`,
+      title: j.title || '', company: slug, location: j.location || '', department: j.department || '',
+      url: j.jobUrl || j.applyUrl || '',
+      description_snippet: (j.descriptionPlain || '').substring(0, 500),
+      updated_at: j.publishedAt || '', source: 'ashby'
+    }));
+}
+
+function normalizeFirecrawl(data, qi) {
+  function co(url) {
+    if (!url) return { company: 'unknown', ats: 'web' };
+    let m;
+    if ((m = url.match(/^https?:\/\/([^.]+)\.wd\d+\.myworkdayjobs\.com\//))) return { company: m[1], ats: 'workday' };
+    if ((m = url.match(/^https?:\/\/(?:job-boards|boards)\.greenhouse\.io\/([^/]+)\//))) return { company: m[1], ats: 'greenhouse' };
+    if ((m = url.match(/^https?:\/\/jobs\.lever\.co\/([^/]+)\//))) return { company: m[1], ats: 'lever' };
+    if ((m = url.match(/^https?:\/\/jobs\.ashbyhq\.com\/([^/]+)\//))) return { company: m[1], ats: 'ashby' };
+    if ((m = url.match(/^https?:\/\/apply\.workable\.com\/([^/]+)\//))) return { company: m[1], ats: 'workable' };
+    return { company: 'unknown', ats: 'web' };
+  }
+  return (data?.data?.web || []).slice(0, 30).map((r, i) => {
+    const url = r.url || '';
+    const { company, ats } = co(url);
+    return { job_id: `fc-${qi}-${company}-${i}`, title: r.title || '', company, location: '',
+      department: '', url, description_snippet: (r.description || '').substring(0, 500),
+      updated_at: '', source: `firecrawl:${ats}` };
+  });
+}
+
+const allPromises = [];
+const allMeta = [];
+
+for (const slug of companies.greenhouse) {
+  allPromises.push(fetchJSON(`https://boards-api.greenhouse.io/v1/boards/${slug}/jobs?content=true`));
+  allMeta.push({ type: 'greenhouse', slug });
+}
+for (const slug of companies.lever) {
+  allPromises.push(fetchJSON(`https://api.lever.co/v0/postings/${slug}?mode=json`));
+  allMeta.push({ type: 'lever', slug });
+}
+for (const slug of companies.ashby) {
+  allPromises.push(fetchJSON(`https://api.ashbyhq.com/posting-api/job-board/${slug}?includeCompensation=true`));
+  allMeta.push({ type: 'ashby', slug });
+}
+
+const firecrawlQueries = expandCtx.firecrawl_queries || [];
+if (firecrawlKey && firecrawlQueries.length > 0) {
+  for (let i = 0; i < firecrawlQueries.length; i++) {
+    allPromises.push(postJSON('https://api.firecrawl.dev/v2/search',
+      { query: firecrawlQueries[i], limit: 30 },
+      { 'Authorization': `Bearer ${firecrawlKey}` }, 30000));
+    allMeta.push({ type: 'firecrawl', queryIdx: i });
+  }
+}
+
+const results = await Promise.allSettled(allPromises);
+const allJobs = [];
+const sourceCounts = {};
+
+results.forEach((result, idx) => {
+  if (result.status !== 'fulfilled' || !result.value) return;
+  const meta = allMeta[idx];
+  const data = result.value;
+  let jobs = [];
+  if (meta.type === 'greenhouse') jobs = normalizeGreenhouse(meta.slug, data);
+  else if (meta.type === 'lever') jobs = normalizeLever(meta.slug, data);
+  else if (meta.type === 'ashby') jobs = normalizeAshby(meta.slug, data);
+  else if (meta.type === 'firecrawl') jobs = normalizeFirecrawl(data, meta.queryIdx);
+  for (const job of jobs) {
+    sourceCounts[job.source] = (sourceCounts[job.source] || 0) + 1;
+    allJobs.push(job);
+  }
+});
+
+return [{ json: { jobs: allJobs, source: 'ats_parallel', count: allJobs.length, sources: sourceCounts } }];
+```
+
+**Wiring:**
+- `ATS + Firecrawl Parallel Fetch` → Merge Sources input 0
+- Reconfigure Merge Sources: change `numberInputs` from 5 → 3
+  - Input 0: ATS + Firecrawl Parallel Fetch
+  - Input 1: You.com Parallel Search (Phase 2, placeholder for now — wire No Remote Jobs to input 1 temporarily)
+  - Input 2: Parse WWR RSS / No Remote Jobs
+
+**Acceptance criteria:**
+- find_jobs completes in < 30s
+- sourceCounts shows greenhouse/lever/ashby/firecrawl all populated
+- No "Running for 2m+" executions
+
+**Commit:** `feat: Phase 1 — parallel ATS+FC fetch, replace 12 sequential nodes`
+
+---
+
+## Phase 2: You.com + Serper Parallel Search Tracks
+
+**What this adds:** Real-time job discovery across ALL ATS platforms (not just companies.json)
+using `site:` operators with freshness filters. This is the signal V2 completely lacks.
+
+### 2a: You.com Parallel Search
+
+**New node:** Name: `You.com Parallel Search` | Type: Code node
+
+```javascript
+// You.com Parallel Search
+// 6 site:-scoped queries in parallel. Freshness filter: last 48hrs.
+// Falls back gracefully if YOUCOM_API_KEY not set.
+
+const https = require('https');
+const youcomKey = $env.YOUCOM_API_KEY || '';
+
+if (!youcomKey) return [{ json: { jobs: [], source: 'youcom', count: 0, error: 'YOUCOM_API_KEY not set' } }];
+
+const expandCtx = $('Parse Expand Query').first().json;
+const roleFamilies = expandCtx.role_families || ['AI Engineer', 'ML Engineer'];
+const locationCanonical = expandCtx.location_canonical || '';
+const remoteMode = expandCtx.remote_mode || false;
+
+const atsDomains = ['boards.greenhouse.io','jobs.lever.co','jobs.ashbyhq.com',
+  'myworkdayjobs.com','apply.workable.com','workatastartup.com'];
+const topRoles = roleFamilies.slice(0, 3);
+const queries = [];
+
+for (let i = 0; i < Math.min(topRoles.length, 3); i++) {
+  const locPart = locationCanonical && !remoteMode ? ` ${locationCanonical}` : '';
+  queries.push(`site:${atsDomains[i % atsDomains.length]} "${topRoles[i]}"${locPart}`);
+}
+for (let i = 0; i < Math.min(topRoles.length, 3); i++) {
+  queries.push(`site:${atsDomains[(i + 3) % atsDomains.length]} "${topRoles[i]}"`);
+}
+
+const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+function searchYouCom(query) {
+  return new Promise(resolve => {
+    try {
+      const params = new URLSearchParams({ query, count: '10', safesearch: 'off' });
+      params.append('date_from', twoDaysAgo);
+      const u = new URL(`https://api.ydc-index.io/search?${params.toString()}`);
+      const req = https.request(
+        { hostname: u.hostname, path: u.pathname + u.search, method: 'GET',
+          headers: { 'X-API-Key': youcomKey, 'Accept': 'application/json' } },
+        res => { let d = ''; res.on('data', c => d += c); res.on('end', () => { try { resolve({ query, data: JSON.parse(d) }); } catch { resolve({ query, data: null }); } }); }
+      );
+      req.on('error', () => resolve({ query, data: null }));
+      req.setTimeout(15000, () => { req.destroy(); resolve({ query, data: null }); });
+      req.end();
+    } catch { resolve({ query, data: null }); }
+  });
+}
+
+const results = await Promise.allSettled(queries.map(q => searchYouCom(q)));
+
+function coFromUrl(url) {
+  if (!url) return 'unknown';
+  let m;
+  if ((m = url.match(/(?:boards\.greenhouse\.io|job-boards\.greenhouse\.io)\/([^/]+)\//))) return m[1];
+  if ((m = url.match(/jobs\.lever\.co\/([^/]+)\//))) return m[1];
+  if ((m = url.match(/jobs\.ashbyhq\.com\/([^/]+)\//))) return m[1];
+  if ((m = url.match(/([^.]+)\.wd\d+\.myworkdayjobs\.com\//))) return m[1];
+  if ((m = url.match(/apply\.workable\.com\/([^/]+)\//))) return m[1];
+  return 'unknown';
+}
+
+const allJobs = [];
+results.forEach(result => {
+  if (result.status !== 'fulfilled' || !result.value?.data) return;
+  for (const hit of (result.value.data.hits || result.value.data.web || [])) {
+    const url = hit.url || '';
+    if (!url) continue;
+    allJobs.push({
+      job_id: `youcom-${coFromUrl(url)}-${allJobs.length}`,
+      title: hit.title || '', company: coFromUrl(url), location: '', department: '', url,
+      description_snippet: (hit.description || (hit.snippets || []).join(' ') || '').substring(0, 500),
+      updated_at: hit.page_age || hit.updated || '', source: 'youcom'
+    });
+  }
+});
+
+return [{ json: { jobs: allJobs, source: 'youcom', count: allJobs.length } }];
+```
+
+### 2b: Serper Parallel Search
+
+**New node:** Name: `Serper Job Search` | Type: Code node
+
+```javascript
+// Serper Parallel Job Search — fires 4 queries with after: date filter.
+// Conserves quota: only 4 calls per find_jobs execution.
+
+const https = require('https');
+const serperKey = $env.SERPER_API_KEY || '';
+
+if (!serperKey) return [{ json: { jobs: [], source: 'serper', count: 0, error: 'SERPER_API_KEY not set' } }];
+
+const expandCtx = $('Parse Expand Query').first().json;
+const roleFamilies = expandCtx.role_families || ['AI Engineer'];
+const locationCanonical = expandCtx.location_canonical || '';
+const remoteMode = expandCtx.remote_mode || false;
+const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+const topRoles = roleFamilies.slice(0, 2);
+
+const queries = [
+  `(site:boards.greenhouse.io OR site:jobs.lever.co) "${topRoles[0]}" after:${yesterday}`,
+  `(site:jobs.ashbyhq.com OR site:myworkdayjobs.com) "${topRoles[0]}" after:${yesterday}`,
+  `(site:boards.greenhouse.io OR site:jobs.lever.co) "${topRoles[1] || topRoles[0]}" after:${yesterday}`,
+  `site:workatastartup.com "${topRoles[0]}"${locationCanonical && !remoteMode ? ' ' + locationCanonical : ''}`
+];
+
+function serperSearch(query) {
+  return new Promise(resolve => {
+    try {
+      const payload = JSON.stringify({ q: query, num: 10, gl: 'us' });
+      const req = https.request(
+        { hostname: 'google.serper.dev', path: '/search', method: 'POST',
+          headers: { 'X-API-KEY': serperKey, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
+        res => { let d = ''; res.on('data', c => d += c); res.on('end', () => { try { resolve(JSON.parse(d)); } catch { resolve(null); } }); }
+      );
+      req.on('error', () => resolve(null));
+      req.setTimeout(10000, () => { req.destroy(); resolve(null); });
+      req.write(payload); req.end();
+    } catch { resolve(null); }
+  });
+}
+
+const results = await Promise.allSettled(queries.map(q => serperSearch(q)));
+
+function coFromUrl(url) {
+  if (!url) return 'unknown';
+  let m;
+  if ((m = url.match(/(?:boards\.greenhouse\.io|job-boards\.greenhouse\.io)\/([^/]+)\//))) return m[1];
+  if ((m = url.match(/jobs\.lever\.co\/([^/]+)\//))) return m[1];
+  if ((m = url.match(/jobs\.ashbyhq\.com\/([^/]+)\//))) return m[1];
+  if ((m = url.match(/([^.]+)\.wd\d+\.myworkdayjobs\.com\//))) return m[1];
+  if ((m = url.match(/apply\.workable\.com\/([^/]+)\//))) return m[1];
+  return 'unknown';
+}
+
+const allJobs = [];
+results.forEach(result => {
+  if (result.status !== 'fulfilled' || !result.value) return;
+  for (const r of (result.value.organic || [])) {
+    const url = r.link || '';
+    if (!url) continue;
+    allJobs.push({
+      job_id: `serper-${coFromUrl(url)}-${allJobs.length}`,
+      title: r.title || '', company: coFromUrl(url), location: '', department: '', url,
+      description_snippet: (r.snippet || '').substring(0, 500),
+      updated_at: r.date || '', source: 'serper'
+    });
+  }
+});
+
+return [{ json: { jobs: allJobs, source: 'serper', count: allJobs.length } }];
+```
+
+### 2c: Update Merge Sources
+
+Expand `numberInputs` to 5:
+- Input 0: ATS + Firecrawl Parallel Fetch
+- Input 1: You.com Parallel Search
+- Input 2: Serper Job Search
+- Input 3: Parse WWR RSS (true branch of IF: Remote Mode?)
+- Input 4: No Remote Jobs (false branch)
+
+### 2d: Update Aggregate Jobs to v6
+
+In the `Aggregate Jobs` Code node, add recency filter after role family filter and raise cap:
+
+```javascript
+// V6: recency filter — drop jobs older than 48hrs (only when date is available and parseable)
+const fortyEightHrsAgo = Date.now() - (48 * 60 * 60 * 1000);
+filtered = filtered.filter(j => {
+  if (!j.updated_at) return true;
+  const t = new Date(j.updated_at).getTime();
+  if (isNaN(t)) return true;
+  return t >= fortyEightHrsAgo;
+});
+```
+
+Also change `filtered.slice(0, 20)` → `filtered.slice(0, 40)`.
+
+**Acceptance criteria:**
+- Jobs from companies NOT in companies.json appear in results
+- sourceCounts shows youcom and serper populated
+- No jobs older than 48hrs when date is available
+
+**Commit:** `feat: Phase 2 — You.com + Serper parallel tracks, recency filter, cap → 40`
+
+---
+
+## Phase 3: Telegraph Output
+
+**What this adds:** Full dark-themed HTML job table on telegra.ph, linked from Telegram message.
+Telegraph is free, no auth, unlimited — Telegram's own publishing platform.
+
+**Delete:** `Format Digest` node
+
+**New node:** Name: `Generate Telegraph Page` | Type: Code
+Insert between `Parse Scorer Output` and `Send Digest`.
+
+```javascript
+// Generate Telegraph Page
+// Creates telegra.ph account once (token in staticData), then createPage on each run.
+// Builds full dark HTML table. Returns URL + top-3 inline Telegram message.
+
+const https = require('https');
+const staticData = $getWorkflowStaticData('global');
+
+const scored = $('Parse Scorer Output').first().json.scored || [];
+const allJobs = $('Aggregate Jobs').first().json.jobs || [];
+const jobMap = {};
+for (const j of allJobs) jobMap[j.job_id] = j;
+
+const rankedJobs = scored
+  .map(s => ({ ...jobMap[s.job_id], fit_score: s.fit_score, one_liner: s.one_liner }))
+  .filter(j => j && j.url).slice(0, 40);
+
+function telegraphPost(endpoint, data) {
+  return new Promise(resolve => {
+    try {
+      const payload = JSON.stringify(data);
+      const req = https.request(
+        { hostname: 'api.telegra.ph', path: endpoint, method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
+        res => { let d = ''; res.on('data', c => d += c); res.on('end', () => { try { resolve(JSON.parse(d)); } catch { resolve({ ok: false }); } }); }
+      );
+      req.on('error', () => resolve({ ok: false }));
+      req.setTimeout(15000, () => { req.destroy(); resolve({ ok: false }); });
+      req.write(payload); req.end();
+    } catch { resolve({ ok: false }); }
+  });
+}
+
+// Get or create Telegraph token (one-time, stored forever)
+let token = staticData.telegraph_token;
+if (!token) {
+  const r = await telegraphPost('/createAccount', {
+    short_name: 'CareerForge', author_name: 'CareerForge', author_url: 'https://t.me/your_bot'
+  });
+  if (r.ok) { token = r.result.access_token; staticData.telegraph_token = token; }
+}
+
+// Build Telegraph content using their node format
+// Each row: title (link) | company | location | score | date | apply
+function scoreEmoji(s) { return s >= 8 ? '🟢' : s >= 6 ? '🟡' : '⚪'; }
+function clean(slug) { return (slug || '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()); }
+
+const contentNodes = [
+  { tag: 'p', children: [`Found ${rankedJobs.length} jobs · ${new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`] },
+  { tag: 'p', children: ['Reply with a number in Telegram to generate a tailored resume + cover letter.'] },
+];
+
+// Build table as a series of paragraphs (Telegraph doesn't support <table> natively)
+// Format: N. 🟢 [Title](url) — Company — Location — 8/10 — May 2
+for (const [i, job] of rankedJobs.entries()) {
+  const score = job.fit_score || 0;
+  const posted = job.updated_at
+    ? new Date(job.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : '—';
+  contentNodes.push({
+    tag: 'p',
+    children: [
+      `${i + 1}. ${scoreEmoji(score)} `,
+      { tag: 'a', attrs: { href: job.url }, children: [job.title || 'Unknown Role'] },
+      ` — ${clean(job.company)} — ${job.location || 'Remote'} — ${score}/10 — ${posted}`
+    ]
+  });
+  if (job.one_liner) {
+    contentNodes.push({ tag: 'p', children: [`    ↳ ${job.one_liner}`] });
+  }
+}
+
+let telegraphUrl = null;
+if (token) {
+  const pageResp = await telegraphPost('/createPage', {
+    access_token: token,
+    title: `CareerForge — ${rankedJobs.length} Jobs · ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+    author_name: 'CareerForge',
+    content: contentNodes,
+    return_content: false
+  });
+  if (pageResp.ok) telegraphUrl = pageResp.result.url;
+}
+
+// Top-3 inline Telegram message
+const top3 = rankedJobs.slice(0, 3);
+let msg = `🔍 *Found ${rankedJobs.length} roles*\n\n`;
+for (const [i, job] of top3.entries()) {
+  msg += `*${i+1}.* [${job.title || 'Unknown'}](${job.url})\n`;
+  msg += `    🏢 ${clean(job.company)} · 📍 ${job.location || 'Unknown'}\n`;
+  msg += `    📊 ${job.fit_score || 0}/10 — ${job.one_liner || ''}\n\n`;
+}
+if (telegraphUrl) msg += `📋 *Full list (${rankedJobs.length} jobs):*\n${telegraphUrl}\n\n`;
+msg += `_Reply with a number (1–${Math.min(rankedJobs.length, 40)}) to apply._`;
+
+// Store in staticData for /apply N
+const last_jobs = {};
+rankedJobs.slice(0, 40).forEach((job, i) => {
+  last_jobs[i + 1] = { job_id: job.job_id, title: job.title, company: job.company,
+    location: job.location, url: job.url, fit_score: job.fit_score,
+    description_snippet: job.description_snippet || '' };
+});
+$getWorkflowStaticData('global').last_jobs = last_jobs;
+
+return [{ json: { message: msg, telegraph_url: telegraphUrl, total_jobs: rankedJobs.length } }];
+```
+
+**Wiring:** `Parse Scorer Output` → `Generate Telegraph Page` → `Send Digest`
+
+**Acceptance criteria:**
+- Telegram message contains a telegra.ph link
+- Link opens with all jobs listed
+- Reply "5" triggers apply flow (staticData.last_jobs[5] exists)
+- Apply range extended to 1-40
+
+**Commit:** `feat: Phase 3 — Telegraph job page output`
+
+---
+
+## Phase 4: You.com Research API for Intel/Outreach
+
+**What this replaces:** `Web Search` + `RRF Merge` (both deleted).
+You.com Research API does multi-step reasoning + synthesis internally in one call.
+
+**Delete:** `Web Search` node, `RRF Merge` node
+
+**New node:** Name: `You.com Research` | Type: Code node
+Wire: `IF: Draft Request?` (false branch) → `You.com Research` → `IF: Intel or Outreach?`
+
+```javascript
+// You.com Research API
+// Replaces Web Search + RRF Merge for intel and outreach.
+// Single API call with multi-step reasoning. Falls back to Serper if unavailable.
+
+const https = require('https');
+const youcomKey = $env.YOUCOM_API_KEY || '';
+const serperKey = $env.SERPER_API_KEY || '';
+
+const ctx = $input.first().json;
+const company = ctx.company || '';
+const researchType = ctx.research_type || 'intel';
+const role = ctx.role || 'Software Engineer';
+
+// Build research query
+const researchQuery = researchType === 'intel'
+  ? `Company health analysis for ${company} ${new Date().getFullYear()}: latest news, layoffs, funding rounds, Glassdoor rating, H1B sponsorship, engineering culture, red flags`
+  : `Recruiters and hiring managers at ${company} for ${role} positions: LinkedIn profiles, names, titles, contact information`;
+
+function youResearch(query) {
+  return new Promise(resolve => {
+    try {
+      const payload = JSON.stringify({ query, num_web_results: 10 });
+      const req = https.request(
+        { hostname: 'api.ydc-index.io', path: '/research', method: 'POST',
+          headers: { 'X-API-Key': youcomKey, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
+        res => { let d = ''; res.on('data', c => d += c); res.on('end', () => { try { resolve(JSON.parse(d)); } catch { resolve(null); } }); }
+      );
+      req.on('error', () => resolve(null));
+      req.setTimeout(30000, () => { req.destroy(); resolve(null); });
+      req.write(payload); req.end();
+    } catch { resolve(null); }
+  });
+}
+
+function serperSearch(query) {
+  return new Promise(resolve => {
+    if (!serperKey) return resolve(null);
+    try {
+      const payload = JSON.stringify({ q: query, num: 10 });
+      const req = https.request(
+        { hostname: 'google.serper.dev', path: '/search', method: 'POST',
+          headers: { 'X-API-KEY': serperKey, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
+        res => { let d = ''; res.on('data', c => d += c); res.on('end', () => { try { resolve(JSON.parse(d)); } catch { resolve(null); } }); }
+      );
+      req.on('error', () => resolve(null));
+      req.setTimeout(10000, () => { req.destroy(); resolve(null); });
+      req.write(payload); req.end();
+    } catch { resolve(null); }
+  });
+}
+
+const merged_results = [];
+
+if (youcomKey) {
+  const result = await youResearch(researchQuery);
+  if (result) {
+    const answer = result.answer || result.response || '';
+    const sources = result.sources || result.references || result.hits || [];
+    if (answer) merged_results.push({ url: `https://you.com/research`, title: `You.com Research: ${company}`, snippet: answer.substring(0, 1000), content: answer, sources: ['youcom-research'], score: 1.0 });
+    for (const src of sources.slice(0, 10)) {
+      merged_results.push({ url: src.url || '', title: src.title || '', snippet: src.snippet || src.description || '', content: src.content || src.markdown || '', sources: ['youcom'], score: 0.5 });
+    }
+  }
+}
+
+// Serper fallback if You.com returned nothing
+if (merged_results.length === 0 && serperKey) {
+  const fallbackQueries = researchType === 'intel'
+    ? [`${company} latest news layoffs funding ${new Date().getFullYear()}`, `${company} glassdoor H1B engineering culture`]
+    : [`${company} ${role} recruiter hiring manager LinkedIn`, `${company} ${role} engineering team hiring`];
+  const fallbackResults = await Promise.allSettled(fallbackQueries.map(q => serperSearch(q)));
+  for (const r of fallbackResults) {
+    if (r.status !== 'fulfilled' || !r.value) continue;
+    for (const item of (r.value.organic || []).slice(0, 5)) {
+      merged_results.push({ url: item.link || '', title: item.title || '', snippet: item.snippet || '', content: '', sources: ['serper'], score: 0.3 });
+    }
+  }
+}
+
+return [{ json: { ...ctx, merged_results, result_count: merged_results.length, search_error: merged_results.length === 0 ? 'All search providers returned empty results' : null, research_query: researchQuery } }];
+```
+
+**Acceptance criteria:**
+- "intel about Databricks" returns a company health report with current data
+- "find recruiters at Anthropic" returns named contacts
+- Serper is NOT called when You.com succeeds (check execution logs)
+- Intel execution time < 15s
+
+**Commit:** `feat: Phase 4 — You.com Research API for intel/outreach, Serper fallback`
+
+---
+
+## V3 Environment Variables
+
+Add/update in `docker/.env` and `docker/.env.example`:
+
+```env
+# ── Search Providers ────────────────────────────────────────────────────────
+# Firecrawl: Get API key from firecrawl.dev → switch to "via OpenRouter" team → API Keys
+# 100,500 credits already provisioned, 0 used
+FIRECRAWL_API_KEY=fc-...
+
+# Serper: 2,500 one-time free queries — use sparingly (fallback only)
+SERPER_API_KEY=...
+
+# You.com: $100 free credits = ~20,000 search calls at $5/1000
+YOUCOM_API_KEY=...
+
+# ── Telegraph ────────────────────────────────────────────────────────────────
+# No env var needed — token auto-provisioned on first run, stored in n8n staticData
+```
+
+---
+
+## V3 Performance Targets
+
+| Metric | V2 Current | V3 Target |
+|--------|-----------|-----------|
+| find_jobs time | 2m+ (hang) | 25–40s |
+| Jobs returned | 5 | 20–40 |
+| Companies covered | 79 hardcoded | All ATS platforms |
+| Recency filter | None | 48hr |
+| Output | 5-line text | Telegraph table + top-3 inline |
+| Firecrawl queries used | 1 of 4 | 4 of 4 |
+| You.com in find_jobs | ❌ | ✅ |
+| You.com in intel/outreach | partial | ✅ Research API |
+| Apply range | 1–5 | 1–40 |
+| Node count (find_jobs path) | ~25 | ~13 |
+
+---
+
+## V3 Execution Checklist
+
+### Pre-flight (human — before running agent)
+- [ ] Get Firecrawl API key: firecrawl.dev → "via OpenRouter" team → API Keys
+- [ ] Add `FIRECRAWL_API_KEY=fc-...` to n8n environment variables + `.env`
+- [ ] Confirm `YOUCOM_API_KEY` set in n8n environment
+- [ ] Confirm `SERPER_API_KEY` set in n8n environment
+- [ ] `docker compose restart n8n` to pick up env changes
+- [ ] Install You.com community node: Settings → Community Nodes → search `youcom`
+
+### Phase 1
+- [ ] Add `ATS + Firecrawl Parallel Fetch` Code node (code above)
+- [ ] Delete 12 nodes: Split GH/LV/AB Slugs + HTTP GH/LV/AB + Normalize GH/LV/AB + Prep Firecrawl + HTTP Firecrawl + Normalize Firecrawl
+- [ ] Reconfigure Merge Sources to 3 inputs temporarily
+- [ ] Wire ATS+FC → Merge Sources input 0
+- [ ] Test execution: "find AI jobs" should complete < 30s
+- [ ] Verify sourceCounts contains greenhouse/lever/ashby/firecrawl
+- [ ] `git commit -m "feat: Phase 1 — parallel ATS+FC, replace 12 sequential nodes"`
+
+### Phase 2
+- [ ] Add `You.com Parallel Search` Code node
+- [ ] Add `Serper Job Search` Code node
+- [ ] Expand Merge Sources to 5 inputs
+- [ ] Wire You.com → input 1, Serper → input 2
+- [ ] Update Aggregate Jobs: add recency filter + change cap to 40
+- [ ] Test: jobs from companies outside companies.json appear in results
+- [ ] `git commit -m "feat: Phase 2 — You.com + Serper tracks, recency filter"`
+
+### Phase 3
+- [ ] Add `Generate Telegraph Page` Code node
+- [ ] Delete `Format Digest` node
+- [ ] Wire: Parse Scorer Output → Generate Telegraph Page → Send Digest
+- [ ] Test: Telegram message includes telegra.ph link
+- [ ] Test: link opens with job list
+- [ ] Test: reply "5" triggers apply flow
+- [ ] `git commit -m "feat: Phase 3 — Telegraph job page output"`
+
+### Phase 4
+- [ ] Add `You.com Research` Code node
+- [ ] Delete `Web Search` and `RRF Merge` nodes
+- [ ] Wire: IF: Draft Request? false → You.com Research → IF: Intel or Outreach?
+- [ ] Test: "intel about Databricks" returns health report
+- [ ] Test: "find recruiters at Anthropic" returns contacts
+- [ ] Verify Serper not called when You.com succeeds
+- [ ] `git commit -m "feat: Phase 4 — You.com Research API for intel/outreach"`
+
+### Post-V3
+- [ ] Export workflow JSON from n8n → overwrite `workflows/CareerForge Master.json`
+- [ ] Update README Status table
+- [ ] `git tag v2.0.0`
+- [ ] Delete `PLAN_V3_APPEND.md` (content now in PLAN.md)
+
+---
+
+# Part 10: V3.1 — Experience Intelligence + Resume Positioning
+
+Phases 5a, 5b, and 5c implemented via Claude Dispatch on 2026-05-02.
+
+Phase 5a: Experience Filter in find_jobs
+- Expand Query: now outputs max_yoe and seniority_pref
+- Experience Filter Code node: regex YOE extraction from description_snippets, yoe_compat_score (0.0-1.0) per job, filters hard mismatches (score < 0.15) when user specified a preference
+- JobScorer: yoe_compatibility dimension added at weight 0.15, skills_match reduced to 0.20
+
+Phase 5b: Bidirectional Seniority + Keyword Gap Analysis
+- SeniorityDetector: now outputs candidate_yoe, jd_required_min, jd_required_max, jd_seniority, fit_strategy (perfect_fit / slightly_under / slightly_over / mismatch)
+- ForgeScore: now outputs keyword_gaps[] and keyword_hits[]
+- IF: Mismatch? node: rejects mismatch roles with explanation before any LLM generation
+- IF: Keyword Gaps? node: warns user of gaps before PDF delivery
+- ResumeForge: fit_strategy content strategy injected (impact-led for slightly_under, deliberate framing for slightly_over)
+- CoverForge: fit_strategy tone strategy injected
+- Save Apply Context: saves last_resume_json, last_jd, last_fit_strategy, last_keyword_gaps to staticData
+
+Phase 5c: Section-Targeted Revisions
+- IntentRouter: detects revise_section (summary/experience/skills/keywords) and revise_tone (senior/junior/neutral)
+- "add keywords" shortcut: directly triggers keywords inject pass
+- ResumeRefine Code node: section-aware rebuild using staticData from last apply
+- ResumeRefine LLM node: uses section_instruction as user message

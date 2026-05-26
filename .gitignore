@@ -11,6 +11,15 @@ bak/
 user-data/
 data/user-data/
 
+# Dead config (ATS slugs no longer used — pipeline is fully dynamic)
+data/companies.json
+
+# Claude Code artifacts (local dev only)
+.claude/
+
+# Local review notes
+Review.md
+
 # n8n runtime databases (Docker volume data)
 *.sqlite
 *.sqlite-journal
@@ -19,6 +28,9 @@ data/user-data/
 # Debug SQL queries
 docker/query*.sql
 docker/qlatest.sql
+
+# Connection extracts (debug artifacts)
+connections_extract.json
 
 # Node
 node_modules/
@@ -42,3 +54,9 @@ logs/
 # Build artifacts
 dist/
 build/
+
+# Local patch scripts (we only commit the resulting JSON, not the patchers)
+scripts/patch_workflow*.py
+
+# Workflow backups (the script creates these as safety, no need to commit)
+workflows/*.backup*.json

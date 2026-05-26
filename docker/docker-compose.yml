@@ -1,8 +1,11 @@
 # ═══════════════════════════════════════════════════════════════
-#  CareerForge n8n — Local Dev Stack
+#  CareerForge n8n — Local Dev Stack (Community Edition)
 #  Run:  docker compose up -d   (from the docker/ folder)
 #  UI:   http://localhost:5678
-#  Copy .env.example → .env and fill in your keys first.
+#
+#  Sensitive config is in n8n credentials (encrypted), not env vars.
+#  The few env vars below are for Code nodes that haven't been migrated
+#  to credentials yet — all off the Round 1 critical path.
 # ═══════════════════════════════════════════════════════════════
 
 services:
@@ -29,24 +32,30 @@ services:
       - N8N_BASIC_AUTH_USER=${N8N_USER:-careerforge}
       - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-demo1234}
 
-      # Database (SQLite for local dev — switch to postgresdb for production)
+      # Database — SQLite for local
       - DB_TYPE=sqlite
       - DB_SQLITE_DATABASE=/home/node/.n8n/database.sqlite
 
-      # Community nodes (some integrations need this)
+      # Community nodes
       - N8N_COMMUNITY_PACKAGES_ENABLED=true
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      # require('fs') for Parse Personal Info, Load Skeletons, Build Scorer Input
+      # require('https') for Search Salary Data, You.com Research
+      - NODE_FUNCTION_ALLOW_BUILTIN=fs,https
 
-      # LLM
+      # API keys for Code nodes off Round 1 critical path
+      # (Will migrate to credentials in later rounds)
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-
-      # Search providers (configure at least one)
       - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
       - SERPER_API_KEY=${SERPER_API_KEY}
       - YOUCOM_API_KEY=${YOUCOM_API_KEY}
-
-      # Telegram
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+
+      # File access
+      - N8N_RESTRICT_FILE_ACCESS_TO=/data;/home/node/.n8n-files
+      - N8N_BLOCK_FILE_ACCESS_TO_N8N_FILES=false
+      - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
+      - N8N_BINARY_DATA_STORAGE_PATH=/home/node/.n8n/binaryData
 
       # UI preferences
       - N8N_PERSONALIZATION_ENABLED=false
@@ -57,7 +66,8 @@ services:
       - n8n_data:/home/node/.n8n
       - ../templates:/data/templates:ro
       - ../prompts:/data/prompts:ro
-      - ../user-data:/data/user-data:ro
+      - ../user-data:/data/user-data
+      - ../data:/home/node/.n8n-files/companies:ro
 
     depends_on:
       latex:
@@ -75,6 +85,7 @@ services:
     build:
       context: ../services/latex
     container_name: careerforge_latex
+    hostname: latex-service
     restart: unless-stopped
     ports:
       - "5679:5679"
