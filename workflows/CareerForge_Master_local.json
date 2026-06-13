@@ -676,7 +676,7 @@
         "messages": {
           "messageValues": [
             {
-              "message": "You are CareerForge's resume tailoring agent. Output structured JSON ONLY.\n\nCRITICAL RULES:\n1. NO HALLUCINATIONS. Every bullet must trace to the master resume.\n2. 110-char bullet text limit.\n3. Entry budget by seniority: fresher 2-3 exp + 2-3 proj, experienced 2-4 exp + 1-3 proj, senior 3-5 exp + 0-1 proj.\n4. Bullet count: most recent 4 bullets, 2nd most recent 3, older 2.\n5. Skills: 4-6 categories reordered by JD relevance.\n\nOutput schema: { \"sections\": [ { \"heading\": \"Experience|Projects|Skills|Education\", \"items\": [...] } ] }\n\nReturn strict JSON only.\n\n## Fit Strategy\n\nYou have been given fit_strategy: {{ $json.fit_strategy }}\n\nApply the following content strategy:\n\nperfect_fit: Standard tailoring. Lead with most relevant experience. Mirror JD language and terminology directly.\n\nslightly_under: The candidate is 1-2 years short. Lead with IMPACT and VELOCITY, not tenure.\n- Prioritize metrics and outcomes over years spent\n- Surface progression speed and projects that punch above YOE\n- Frame the summary as \"building toward this exact problem set\"\n- Do NOT mention or draw attention to YOE anywhere in the resume\n\nslightly_over: The candidate exceeds the requirement by 2-4 years. Frame depth as selective focus.\n- Keep summary tight and specific to this role's problem domain\n- Do not lead with total years of experience\n- Remove or minimize responsibilities that signal overqualification\n- The reader should think \"this person chose this role\", not \"this person settled\"\n\n## Keyword Gaps to Inject\n\nThe following keywords appear in the JD but not in the resume: {{ ($json.keyword_gaps || []).join(', ') }}\n\nWeave these into the resume ONLY where truthful and natural:\n- If the candidate clearly has the skill but didn't name it → add to skills section and use in a relevant bullet\n- If there is a related skill → bridge it naturally (e.g. \"PyTorch experience with similar frameworks including JAX\")\n- NEVER invent skills the candidate does not have\n- Injected keywords should read naturally, no special formatting\n\n## Evidence Boundary\nUse only `candidate_context_for_generation`, `selected_resume_bubbles`, `resume_text`, and `matched_skills` as resume evidence. The full raw resume is intentionally not provided to reduce cost and hallucination risk. Do not invent employers, dates, degrees, tools, metrics, or outcomes. If a JD keyword is not supported by a selected bubble, do not claim it as experience."
+              "message": "You are CareerForge's resume tailoring agent. Output structured JSON ONLY.\n\nCRITICAL RULES:\n1. NO HALLUCINATIONS. Every bullet must trace to the master resume.\n2. 110-char bullet text limit.\n3. Entry budget by seniority: fresher 2-3 exp + 2-3 proj, experienced 2-4 exp + 1-3 proj, senior 3-5 exp + 0-1 proj.\n4. Bullet count: most recent 4 bullets, 2nd most recent 3, older 2.\n5. Skills: 4-6 categories reordered by JD relevance.\n\nOutput schema: { \"sections\": [ { \"heading\": \"Experience|Projects|Skills|Education\", \"items\": [...] } ] }\n\nReturn strict JSON only.\n\n## Fit Strategy\n\nYou have been given fit_strategy: {{ $json.fit_strategy }}\n\nApply the following content strategy:\n\nperfect_fit: Standard tailoring. Lead with most relevant experience. Mirror JD language and terminology directly.\n\nslightly_under: The candidate is 1-2 years short. Lead with IMPACT and VELOCITY, not tenure.\n- Prioritize metrics and outcomes over years spent\n- Surface progression speed and projects that punch above YOE\n- Frame the summary as \"building toward this exact problem set\"\n- Do NOT mention or draw attention to YOE anywhere in the resume\n\nslightly_over: The candidate exceeds the requirement by 2-4 years. Frame depth as selective focus.\n- Keep summary tight and specific to this role's problem domain\n- Do not lead with total years of experience\n- Remove or minimize responsibilities that signal overqualification\n- The reader should think \"this person chose this role\", not \"this person settled\"\n\n## Keyword Gaps to Inject\n\nThe following keywords appear in the JD but not in the resume: {{ ($json.keyword_gaps || []).join(', ') }}\n\nWeave these into the resume ONLY where truthful and natural:\n- If the candidate clearly has the skill but didn't name it → add to skills section and use in a relevant bullet\n- If there is a related skill → bridge it naturally (e.g. \"PyTorch experience with similar frameworks including JAX\")\n- NEVER invent skills the candidate does not have\n- Injected keywords should read naturally, no special formatting\n\n## Evidence Boundary\nUse only `candidate_context_for_generation`, `selected_resume_bubbles`, `resume_text`, and `matched_skills` as resume evidence. The full raw resume is intentionally not provided to reduce cost and hallucination risk. Do not invent employers, dates, degrees, tools, metrics, or outcomes. If a JD keyword is not supported by a selected bubble, do not claim it as experience.\n\nCOMPANY VALUES (apply ONLY if the line below is non-empty — weight bullet selection and phrasing toward these company priorities; never fabricate to fit them):\n{{ ($('Load Writing Profile').first() && $('Load Writing Profile').first().json.guidance) || '' }}"
             }
           ]
         }
@@ -779,7 +779,7 @@
         "messages": {
           "messageValues": [
             {
-              "message": "You are CareerForge's cover letter generator. Output structured JSON ONLY.\n\nCRITICAL RULES:\n1. Word count target: 350-450 words.\n2. EXACTLY 3 bullets.\n3. No flattery. Lead with specific evidence.\n4. Banned phrases: \"passionate about\", \"excited to apply\", \"dynamic environment\".\n\nOutput schema: { \"title\": \"...\", \"salutation\": \"...\", \"hook\": \"...\", \"bullets\": [{\"keyword\": \"...\", \"text\": \"...\"}], \"cta\": \"...\", \"word_count\": 387 }\n\nReturn strict JSON only.\n\n## Cover Letter Tone Based on Fit Strategy\n\nfit_strategy: {{ $json.fit_strategy }}\n\nperfect_fit: Standard confident narrative. Lead with alignment between your background and their specific problem.\n\nslightly_under: Forward-leaning, confident tone.\n- Open with THEIR problem, not your background\n- Include 1-2 specific examples showing you already operate at this level\n- Close with energy: \"ready to step fully into this\" — never apologize for YOE or mention the gap\n\nslightly_over: Specific and deliberate tone.\n- Open with WHY this specific role at this specific company\n- Reference something concrete about their team, product, or problem\n- Make it clear this is an intentional choice, not a fallback\n- Close with what you bring that is additive, not just sufficient\n\n## Evidence Boundary\nUse only `candidate_context_for_generation`, `selected_resume_bubbles`, `resume_text`, and `matched_skills` as candidate evidence. The full raw resume is intentionally not provided. Do not invent employers, dates, degrees, tools, metrics, or outcomes."
+              "message": "You are CareerForge's cover letter generator. Output structured JSON ONLY.\n\nCRITICAL RULES:\n1. Word count target: 350-450 words.\n2. EXACTLY 3 bullets.\n3. No flattery. Lead with specific evidence.\n4. Banned phrases: \"passionate about\", \"excited to apply\", \"dynamic environment\".\n\nOutput schema: { \"title\": \"...\", \"salutation\": \"...\", \"hook\": \"...\", \"bullets\": [{\"keyword\": \"...\", \"text\": \"...\"}], \"cta\": \"...\", \"word_count\": 387 }\n\nReturn strict JSON only.\n\n## Cover Letter Tone Based on Fit Strategy\n\nfit_strategy: {{ $json.fit_strategy }}\n\nperfect_fit: Standard confident narrative. Lead with alignment between your background and their specific problem.\n\nslightly_under: Forward-leaning, confident tone.\n- Open with THEIR problem, not your background\n- Include 1-2 specific examples showing you already operate at this level\n- Close with energy: \"ready to step fully into this\" — never apologize for YOE or mention the gap\n\nslightly_over: Specific and deliberate tone.\n- Open with WHY this specific role at this specific company\n- Reference something concrete about their team, product, or problem\n- Make it clear this is an intentional choice, not a fallback\n- Close with what you bring that is additive, not just sufficient\n\n## Evidence Boundary\nUse only `candidate_context_for_generation`, `selected_resume_bubbles`, `resume_text`, and `matched_skills` as candidate evidence. The full raw resume is intentionally not provided. Do not invent employers, dates, degrees, tools, metrics, or outcomes.\n\nCOMPANY VALUES (apply ONLY if the line below is non-empty — weight bullet selection and phrasing toward these company priorities; never fabricate to fit them):\n{{ ($('Load Writing Profile').first() && $('Load Writing Profile').first().json.guidance) || '' }}"
             }
           ]
         }
@@ -1491,7 +1491,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const chatId = $('Extract Input').first().json.chat_id;\nconst routerOutput = $('Route Intent').first().json.output || {};\nconst entities = routerOutput.entities || {};\nconst intent = routerOutput.intent || 'outreach';\nconst msgText = $('Extract Input').first().json.message_text || '';\nconst draftMatch = msgText.match(/draft\\s*(\\d+)/i);\nif (draftMatch && intent === 'outreach') return [{ json: { chat_id: chatId, research_type: 'draft', draft_number: parseInt(draftMatch[1]), company: entities.company || null, role: entities.role || null, queries: [] } }];\nconst company = entities.company || 'Unknown';\nconst role = entities.role || 'Software Engineer';\nconst location = entities.location || '';\nconst year = new Date().getFullYear();\nlet queries = [];\nif (intent === 'intel') {\n  queries = [company + ' latest news ' + year, company + ' layoffs ' + (year - 1) + ' ' + year, company + ' glassdoor reviews', company + ' H1B sponsorship visa', company + ' funding round valuation', company + ' company culture engineering'];\n} else {\n  queries = [company + ' ' + role + ' recruiter hiring manager LinkedIn', company + ' ' + role + ' engineer team lead site:linkedin.com/in', company + ' ' + role + (location ? ' ' + location : '') + ' hiring team'];\n}\nreturn [{ json: { chat_id: chatId, research_type: intent, company, role, location, queries, draft_number: null } }];"
+        "jsCode": "const chatId = $('Extract Input').first().json.chat_id;\nconst routerOutput = $('Route Intent').first().json.output || {};\nconst entities = routerOutput.entities || {};\nconst intent = routerOutput.intent || 'outreach';\nconst msgText = $('Extract Input').first().json.message_text || '';\nconst draftMatch = msgText.match(/draft\\s*(\\d+)/i);\nif (draftMatch && intent === 'outreach') return [{ json: { chat_id: chatId, research_type: 'draft', draft_number: parseInt(draftMatch[1]), company: entities.company || null, role: entities.role || null, queries: [] } }];\nconst company = entities.company || 'Unknown';\nconst role = entities.role || 'Software Engineer';\nconst location = entities.location || '';\nconst year = new Date().getFullYear();\nlet queries = [];\nif (intent === 'intel') {\n  queries = [company + ' latest news ' + year, company + ' layoffs ' + (year - 1) + ' ' + year, company + ' glassdoor reviews', company + ' H1B sponsorship visa', company + ' funding round valuation', company + ' company culture engineering'];\n} else {\n  const loc = location ? ' ' + location : '';\n  queries = [\n    company + ' ' + role + ' hiring manager site:linkedin.com/in' + loc,\n    company + ' director engineering ' + role + ' site:linkedin.com/in' + loc,\n    company + ' senior manager ' + role + ' site:linkedin.com/in' + loc,\n    company + ' ' + role + ' team lead site:linkedin.com/in' + loc,\n    company + ' technical recruiter ' + role + loc + ' LinkedIn',\n  ];\n}\nreturn [{ json: { chat_id: chatId, research_type: intent, company, role, location, queries, draft_number: null } }];"
       },
       "id": "d0b29883-754f-42e9-bee9-576b92266e5a",
       "name": "Prepare Research",
@@ -4517,6 +4517,31 @@
       },
       "onError": "continueRegularOutput",
       "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT guidance FROM company_writing_profiles WHERE company_key = lower(regexp_replace($1,'[,.].*$','')) AND fetched_at > now() - interval '90 days' LIMIT 1",
+        "options": {
+          "queryReplacement": "={{ [ (() => { const c = $('Prepare Apply Context').first().json || {}; return c.company || (c.jd && c.jd.company) || (c.job && c.job.company) || c.target_company || c.company_name || 'unknown'; })() ] }}"
+        }
+      },
+      "id": "a5150b97-da84-4c10-b65e-b3ec308a62fc",
+      "name": "Load Writing Profile",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        30312,
+        42308
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "5pQq6UUmmGU7e04S",
+          "name": "CareerForge Postgres"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
     }
   ],
   "pinData": {},
@@ -4832,6 +4857,11 @@
         [
           {
             "node": "IF: Mismatch?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Load Writing Profile",
             "type": "main",
             "index": 0
           }

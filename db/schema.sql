@@ -134,3 +134,11 @@ CREATE TABLE IF NOT EXISTS company_intel (
   health_score INT,
   fetched_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ── R8: company_writing_profiles — per-company resume/cover guidance ──
+CREATE TABLE IF NOT EXISTS company_writing_profiles (
+  company_key TEXT PRIMARY KEY,
+  guidance    TEXT NOT NULL,
+  source      TEXT NOT NULL DEFAULT 'seed',
+  fetched_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
