@@ -121,3 +121,8 @@ CREATE TABLE IF NOT EXISTS tool_cost_log (
 );
 CREATE INDEX IF NOT EXISTS idx_cost_ts       ON tool_cost_log (ts);
 CREATE INDEX IF NOT EXISTS idx_cost_provider ON tool_cost_log (provider, ts);
+
+-- ── R3 additions: probe funnel ─────────────────────────────────
+--  tier: dream | probe | hot | warm | cold (promotion by match yield)
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS tier TEXT NOT NULL DEFAULT 'probe';
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS relevant_yield INT NOT NULL DEFAULT 0;

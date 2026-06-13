@@ -4330,6 +4330,60 @@
         27134,
         41368
       ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://ollama-service:11434/api/embed",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"bge-m3\", \"input\": [($json.resume_doc && $json.resume_doc.compact_views && $json.resume_doc.compact_views.scoring_profile) || ''] } }}",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "3df50258-893a-43aa-b1f7-f64edef47fa1",
+      "name": "Embed Resume Profile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        24764,
+        43664
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH u AS (INSERT INTO users (tg_user_id) VALUES ($1::bigint) ON CONFLICT (tg_user_id) DO UPDATE SET tg_user_id = EXCLUDED.tg_user_id RETURNING tg_user_id) INSERT INTO resumes (user_id, doc_text, embedding, is_primary) SELECT tg_user_id, $2, NULLIF($3, '')::vector, true FROM u ON CONFLICT (user_id) WHERE is_primary DO UPDATE SET doc_text = EXCLUDED.doc_text, embedding = COALESCE(EXCLUDED.embedding, resumes.embedding), updated_at = now()",
+        "options": {
+          "queryReplacement": "={{ [$('Ingest Resume JSON').first().json.chat_id, $('Ingest Resume JSON').first().json.resume_doc.compact_views.scoring_profile || '', ($json.embeddings && $json.embeddings[0] && $json.embeddings[0].length === 1024) ? '[' + $json.embeddings[0].join(',') + ']' : ''] }}"
+        }
+      },
+      "id": "597d04e6-5975-419d-aef2-adfd1ba92f48",
+      "name": "Upsert Resume Row",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        24984,
+        43664
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "5pQq6UUmmGU7e04S",
+          "name": "CareerForge Postgres"
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "pinData": {},
@@ -6402,6 +6456,11 @@
             "node": "Build Bubble Preview",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Embed Resume Profile",
+            "type": "main",
+            "index": 0
           }
         ],
         [
@@ -6579,6 +6638,17 @@
         [
           {
             "node": "Send Resume Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embed Resume Profile": {
+      "main": [
+        [
+          {
+            "node": "Upsert Resume Row",
             "type": "main",
             "index": 0
           }
