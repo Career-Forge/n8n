@@ -4384,6 +4384,114 @@
         }
       },
       "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://ollama-service:11434/api/embed",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"bge-m3\", \"input\": [ ((($json.role_families)||[]).join(', ')) || 'software engineer' ] } }}",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "cabeeff9-d061-494c-a28e-5775511efdd1",
+      "name": "Embed Search Query",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        28872,
+        41588
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1500,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH q AS (SELECT $1::vector AS qvec, websearch_to_tsquery('english', COALESCE($2,'')) AS qtext), vec AS (SELECT j.id, row_number() OVER (ORDER BY j.embedding <=> (SELECT qvec FROM q)) AS rnk FROM jobs j WHERE j.status='active' AND j.embedding IS NOT NULL AND (SELECT qvec FROM q) IS NOT NULL ORDER BY j.embedding <=> (SELECT qvec FROM q) LIMIT 50), kw AS (SELECT j.id, row_number() OVER (ORDER BY ts_rank(j.jd_tsv,(SELECT qtext FROM q)) DESC) AS rnk FROM jobs j WHERE j.status='active' AND (SELECT qtext FROM q)::text <> '' AND j.jd_tsv @@ (SELECT qtext FROM q) ORDER BY ts_rank(j.jd_tsv,(SELECT qtext FROM q)) DESC LIMIT 50), fused AS (SELECT COALESCE(v.id,k.id) AS id, COALESCE(1.0/(60+v.rnk),0)+COALESCE(1.0/(60+k.rnk),0) AS score FROM vec v FULL OUTER JOIN kw k ON v.id=k.id) SELECT j.id AS job_id, j.title, c.name AS company, j.location, j.remote, j.apply_url, left(j.jd_text,1200) AS jd_text, j.posted_at, f.score AS rrf_score FROM fused f JOIN jobs j ON j.id=f.id JOIN companies c ON c.id=j.company_id ORDER BY f.score DESC LIMIT 30",
+        "options": {
+          "queryReplacement": "={{ [ ($json.embeddings && $json.embeddings[0] && $json.embeddings[0].length===1024) ? ('[' + $json.embeddings[0].join(',') + ']') : null, (($('Pre-flight: Providers').first().json.role_families)||[]).join(' ') ] }}"
+        }
+      },
+      "id": "9244e82d-415d-4711-8d11-42980f736cd5",
+      "name": "Hybrid Cache Search",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        29072,
+        41588
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "5pQq6UUmmGU7e04S",
+          "name": "CareerForge Postgres"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && r.job_id);\nconst NEG = /(u\\.?s\\.?\\s*citizen(ship)?\\s*(required|only)|must\\s*be\\s*a\\s*(u\\.?s\\.?\\s*)?citizen|security\\s*clearance|active\\s*clearance|ts\\/sci|secret\\s*clearance|no\\s*sponsorship|not?\\s*(able|willing)\\s*to\\s*sponsor|unable\\s*to\\s*sponsor)/i;\nconst seen = new Set();\nconst jobs = [];\nfor (const r of rows) {\n  const jd = String(r.jd_text || '');\n  if (NEG.test(jd)) continue;\n  const url = r.apply_url || '';\n  if (!url) continue;\n  const key = url.replace(/[?#].*$/,'').replace(/\\/+$/,'').toLowerCase();\n  if (seen.has(key)) continue;\n  seen.add(key);\n  jobs.push({ job_id: 'cache_' + r.job_id, title: r.title || '', company: r.company || '', location: r.location || '', remote: !!r.remote, url: url, updated_at: r.posted_at || null, source: 'cache', source_tier: 1, description_snippet: jd.slice(0,600), rrf_score: r.rrf_score || 0 });\n}\nreturn [{ json: { jobs: jobs, source: 'cache', count: jobs.length } }];"
+      },
+      "id": "e9d373b4-1c5e-439b-ade3-998b379e7d27",
+      "name": "Cache Prefilter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        29272,
+        41588
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "numberInputs": 2
+      },
+      "id": "2c0c94af-4817-4fb5-83cb-e45b2407ae25",
+      "name": "Merge Cache",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        31160,
+        41184
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO matches (user_id, job_id, score) SELECT $1::bigint, (regexp_replace(s->>'job_id','^cache_',''))::bigint, ((s->>'fit_score')::real)/10.0 FROM jsonb_array_elements($2::jsonb) s WHERE s->>'job_id' ~ '^cache_[0-9]+$' ON CONFLICT (user_id, job_id) DO UPDATE SET score = EXCLUDED.score, created_at = now()",
+        "options": {
+          "queryReplacement": "={{ [ $('Extract Input').first().json.chat_id, JSON.stringify($json.scored || []) ] }}"
+        }
+      },
+      "id": "69002aed-e1d2-450a-ac08-907dad75b649",
+      "name": "Record Matches",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        32856,
+        41428
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "5pQq6UUmmGU7e04S",
+          "name": "CareerForge Postgres"
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "pinData": {},
@@ -5484,7 +5592,7 @@
       "main": [
         [
           {
-            "node": "Aggregate Jobs",
+            "node": "Merge Cache",
             "type": "main",
             "index": 0
           }
@@ -5496,6 +5604,11 @@
         [
           {
             "node": "Build Telegraph Body",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Record Matches",
             "type": "main",
             "index": 0
           }
@@ -5806,6 +5919,11 @@
         [
           {
             "node": "IF: Providers?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Embed Search Query",
             "type": "main",
             "index": 0
           }
@@ -6651,6 +6769,50 @@
             "node": "Upsert Resume Row",
             "type": "main",
             "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Cache": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embed Search Query": {
+      "main": [
+        [
+          {
+            "node": "Hybrid Cache Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hybrid Cache Search": {
+      "main": [
+        [
+          {
+            "node": "Cache Prefilter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cache Prefilter": {
+      "main": [
+        [
+          {
+            "node": "Merge Cache",
+            "type": "main",
+            "index": 1
           }
         ]
       ]
