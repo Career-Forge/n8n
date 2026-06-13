@@ -126,3 +126,11 @@ CREATE INDEX IF NOT EXISTS idx_cost_provider ON tool_cost_log (provider, ts);
 --  tier: dream | probe | hot | warm | cold (promotion by match yield)
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS tier TEXT NOT NULL DEFAULT 'probe';
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS relevant_yield INT NOT NULL DEFAULT 0;
+
+-- ── R7: company_intel — cached dossiers + health for match penalty ──
+CREATE TABLE IF NOT EXISTS company_intel (
+  company_key  TEXT PRIMARY KEY,
+  dossier      JSONB NOT NULL,
+  health_score INT,
+  fetched_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
