@@ -1,5 +1,5 @@
 {
-  "name": "CareerForge Master — Local v6.3",
+  "name": "CareerForge Master PATCHED v6.3 DOCX No-Zlib Fix",
   "nodes": [
     {
       "parameters": {
@@ -20,7 +20,7 @@
       "webhookId": "careerforge-telegram",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -191,7 +191,7 @@
       "webhookId": "1f3cf423-2def-4887-8e40-4fd9820c2e23",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -211,19 +211,35 @@
     },
     {
       "parameters": {
-        "fileSelector": "/data/user-data/resume_structured.json",
-        "options": {}
+        "operation": "getAll",
+        "tableId": "cf_state",
+        "limit": 1,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "global:resume_structured"
+            }
+          ]
+        }
       },
       "id": "eaf71702-524d-440f-9f39-9544f36697f3",
       "name": "Read Resume",
-      "type": "n8n-nodes-base.readWriteFile",
-      "typeVersion": 1.1,
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
       "position": [
         31664,
         41184
       ],
       "alwaysOutputData": true,
-      "onError": "continueRegularOutput"
+      "credentials": {
+        "supabaseApi": {
+          "id": "2GX5OhRhgZUQkLjE",
+          "name": "Supabase"
+        }
+      }
     },
     {
       "parameters": {
@@ -294,7 +310,7 @@
       "webhookId": "4fe62b0e-e3e8-4629-862c-f20402e6197a",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -316,7 +332,7 @@
       "webhookId": "6115f6cc-47ba-4c99-bf1d-28031086b4f5",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -340,7 +356,7 @@
       "webhookId": "24d3d0a4-c44b-4989-9cd1-6460d700ce0a",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -407,7 +423,7 @@
       "webhookId": "ad587865-b92c-4b17-81f2-445f8f7f2983",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -427,23 +443,39 @@
     },
     {
       "parameters": {
-        "fileSelector": "/data/user-data/resume_structured.json",
-        "options": {}
+        "operation": "getAll",
+        "tableId": "cf_state",
+        "limit": 1,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "global:resume_structured"
+            }
+          ]
+        }
       },
       "id": "2fc4851c-097c-4f9d-8aed-bd3e9c7f76af",
       "name": "Read Master Resume (Apply)",
-      "type": "n8n-nodes-base.readWriteFile",
-      "typeVersion": 1.1,
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
       "position": [
         28704,
         41968
       ],
       "alwaysOutputData": true,
-      "onError": "continueRegularOutput"
+      "credentials": {
+        "supabaseApi": {
+          "id": "2GX5OhRhgZUQkLjE",
+          "name": "Supabase"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "// Parse Personal Info v5 — Supabase resume_bubbles/structured resume first, legacy file fallback second.\nconst jobCtx = $('Prepare Job Context').first().json;\n\nfunction parseMaybe(v) {\n  if (!v) return null;\n  if (typeof v === 'string') {\n    try { return JSON.parse(v); } catch(e) { return v; }\n  }\n  return v;\n}\nfunction firstPrimary(arr) {\n  return Array.isArray(arr) ? (arr.find(x => x && x.primary) || arr[0] || {}) : {};\n}\nfunction clean(v) {\n  const s = (v === null || v === undefined) ? '' : String(v).trim();\n  if (!s || s.toLowerCase() === 'undefined' || s.toLowerCase() === 'null') return '';\n  return s;\n}\nfunction locToString(loc) {\n  if (!loc) return '';\n  if (typeof loc === 'string') return clean(loc);\n  return [loc.city, loc.region, loc.country].map(clean).filter(Boolean).join(', ');\n}\nfunction flatSkills(skills) {\n  const out = [];\n  if (skills && typeof skills === 'object') {\n    for (const vals of Object.values(skills)) if (Array.isArray(vals)) out.push(...vals);\n  }\n  return [...new Set(out.map(s => String(s).trim()).filter(Boolean))];\n}\nfunction linesFromBubbles(r) {\n  const out = [];\n  const p = r.personal || r.profile || {};\n  const email = firstPrimary(p.emails).address || p.email || '';\n  const phone = firstPrimary(p.phones).number || p.phone_primary || p.phone || '';\n  const loc = locToString(firstPrimary(p.locations)) || p.location || '';\n  const links = p.links || {};\n  out.push('## PERSONAL');\n  out.push('name: ' + (p.name || ''));\n  out.push('headline: ' + (p.headline || ''));\n  out.push('email: ' + email);\n  out.push('phone_primary: ' + phone);\n  out.push('linkedin: ' + (links.linkedin || p.linkedin || ''));\n  out.push('github: ' + (links.github || p.github || ''));\n  out.push('portfolio: ' + (links.portfolio || p.portfolio || ''));\n  out.push('location: ' + loc);\n  out.push('');\n  const compact = r.compact_views?.generation_base || r.compact_views?.scoring_profile || '';\n  if (compact) {\n    out.push('## COMPACT RESUME CONTEXT');\n    out.push(compact);\n    out.push('');\n  }\n  out.push('## SKILLS');\n  const skillList = flatSkills(r.skills);\n  if (skillList.length) out.push(skillList.join(', '));\n  out.push('');\n  out.push('## EXPERIENCE BUBBLES');\n  (r.experience || []).slice(0, 8).forEach(e => {\n    out.push([e.title, e.company || e.organization, e.start_date, e.is_current ? 'Present' : e.end_date].filter(Boolean).join(' | '));\n    (e.bullets || []).slice(0, 6).forEach(b => out.push('- ' + b));\n    out.push('');\n  });\n  out.push('## PROJECT BUBBLES');\n  (r.projects || []).slice(0, 8).forEach(pj => {\n    out.push((pj.name || pj.title || 'Project') + (Array.isArray(pj.tech) && pj.tech.length ? ' [' + pj.tech.slice(0, 12).join(', ') + ']' : ''));\n    (pj.bullets || []).slice(0, 5).forEach(b => out.push('- ' + b));\n    out.push('');\n  });\n  out.push('## EDUCATION');\n  (r.education || []).forEach(ed => {\n    out.push([ed.institution, ed.degree, ed.field, ed.location, ed.gpa ? 'GPA ' + ed.gpa : ''].filter(Boolean).join(' | '));\n  });\n  return out.join('\\n').trim().slice(0, 7000);\n}\nfunction linesFromStructured(r) {\n  if (r.kind === 'resume_bubbles') return linesFromBubbles(r);\n  const out = [];\n  const p = r.personal || {};\n  const email = firstPrimary(p.emails).address || p.email || '';\n  const phone = firstPrimary(p.phones).number || p.phone_primary || p.phone || '';\n  const loc = locToString(firstPrimary(p.locations)) || p.location || '';\n  const links = p.links || {};\n  out.push('## PERSONAL');\n  out.push('name: ' + (p.name || ''));\n  out.push('headline: ' + (p.headline || ''));\n  out.push('email: ' + email);\n  out.push('phone_primary: ' + phone);\n  out.push('linkedin: ' + (links.linkedin || p.linkedin || ''));\n  out.push('github: ' + (links.github || p.github || ''));\n  out.push('portfolio: ' + (links.portfolio || p.portfolio || ''));\n  out.push('location: ' + loc);\n  out.push('work_authorization: ' + (typeof p.work_authorization === 'string' ? p.work_authorization : JSON.stringify(p.work_authorization || {})));\n  out.push('');\n  if (Array.isArray(r.summary_bullets) && r.summary_bullets.length) {\n    out.push('## SUMMARY');\n    r.summary_bullets.forEach(b => out.push('- ' + b));\n    out.push('');\n  }\n  out.push('## EXPERIENCES');\n  (r.experience || []).forEach(e => {\n    out.push([e.title, e.company || e.organization, e.location].filter(Boolean).join(' | ') + ' | ' + (e.start_date || '') + ' - ' + (e.is_current ? 'Present' : (e.end_date || '')));\n    (e.projects || []).forEach(pr => {\n      if (pr.name) out.push('Project: ' + pr.name + (Array.isArray(pr.tech) && pr.tech.length ? ' [' + pr.tech.join(', ') + ']' : ''));\n      (pr.bullets || []).forEach(b => out.push('- ' + b));\n    });\n    (e.bullets || []).forEach(b => out.push('- ' + b));\n    out.push('');\n  });\n  out.push('## PROJECTS');\n  (r.projects || []).forEach(pj => {\n    out.push((pj.name || pj.title || 'Project') + (Array.isArray(pj.tech) && pj.tech.length ? ' [' + pj.tech.join(', ') + ']' : ''));\n    (pj.bullets || []).forEach(b => out.push('- ' + b));\n    out.push('');\n  });\n  out.push('## EDUCATION');\n  (r.education || []).forEach(ed => {\n    out.push([ed.institution, ed.degree, ed.field, ed.location, ed.gpa ? 'GPA ' + ed.gpa : ''].filter(Boolean).join(' | '));\n  });\n  out.push('');\n  out.push('## SKILLS');\n  if (r.skills && typeof r.skills === 'object') {\n    Object.entries(r.skills).forEach(([cat, vals]) => {\n      if (Array.isArray(vals) && vals.length) out.push(cat + ': ' + vals.join(', '));\n    });\n  }\n  return out.join('\\n').trim();\n}\nfunction personalFromStructured(r) {\n  const p = r.personal || r.profile || {};\n  const email = firstPrimary(p.emails).address || p.email || '';\n  const primaryPhone = firstPrimary(p.phones).number || p.phone_primary || p.phone || '';\n  const secondaryPhone = Array.isArray(p.phones) ? ((p.phones.find(ph => !ph.primary) || {}).number || '') : (p.phone_secondary || '');\n  const loc = locToString(firstPrimary(p.locations)) || p.location || '';\n  const links = p.links || {};\n  return {\n    name: p.name || '',\n    email,\n    phone_primary: primaryPhone,\n    phone_secondary: secondaryPhone,\n    phone: primaryPhone,\n    linkedin: links.linkedin || p.linkedin || '',\n    github: links.github || p.github || '',\n    portfolio: links.portfolio || p.portfolio || '',\n    location: loc,\n    show_location: false,\n    work_authorization: typeof p.work_authorization === 'string' ? p.work_authorization : JSON.stringify(p.work_authorization || {})\n  };\n}\nfunction parsePersonalFromText(resumeText) {\n  const personal = {};\n  const fieldPattern = /^(name|email|phone_primary|phone_secondary|phone|linkedin|github|portfolio|location|show_location|work_authorization):\\s*(.+)/gim;\n  let match;\n  while ((match = fieldPattern.exec(resumeText)) !== null) {\n    const key = match[1].toLowerCase();\n    const val = match[2].trim();\n    if (val.startsWith('[') && val.endsWith(']')) continue;\n    if (val.startsWith('#')) continue;\n    personal[key] = val;\n  }\n  if (!personal.email) {\n    const em = resumeText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i);\n    if (em) personal.email = em[0];\n  }\n  if (!personal.phone_primary) {\n    const ph = (resumeText.match(/(?:\\+?\\d[\\d\\s().-]{7,}\\d)/g) || []).find(p => p.replace(/\\D/g, '').length >= 10);\n    if (ph) personal.phone_primary = ph.trim();\n  }\n  if (personal.phone && !personal.phone_primary) personal.phone_primary = personal.phone;\n  return personal;\n}\nfunction applyPhoneDisplay(personal) {\n  const jobLocation = (jobCtx.location || jobCtx.job_title || '').toLowerCase();\n  const indiaKeywords = ['india','hyderabad','bengaluru','bangalore','mumbai','pune','delhi','chennai','kolkata','indian subcontinent'];\n  const targetIsIndia = indiaKeywords.some(kw => jobLocation.includes(kw));\n  personal.phone_display = targetIsIndia && personal.phone_secondary ? personal.phone_secondary : (personal.phone_primary || personal.phone_secondary || '');\n  personal.show_location = String(personal.show_location || 'false').toLowerCase() === 'true';\n  return personal;\n}\n\nconst rows = $input.all().map(i => i.json || {});\nlet row = rows.find(r => r && (r.id === 'global:resume_structured' || r.value)) || rows[0] || {};\nlet structured = parseMaybe(row.value || null);\nif (structured && structured.resume_doc) structured = structured.resume_doc;\n\nlet resumeText = '';\nlet personal = {};\nlet resumeSource = 'none';\n\nif (structured && typeof structured === 'object' && (structured.personal || structured.profile)) {\n  resumeText = linesFromStructured(structured);\n  personal = personalFromStructured(structured);\n  resumeSource = structured.kind === 'resume_bubbles' ? 'supabase_resume_bubbles' : 'supabase_structured';\n}\n\nif (!resumeText && typeof row.value === 'string' && row.value.length > 200) {\n  resumeText = row.value;\n  personal = parsePersonalFromText(resumeText);\n  resumeSource = 'supabase_text';\n}\n\n// [localized] fs legacy-file fallback removed — resume comes from resume_structured.json\n\nif (!resumeText) {\n  return [{ json: { ...jobCtx, resume_text: '', resume_structured: null, personal: {}, resume_source: resumeSource, _validation_error: true, _missing_fields: ['saved resume'], error: 'No saved resume found. Send me your resume as pasted text or upload a PDF/DOCX/TXT, then tap ✅ to save it.' } }];\n}\n\npersonal = applyPhoneDisplay(personal);\nconst required = ['name','email'];\nconst missing = required.filter(f => !personal[f]);\nif (missing.length > 0) {\n  return [{ json: { ...jobCtx, resume_text: resumeText, resume_structured: structured || null, personal, resume_source: resumeSource, _validation_error: true, _missing_fields: missing, error: 'Saved resume is missing required fields: ' + missing.join(', ') } }];\n}\n\nreturn [{ json: { ...jobCtx, resume_text: resumeText, resume_structured: structured || null, personal, resume_source: resumeSource, _validation_error: false } }];\n"
+        "jsCode": "// Parse Personal Info v5 — Supabase resume_bubbles/structured resume first, legacy file fallback second.\nconst jobCtx = $('Prepare Job Context').first().json;\n\nfunction parseMaybe(v) {\n  if (!v) return null;\n  if (typeof v === 'string') {\n    try { return JSON.parse(v); } catch(e) { return v; }\n  }\n  return v;\n}\nfunction firstPrimary(arr) {\n  return Array.isArray(arr) ? (arr.find(x => x && x.primary) || arr[0] || {}) : {};\n}\nfunction clean(v) {\n  const s = (v === null || v === undefined) ? '' : String(v).trim();\n  if (!s || s.toLowerCase() === 'undefined' || s.toLowerCase() === 'null') return '';\n  return s;\n}\nfunction locToString(loc) {\n  if (!loc) return '';\n  if (typeof loc === 'string') return clean(loc);\n  return [loc.city, loc.region, loc.country].map(clean).filter(Boolean).join(', ');\n}\nfunction flatSkills(skills) {\n  const out = [];\n  if (skills && typeof skills === 'object') {\n    for (const vals of Object.values(skills)) if (Array.isArray(vals)) out.push(...vals);\n  }\n  return [...new Set(out.map(s => String(s).trim()).filter(Boolean))];\n}\nfunction linesFromBubbles(r) {\n  const out = [];\n  const p = r.personal || r.profile || {};\n  const email = firstPrimary(p.emails).address || p.email || '';\n  const phone = firstPrimary(p.phones).number || p.phone_primary || p.phone || '';\n  const loc = locToString(firstPrimary(p.locations)) || p.location || '';\n  const links = p.links || {};\n  out.push('## PERSONAL');\n  out.push('name: ' + (p.name || ''));\n  out.push('headline: ' + (p.headline || ''));\n  out.push('email: ' + email);\n  out.push('phone_primary: ' + phone);\n  out.push('linkedin: ' + (links.linkedin || p.linkedin || ''));\n  out.push('github: ' + (links.github || p.github || ''));\n  out.push('portfolio: ' + (links.portfolio || p.portfolio || ''));\n  out.push('location: ' + loc);\n  out.push('');\n  const compact = r.compact_views?.generation_base || r.compact_views?.scoring_profile || '';\n  if (compact) {\n    out.push('## COMPACT RESUME CONTEXT');\n    out.push(compact);\n    out.push('');\n  }\n  out.push('## SKILLS');\n  const skillList = flatSkills(r.skills);\n  if (skillList.length) out.push(skillList.join(', '));\n  out.push('');\n  out.push('## EXPERIENCE BUBBLES');\n  (r.experience || []).slice(0, 8).forEach(e => {\n    out.push([e.title, e.company || e.organization, e.start_date, e.is_current ? 'Present' : e.end_date].filter(Boolean).join(' | '));\n    (e.bullets || []).slice(0, 6).forEach(b => out.push('- ' + b));\n    out.push('');\n  });\n  out.push('## PROJECT BUBBLES');\n  (r.projects || []).slice(0, 8).forEach(pj => {\n    out.push((pj.name || pj.title || 'Project') + (Array.isArray(pj.tech) && pj.tech.length ? ' [' + pj.tech.slice(0, 12).join(', ') + ']' : ''));\n    (pj.bullets || []).slice(0, 5).forEach(b => out.push('- ' + b));\n    out.push('');\n  });\n  out.push('## EDUCATION');\n  (r.education || []).forEach(ed => {\n    out.push([ed.institution, ed.degree, ed.field, ed.location, ed.gpa ? 'GPA ' + ed.gpa : ''].filter(Boolean).join(' | '));\n  });\n  return out.join('\\n').trim().slice(0, 7000);\n}\nfunction linesFromStructured(r) {\n  if (r.kind === 'resume_bubbles') return linesFromBubbles(r);\n  const out = [];\n  const p = r.personal || {};\n  const email = firstPrimary(p.emails).address || p.email || '';\n  const phone = firstPrimary(p.phones).number || p.phone_primary || p.phone || '';\n  const loc = locToString(firstPrimary(p.locations)) || p.location || '';\n  const links = p.links || {};\n  out.push('## PERSONAL');\n  out.push('name: ' + (p.name || ''));\n  out.push('headline: ' + (p.headline || ''));\n  out.push('email: ' + email);\n  out.push('phone_primary: ' + phone);\n  out.push('linkedin: ' + (links.linkedin || p.linkedin || ''));\n  out.push('github: ' + (links.github || p.github || ''));\n  out.push('portfolio: ' + (links.portfolio || p.portfolio || ''));\n  out.push('location: ' + loc);\n  out.push('work_authorization: ' + (typeof p.work_authorization === 'string' ? p.work_authorization : JSON.stringify(p.work_authorization || {})));\n  out.push('');\n  if (Array.isArray(r.summary_bullets) && r.summary_bullets.length) {\n    out.push('## SUMMARY');\n    r.summary_bullets.forEach(b => out.push('- ' + b));\n    out.push('');\n  }\n  out.push('## EXPERIENCES');\n  (r.experience || []).forEach(e => {\n    out.push([e.title, e.company || e.organization, e.location].filter(Boolean).join(' | ') + ' | ' + (e.start_date || '') + ' - ' + (e.is_current ? 'Present' : (e.end_date || '')));\n    (e.projects || []).forEach(pr => {\n      if (pr.name) out.push('Project: ' + pr.name + (Array.isArray(pr.tech) && pr.tech.length ? ' [' + pr.tech.join(', ') + ']' : ''));\n      (pr.bullets || []).forEach(b => out.push('- ' + b));\n    });\n    (e.bullets || []).forEach(b => out.push('- ' + b));\n    out.push('');\n  });\n  out.push('## PROJECTS');\n  (r.projects || []).forEach(pj => {\n    out.push((pj.name || pj.title || 'Project') + (Array.isArray(pj.tech) && pj.tech.length ? ' [' + pj.tech.join(', ') + ']' : ''));\n    (pj.bullets || []).forEach(b => out.push('- ' + b));\n    out.push('');\n  });\n  out.push('## EDUCATION');\n  (r.education || []).forEach(ed => {\n    out.push([ed.institution, ed.degree, ed.field, ed.location, ed.gpa ? 'GPA ' + ed.gpa : ''].filter(Boolean).join(' | '));\n  });\n  out.push('');\n  out.push('## SKILLS');\n  if (r.skills && typeof r.skills === 'object') {\n    Object.entries(r.skills).forEach(([cat, vals]) => {\n      if (Array.isArray(vals) && vals.length) out.push(cat + ': ' + vals.join(', '));\n    });\n  }\n  return out.join('\\n').trim();\n}\nfunction personalFromStructured(r) {\n  const p = r.personal || r.profile || {};\n  const email = firstPrimary(p.emails).address || p.email || '';\n  const primaryPhone = firstPrimary(p.phones).number || p.phone_primary || p.phone || '';\n  const secondaryPhone = Array.isArray(p.phones) ? ((p.phones.find(ph => !ph.primary) || {}).number || '') : (p.phone_secondary || '');\n  const loc = locToString(firstPrimary(p.locations)) || p.location || '';\n  const links = p.links || {};\n  return {\n    name: p.name || '',\n    email,\n    phone_primary: primaryPhone,\n    phone_secondary: secondaryPhone,\n    phone: primaryPhone,\n    linkedin: links.linkedin || p.linkedin || '',\n    github: links.github || p.github || '',\n    portfolio: links.portfolio || p.portfolio || '',\n    location: loc,\n    show_location: false,\n    work_authorization: typeof p.work_authorization === 'string' ? p.work_authorization : JSON.stringify(p.work_authorization || {})\n  };\n}\nfunction parsePersonalFromText(resumeText) {\n  const personal = {};\n  const fieldPattern = /^(name|email|phone_primary|phone_secondary|phone|linkedin|github|portfolio|location|show_location|work_authorization):\\s*(.+)/gim;\n  let match;\n  while ((match = fieldPattern.exec(resumeText)) !== null) {\n    const key = match[1].toLowerCase();\n    const val = match[2].trim();\n    if (val.startsWith('[') && val.endsWith(']')) continue;\n    if (val.startsWith('#')) continue;\n    personal[key] = val;\n  }\n  if (!personal.email) {\n    const em = resumeText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i);\n    if (em) personal.email = em[0];\n  }\n  if (!personal.phone_primary) {\n    const ph = (resumeText.match(/(?:\\+?\\d[\\d\\s().-]{7,}\\d)/g) || []).find(p => p.replace(/\\D/g, '').length >= 10);\n    if (ph) personal.phone_primary = ph.trim();\n  }\n  if (personal.phone && !personal.phone_primary) personal.phone_primary = personal.phone;\n  return personal;\n}\nfunction applyPhoneDisplay(personal) {\n  const jobLocation = (jobCtx.location || jobCtx.job_title || '').toLowerCase();\n  const indiaKeywords = ['india','hyderabad','bengaluru','bangalore','mumbai','pune','delhi','chennai','kolkata','indian subcontinent'];\n  const targetIsIndia = indiaKeywords.some(kw => jobLocation.includes(kw));\n  personal.phone_display = targetIsIndia && personal.phone_secondary ? personal.phone_secondary : (personal.phone_primary || personal.phone_secondary || '');\n  personal.show_location = String(personal.show_location || 'false').toLowerCase() === 'true';\n  return personal;\n}\n\nconst rows = $input.all().map(i => i.json || {});\nlet row = rows.find(r => r && (r.id === 'global:resume_structured' || r.value)) || rows[0] || {};\nlet structured = parseMaybe(row.value || null);\nif (structured && structured.resume_doc) structured = structured.resume_doc;\n\nlet resumeText = '';\nlet personal = {};\nlet resumeSource = 'none';\n\nif (structured && typeof structured === 'object' && (structured.personal || structured.profile)) {\n  resumeText = linesFromStructured(structured);\n  personal = personalFromStructured(structured);\n  resumeSource = structured.kind === 'resume_bubbles' ? 'supabase_resume_bubbles' : 'supabase_structured';\n}\n\nif (!resumeText && typeof row.value === 'string' && row.value.length > 200) {\n  resumeText = row.value;\n  personal = parsePersonalFromText(resumeText);\n  resumeSource = 'supabase_text';\n}\n\nif (!resumeText) {\n  let fs = null;\n  try { fs = require('fs'); } catch(e) { fs = null; }\n  const paths = ['/home/node/.n8n-files/user-data/master_resume.txt','/data/user-data/master_resume.txt'];\n  if (fs) {\n    for (const p of paths) {\n      try { resumeText = fs.readFileSync(p, 'utf-8'); if (resumeText) { resumeSource = 'legacy_file'; break; } } catch(e) {}\n    }\n  }\n  if (resumeText) personal = parsePersonalFromText(resumeText);\n}\n\nif (!resumeText) {\n  return [{ json: { ...jobCtx, resume_text: '', resume_structured: null, personal: {}, resume_source: resumeSource, _validation_error: true, _missing_fields: ['saved resume'], error: 'No saved resume found. Send me your resume as pasted text or upload a PDF/DOCX/TXT, then tap ✅ to save it.' } }];\n}\n\npersonal = applyPhoneDisplay(personal);\nconst required = ['name','email'];\nconst missing = required.filter(f => !personal[f]);\nif (missing.length > 0) {\n  return [{ json: { ...jobCtx, resume_text: resumeText, resume_structured: structured || null, personal, resume_source: resumeSource, _validation_error: true, _missing_fields: missing, error: 'Saved resume is missing required fields: ' + missing.join(', ') } }];\n}\n\nreturn [{ json: { ...jobCtx, resume_text: resumeText, resume_structured: structured || null, personal, resume_source: resumeSource, _validation_error: false } }];\n"
       },
       "id": "c5a80d9d-e56d-4be6-972c-e9b3a7d848af",
       "name": "Parse Personal Info",
@@ -492,7 +524,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Localized: skeleton templates inlined (no fs).\nlet ctx = {};\ntry { ctx = $('Select Relevant Resume Bubbles').first().json; } catch (e) { ctx = $('Parse Personal Info').first().json; }\nconst seniorityOutput = $input.first().json.output || { mode: 'experienced' };\nconst mode = seniorityOutput.mode || 'experienced';\nconst SKELETONS = {\"fresher\":\"\\\\documentclass[letterpaper,11pt]{article}\\n\\n\\\\usepackage{latexsym}\\n\\\\usepackage[empty]{fullpage}\\n\\\\usepackage{titlesec}\\n\\\\usepackage{marvosym}\\n\\\\usepackage[usenames,dvipsnames]{color}\\n\\\\usepackage{verbatim}\\n\\\\usepackage{enumitem}\\n\\\\usepackage[hidelinks]{hyperref}\\n\\\\usepackage{fancyhdr}\\n\\\\usepackage[english]{babel}\\n\\\\usepackage{tabularx}\\n\\\\input{glyphtounicode}\\n\\n% Font options\\n\\\\usepackage[default]{lato}\\n\\\\usepackage[T1]{fontenc}\\n\\n% Margins (Optimized for 1-page max density)\\n\\\\usepackage[top=0.45in, bottom=0.45in, left=0.55in, right=0.55in]{geometry}\\n\\n\\\\pagestyle{fancy}\\n\\\\fancyhf{} % clear all header and footer fields\\n\\\\fancyfoot{}\\n\\\\renewcommand{\\\\headrulewidth}{0pt}\\n\\\\renewcommand{\\\\footrulewidth}{0pt}\\n\\n% Adjust margins\\n\\\\urlstyle{same}\\n\\n\\\\raggedbottom\\n\\\\raggedright\\n\\\\setlength{\\\\tabcolsep}{0in}\\n\\n% Sections formatting (Extremely compact)\\n\\\\titleformat{\\\\section}{\\n  \\\\vspace{-5pt}\\\\scshape\\\\raggedright\\\\large\\n}{}{0em}{}[\\\\color{black}\\\\titlerule \\\\vspace{-4pt}]\\n\\n% Ensure that generate pdf is machine readable/ATS parsable\\n\\\\pdfgentounicode=1\\n\\n%-------------------------\\n% Custom commands\\n\\\\newcommand{\\\\resumeItem}[1]{\\n  \\\\item\\\\small{\\n    {#1}\\n  }\\n}\\n\\n\\\\newcommand{\\\\resumeSubheading}[4]{\\n  \\\\vspace{-1pt}\\\\item\\n    \\\\begin{tabular*}{0.97\\\\textwidth}[t]{l@{\\\\extracolsep{\\\\fill}}r}\\n      \\\\textbf{#1} & #2 \\\\\\\\\\n      \\\\textit{\\\\small#3} & \\\\textit{\\\\small #4} \\\\\\\\\\n    \\\\end{tabular*}\\\\vspace{-5pt}\\n}\\n\\n\\\\newcommand{\\\\resumeSubSubheading}[2]{\\n    \\\\item\\n    \\\\begin{tabular*}{0.97\\\\textwidth}{l@{\\\\extracolsep{\\\\fill}}r}\\n      \\\\textit{\\\\small#1} & \\\\textit{\\\\small #2} \\\\\\\\\\n    \\\\end{tabular*}\\\\vspace{-5pt}\\n}\\n\\n\\\\newcommand{\\\\resumeProjectHeading}[2]{\\n    \\\\item\\n    \\\\begin{tabular*}{0.97\\\\textwidth}{l@{\\\\extracolsep{\\\\fill}}r}\\n      \\\\small#1 & #2 \\\\\\\\\\n    \\\\end{tabular*}\\\\vspace{-5pt}\\n}\\n\\n\\\\newcommand{\\\\resumeSubItem}[1]{\\\\resumeItem{#1}\\\\vspace{-4pt}}\\n\\n\\\\newcommand{\\\\resumeSkillLine}[2]{\\n  \\\\textbf{#1}{: #2} \\\\\\\\ \\\\vspace{2pt}\\n}\\n\\n% Explicit bullet definitions — prevents $s*ss rendering artifact with lato font\\n\\\\renewcommand\\\\labelitemi{\\\\textbullet}\\n\\\\renewcommand\\\\labelitemii{$\\\\vcenter{\\\\hbox{\\\\tiny$\\\\bullet$}}$}\\n\\n\\\\newcommand{\\\\resumeSubHeadingListStart}{\\\\begin{itemize}[leftmargin=0.15in, label={}]}\\n\\\\newcommand{\\\\resumeSubHeadingListEnd}{\\\\end{itemize}}\\n\\n% List spacing zeroed out to prevent LLM hallucinating newlines\\n\\\\newcommand{\\\\resumeItemListStart}{\\\\begin{itemize}[noitemsep, topsep=0pt, parsep=0pt, partopsep=0pt]}\\n\\\\newcommand{\\\\resumeItemListEnd}{\\\\end{itemize}\\\\vspace{-4pt}}\\n\\n%-------------------------------------------\\n%%%%%%  RESUME STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%\\n\\n\\\\begin{document}\\n\\n%%% HEADER_START\\n\\\\begin{center}\\n    \\\\textbf{\\\\Huge \\\\scshape {{NAME}}} \\\\\\\\ \\\\vspace{4pt}\\n    \\\\small\\n    {{PHONE}} $|$\\n    \\\\href{mailto:{{EMAIL}}}{\\\\underline{{{EMAIL}}}} $|$\\n    \\\\href{{{LINKEDIN}}}{\\\\underline{LinkedIn}}{{PORTFOLIO_LINE}}{{GITHUB_LINE}}{{LOCATION_LINE}}\\n\\\\end{center}\\n%%% HEADER_END\\n\\n%%% CONTENT_START\\n% For freshers, LLM order: Education -> Technical Skills -> Projects -> Experience -> Achievements\\n%%% CONTENT_END\\n\\n\\\\end{document}\\n\",\"experienced\":\"\\\\documentclass[letterpaper,11pt]{article}\\n\\n\\\\usepackage{latexsym}\\n\\\\usepackage[empty]{fullpage}\\n\\\\usepackage{titlesec}\\n\\\\usepackage{marvosym}\\n\\\\usepackage[usenames,dvipsnames]{color}\\n\\\\usepackage{verbatim}\\n\\\\usepackage{enumitem}\\n\\\\usepackage[hidelinks]{hyperref}\\n\\\\usepackage{fancyhdr}\\n\\\\usepackage[english]{babel}\\n\\\\usepackage{tabularx}\\n\\\\input{glyphtounicode}\\n\\n% Font options\\n\\\\usepackage[default]{lato}\\n\\\\usepackage[T1]{fontenc}\\n\\n% Margins (Optimized for 1-page max density)\\n\\\\usepackage[top=0.45in, bottom=0.45in, left=0.55in, right=0.55in]{geometry}\\n\\n\\\\pagestyle{fancy}\\n\\\\fancyhf{} % clear all header and footer fields\\n\\\\fancyfoot{}\\n\\\\renewcommand{\\\\headrulewidth}{0pt}\\n\\\\renewcommand{\\\\footrulewidth}{0pt}\\n\\n% Adjust margins\\n\\\\urlstyle{same}\\n\\n\\\\raggedbottom\\n\\\\raggedright\\n\\\\setlength{\\\\tabcolsep}{0in}\\n\\n% Sections formatting (Extremely compact)\\n\\\\titleformat{\\\\section}{\\n  \\\\vspace{-5pt}\\\\scshape\\\\raggedright\\\\large\\n}{}{0em}{}[\\\\color{black}\\\\titlerule \\\\vspace{-4pt}]\\n\\n% Ensure that generate pdf is machine readable/ATS parsable\\n\\\\pdfgentounicode=1\\n\\n%-------------------------\\n% Custom commands\\n\\\\newcommand{\\\\resumeItem}[1]{\\n  \\\\item\\\\small{\\n    {#1}\\n  }\\n}\\n\\n\\\\newcommand{\\\\resumeSubheading}[4]{\\n  \\\\vspace{-1pt}\\\\item\\n    \\\\begin{tabular*}{0.97\\\\textwidth}[t]{l@{\\\\extracolsep{\\\\fill}}r}\\n      \\\\textbf{#1} & #2 \\\\\\\\\\n      \\\\textit{\\\\small#3} & \\\\textit{\\\\small #4} \\\\\\\\\\n    \\\\end{tabular*}\\\\vspace{-5pt}\\n}\\n\\n\\\\newcommand{\\\\resumeSubSubheading}[2]{\\n    \\\\item\\n    \\\\begin{tabular*}{0.97\\\\textwidth}{l@{\\\\extracolsep{\\\\fill}}r}\\n      \\\\textit{\\\\small#1} & \\\\textit{\\\\small #2} \\\\\\\\\\n    \\\\end{tabular*}\\\\vspace{-5pt}\\n}\\n\\n\\\\newcommand{\\\\resumeProjectHeading}[2]{\\n    \\\\item\\n    \\\\begin{tabular*}{0.97\\\\textwidth}{l@{\\\\extracolsep{\\\\fill}}r}\\n      \\\\small#1 & #2 \\\\\\\\\\n    \\\\end{tabular*}\\\\vspace{-5pt}\\n}\\n\\n\\\\newcommand{\\\\resumeSubItem}[1]{\\\\resumeItem{#1}\\\\vspace{-4pt}}\\n\\n\\\\newcommand{\\\\resumeSkillLine}[2]{\\n  \\\\textbf{#1}{: #2} \\\\\\\\ \\\\vspace{2pt}\\n}\\n\\n% Explicit bullet definitions — prevents $s*ss rendering artifact with lato font\\n\\\\renewcommand\\\\labelitemi{\\\\textbullet}\\n\\\\renewcommand\\\\labelitemii{$\\\\vcenter{\\\\hbox{\\\\tiny$\\\\bullet$}}$}\\n\\n\\\\newcommand{\\\\resumeSubHeadingListStart}{\\\\begin{itemize}[leftmargin=0.15in, label={}]}\\n\\\\newcommand{\\\\resumeSubHeadingListEnd}{\\\\end{itemize}}\\n\\n% List spacing zeroed out to prevent LLM hallucinating newlines\\n\\\\newcommand{\\\\resumeItemListStart}{\\\\begin{itemize}[noitemsep, topsep=0pt, parsep=0pt, partopsep=0pt]}\\n\\\\newcommand{\\\\resumeItemListEnd}{\\\\end{itemize}\\\\vspace{-4pt}}\\n\\n%-------------------------------------------\\n%%%%%%  RESUME STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%\\n\\n\\\\begin{document}\\n\\n%%% HEADER_START\\n\\\\begin{center}\\n    \\\\textbf{\\\\Huge \\\\scshape {{NAME}}} \\\\\\\\ \\\\vspace{4pt}\\n    \\\\small\\n    {{PHONE}} $|$\\n    \\\\href{mailto:{{EMAIL}}}{\\\\underline{{{EMAIL}}}} $|$\\n    \\\\href{{{LINKEDIN}}}{\\\\underline{LinkedIn}}{{PORTFOLIO_LINE}}{{GITHUB_LINE}}{{LOCATION_LINE}}\\n\\\\end{center}\\n%%% HEADER_END\\n\\n%%% CONTENT_START\\n% The LLM injects Experience, Projects, Skills, Education, and Achievements here\\n%%% CONTENT_END\\n\\n\\\\end{document}\\n\",\"senior\":\"\\\\documentclass[letterpaper,11pt]{article}\\n\\n\\\\usepackage{latexsym}\\n\\\\usepackage[empty]{fullpage}\\n\\\\usepackage{titlesec}\\n\\\\usepackage{marvosym}\\n\\\\usepackage[usenames,dvipsnames]{color}\\n\\\\usepackage{verbatim}\\n\\\\usepackage{enumitem}\\n\\\\usepackage[hidelinks]{hyperref}\\n\\\\usepackage{fancyhdr}\\n\\\\usepackage[english]{babel}\\n\\\\usepackage{tabularx}\\n\\\\input{glyphtounicode}\\n\\n% Font options\\n\\\\usepackage[default]{lato}\\n\\\\usepackage[T1]{fontenc}\\n\\n% Margins (Optimized for density, though seniors may use 2 pages)\\n\\\\usepackage[top=0.45in, bottom=0.45in, left=0.55in, right=0.55in]{geometry}\\n\\n\\\\pagestyle{fancy}\\n\\\\fancyhf{} % clear all header and footer fields\\n\\\\fancyfoot{}\\n\\\\renewcommand{\\\\headrulewidth}{0pt}\\n\\\\renewcommand{\\\\footrulewidth}{0pt}\\n\\n% Adjust margins\\n\\\\urlstyle{same}\\n\\n\\\\raggedbottom\\n\\\\raggedright\\n\\\\setlength{\\\\tabcolsep}{0in}\\n\\n% Sections formatting\\n\\\\titleformat{\\\\section}{\\n  \\\\vspace{-5pt}\\\\scshape\\\\raggedright\\\\large\\n}{}{0em}{}[\\\\color{black}\\\\titlerule \\\\vspace{-4pt}]\\n\\n% Ensure that generate pdf is machine readable/ATS parsable\\n\\\\pdfgentounicode=1\\n\\n%-------------------------\\n% Custom commands\\n\\\\newcommand{\\\\resumeItem}[1]{\\n  \\\\item\\\\small{\\n    {#1}\\n  }\\n}\\n\\n\\\\newcommand{\\\\resumeSubheading}[4]{\\n  \\\\vspace{-1pt}\\\\item\\n    \\\\begin{tabular*}{0.97\\\\textwidth}[t]{l@{\\\\extracolsep{\\\\fill}}r}\\n      \\\\textbf{#1} & #2 \\\\\\\\\\n      \\\\textit{\\\\small#3} & \\\\textit{\\\\small #4} \\\\\\\\\\n    \\\\end{tabular*}\\\\vspace{-5pt}\\n}\\n\\n\\\\newcommand{\\\\resumeProjectHeading}[2]{\\n    \\\\item\\n    \\\\begin{tabular*}{0.97\\\\textwidth}{l@{\\\\extracolsep{\\\\fill}}r}\\n      \\\\small#1 & #2 \\\\\\\\\\n    \\\\end{tabular*}\\\\vspace{-5pt}\\n}\\n\\n\\\\newcommand{\\\\resumeSubItem}[1]{\\\\resumeItem{#1}\\\\vspace{-4pt}}\\n\\n\\\\newcommand{\\\\resumeSkillLine}[2]{\\n  \\\\textbf{#1}{: #2} \\\\\\\\ \\\\vspace{2pt}\\n}\\n\\n% Explicit bullet definitions — prevents $s*ss rendering artifact with lato font\\n\\\\renewcommand\\\\labelitemi{\\\\textbullet}\\n\\\\renewcommand\\\\labelitemii{$\\\\vcenter{\\\\hbox{\\\\tiny$\\\\bullet$}}$}\\n\\n\\\\newcommand{\\\\resumeSubHeadingListStart}{\\\\begin{itemize}[leftmargin=0.15in, label={}]}\\n\\\\newcommand{\\\\resumeSubHeadingListEnd}{\\\\end{itemize}}\\n\\n\\\\newcommand{\\\\resumeItemListStart}{\\\\begin{itemize}[noitemsep, topsep=0pt, parsep=0pt, partopsep=0pt]}\\n\\\\newcommand{\\\\resumeItemListEnd}{\\\\end{itemize}\\\\vspace{-4pt}}\\n\\n%-------------------------------------------\\n%%%%%%  RESUME STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%\\n\\n\\\\begin{document}\\n\\n%%% HEADER_START\\n\\\\begin{center}\\n    \\\\textbf{\\\\Huge \\\\scshape {{NAME}}} \\\\\\\\ \\\\vspace{4pt}\\n    \\\\small\\n    {{PHONE}} $|$\\n    \\\\href{mailto:{{EMAIL}}}{\\\\underline{{{EMAIL}}}} $|$\\n    \\\\href{{{LINKEDIN}}}{\\\\underline{LinkedIn}}{{PORTFOLIO_LINE}}{{LOCATION_LINE}}\\n\\\\end{center}\\n%%% HEADER_END\\n\\n%%% CONTENT_START\\n% For seniors, LLM order: Summary -> Core Competencies -> Experience -> Education -> Board/Talks\\n%%% CONTENT_END\\n\\n\\\\end{document}\\n\"};\nconst COVER = \"\\\\documentclass[letterpaper,11pt]{article}\\n\\n\\\\usepackage[empty]{fullpage}\\n\\\\usepackage{titlesec}\\n\\\\usepackage[usenames,dvipsnames]{color}\\n\\\\usepackage{enumitem}\\n\\\\usepackage[hidelinks]{hyperref}\\n\\\\usepackage{fancyhdr}\\n\\\\usepackage[english]{babel}\\n\\\\usepackage{tabularx}\\n\\\\usepackage{setspace}\\n\\\\input{glyphtounicode}\\n\\n% Font options\\n\\\\usepackage[default]{lato}\\n\\\\usepackage[T1]{fontenc}\\n\\n% Margins for Cover Letter (Standard letter margins, slightly wider than resume)\\n\\\\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry}\\n\\n\\\\pagestyle{fancy}\\n\\\\fancyhf{} % clear all header and footer fields\\n\\\\fancyfoot{}\\n\\\\renewcommand{\\\\headrulewidth}{0pt}\\n\\\\renewcommand{\\\\footrulewidth}{0pt}\\n\\n% Adjust margins\\n\\\\urlstyle{same}\\n\\\\raggedright\\n\\\\setlength{\\\\tabcolsep}{0in}\\n\\n% Cover letter specific formatting\\n\\\\newenvironment{lettercontent}{\\n  \\\\normalsize\\n  \\\\parskip=1em\\n  \\\\parindent=0pt\\n}{}\\n\\n% Ensure that generate pdf is machine readable/ATS parsable\\n\\\\pdfgentounicode=1\\n\\n%-------------------------------------------\\n%%%%%%  COVER LETTER STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%\\n\\n\\\\begin{document}\\n\\n%%% HEADER_START\\n% Header is omitted in favor of a clean, direct title approach.\\n%%% HEADER_END\\n\\n%%% CONTENT_START\\n\\\\begin{lettercontent}\\n% LLM injects Centered Catchy Title here.\\n% LLM injects Salutation (Dear [Team],) here.\\n% LLM injects Hook paragraph here.\\n% LLM injects 3 \\\\textbf{Keyword:} bullet points here utilizing itemize.\\n% LLM injects specific short CTA here.\\n\\\\end{lettercontent}\\n%%% CONTENT_END\\n\\n\\\\vspace{20pt}\\nWarm regards, \\\\\\\\ \\\\vspace{10pt}\\n\\\\textbf{{{NAME}}} \\\\\\\\\\n\\\\small {{PHONE}} $|$ \\\\href{mailto:{{EMAIL}}}{\\\\underline{{{EMAIL}}}} $|$ \\\\href{{{LINKEDIN}}}{\\\\underline{LinkedIn}}\\n\\n\\\\end{document}\\n\";\nconst resumeSkeleton = SKELETONS[mode] || SKELETONS.experienced || '';\nconst coverSkeleton = COVER || '';\nreturn [{ json: {\n  ...ctx,\n  seniority_mode: mode,\n  total_years_experience: seniorityOutput.total_years_experience || seniorityOutput.candidate_yoe || 0,\n  resume_skeleton: resumeSkeleton,\n  cover_skeleton: coverSkeleton,\n  fit_strategy: seniorityOutput.fit_strategy || 'perfect_fit',\n  candidate_yoe: seniorityOutput.candidate_yoe || seniorityOutput.total_years_experience || 0,\n  jd_required_min: seniorityOutput.jd_required_min ?? null,\n  jd_required_max: seniorityOutput.jd_required_max ?? null,\n  jd_seniority: seniorityOutput.jd_seniority || 'unknown'\n} }];"
+        "jsCode": "const fs = require('fs');\nlet ctx = {};\ntry { ctx = $('Select Relevant Resume Bubbles').first().json; } catch (e) { ctx = $('Parse Personal Info').first().json; }\nconst seniorityOutput = $input.first().json.output || { mode: 'experienced' };\nconst mode = seniorityOutput.mode || 'experienced';\nconst skeletonMap = {\n  fresher: '/data/templates/resume_skeleton_fresher.tex',\n  experienced: '/data/templates/resume_skeleton_experienced.tex',\n  senior: '/data/templates/resume_skeleton_senior.tex'\n};\nlet resumeSkeleton = '', coverSkeleton = '';\ntry { resumeSkeleton = fs.readFileSync(skeletonMap[mode] || skeletonMap.experienced, 'utf-8'); } catch (e) { try { resumeSkeleton = fs.readFileSync(skeletonMap.experienced, 'utf-8'); } catch (e2) {} }\ntry { coverSkeleton = fs.readFileSync('/data/templates/cover_skeleton.tex', 'utf-8'); } catch (e) {}\nreturn [{ json: {\n  ...ctx,\n  seniority_mode: mode,\n  total_years_experience: seniorityOutput.total_years_experience || seniorityOutput.candidate_yoe || 0,\n  resume_skeleton: resumeSkeleton,\n  cover_skeleton: coverSkeleton,\n  fit_strategy: seniorityOutput.fit_strategy || 'perfect_fit',\n  candidate_yoe: seniorityOutput.candidate_yoe || seniorityOutput.total_years_experience || 0,\n  jd_required_min: seniorityOutput.jd_required_min ?? null,\n  jd_required_max: seniorityOutput.jd_required_max ?? null,\n  jd_seniority: seniorityOutput.jd_seniority || 'unknown'\n} }];\n"
       },
       "id": "020a2408-0116-4ab7-9812-b5b881ba6006",
       "name": "Load Skeletons",
@@ -605,7 +637,7 @@
       "webhookId": "d0a61d6e-acfe-47a3-b246-5cace133c894",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -663,7 +695,7 @@
       "webhookId": "2448516e-8fcb-416b-9e60-b46ce1bfebe6",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -766,7 +798,7 @@
       "webhookId": "6ee1a6bd-782e-40c0-87f9-a88bb1705c7c",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -869,7 +901,7 @@
       "webhookId": "087b87c4-eb2b-47c3-8020-fd9af234ff6e",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -917,7 +949,7 @@
       "webhookId": "57a354c7-77d9-4458-a2e2-9e9eef47bfd5",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -954,7 +986,7 @@
       "webhookId": "6d204191-3bd0-4ab4-94fc-ed50854fd32e",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -991,7 +1023,7 @@
       "webhookId": "8708d93b-8009-4ef2-a78a-a10ff6a21f20",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -1061,7 +1093,7 @@
       "webhookId": "4061cf2d-f930-4a47-ae29-52bdd6235dab",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -1134,7 +1166,7 @@
       "webhookId": "66d01378-2dac-45fd-950d-20b2cca4220d",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -1259,7 +1291,7 @@
       "webhookId": "f81fa9ed-82fd-4763-b1c6-998a83b0d3ec",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -1329,7 +1361,7 @@
       "webhookId": "dd0e1f3c-f7cc-4622-9cb6-7405bdb7aa25",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -1447,7 +1479,7 @@
       "webhookId": "4d419b1b-51dd-4aca-a959-233fe2c2e2bb",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -1484,7 +1516,7 @@
       "webhookId": "bdcdd644-6135-45b1-abad-372dfb718d84",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -1636,7 +1668,7 @@
       "webhookId": "78b21787-7f55-4084-9292-9aeeef9c7a94",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -1709,7 +1741,7 @@
       "webhookId": "90e57a17-7cc0-4abc-82b2-4d537b95ab61",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -1779,7 +1811,7 @@
       "webhookId": "6b04ab22-14cd-48bc-b04b-127258886590",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -1852,7 +1884,7 @@
       "webhookId": "ed3e2e19-40c9-4fdc-8916-d42326853cd2",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -1862,6 +1894,7 @@
         "model": "openai/gpt-5.4-mini",
         "options": {
           "maxTokens": 2048,
+          "temperature": 0.2,
           "timeout": 60000
         }
       },
@@ -1875,7 +1908,7 @@
       "name": "OpenRouter Chat Model",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
+          "id": "iWbOXxs8r5UV0U3l",
           "name": "OpenRouter account"
         }
       }
@@ -1899,7 +1932,7 @@
       "name": "OpenRouter Chat Model1",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
+          "id": "iWbOXxs8r5UV0U3l",
           "name": "OpenRouter account"
         }
       }
@@ -1919,7 +1952,7 @@
       "name": "OpenRouter Chat Model2",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
+          "id": "iWbOXxs8r5UV0U3l",
           "name": "OpenRouter account"
         }
       }
@@ -1953,7 +1986,7 @@
       "name": "OpenRouter Chat Model3",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
+          "id": "iWbOXxs8r5UV0U3l",
           "name": "OpenRouter account"
         }
       }
@@ -1973,7 +2006,7 @@
       "name": "OpenRouter Chat Model4",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
+          "id": "iWbOXxs8r5UV0U3l",
           "name": "OpenRouter account"
         }
       }
@@ -1993,7 +2026,7 @@
       "name": "OpenRouter Chat Model5",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
+          "id": "iWbOXxs8r5UV0U3l",
           "name": "OpenRouter account"
         }
       }
@@ -2013,7 +2046,7 @@
       "name": "OpenRouter Chat Model6",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
+          "id": "iWbOXxs8r5UV0U3l",
           "name": "OpenRouter account"
         }
       }
@@ -2033,7 +2066,7 @@
       "name": "OpenRouter Chat Model7",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
+          "id": "iWbOXxs8r5UV0U3l",
           "name": "OpenRouter account"
         }
       }
@@ -2053,7 +2086,7 @@
       "name": "OpenRouter Chat Model8",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
+          "id": "iWbOXxs8r5UV0U3l",
           "name": "OpenRouter account"
         }
       }
@@ -2073,7 +2106,7 @@
       "name": "OpenRouter Chat Model9",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
+          "id": "iWbOXxs8r5UV0U3l",
           "name": "OpenRouter account"
         }
       }
@@ -2093,7 +2126,7 @@
       "name": "OpenRouter Chat Model10",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
+          "id": "iWbOXxs8r5UV0U3l",
           "name": "OpenRouter account"
         }
       }
@@ -2113,7 +2146,7 @@
       "name": "OpenRouter Chat Model11",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
+          "id": "iWbOXxs8r5UV0U3l",
           "name": "OpenRouter account"
         }
       }
@@ -2179,10 +2212,9 @@
     {
       "parameters": {
         "chatId": "={{ $('Extract Input').first().json.chat_id || $('Schedule Payload').first().json.chat_id }}",
-        "text": "🗂️ <b>I need your résumé as JSON (one-time setup)</b>\n\nI read résumés from a fixed JSON template — deterministic, private, and reliable (no AI guessing in the loop).\n\n<b>How:</b>\n1️⃣ Copy the block below.\n2️⃣ Paste it into ChatGPT / Claude, then paste your résumé under it.\n3️⃣ Send the filled JSON back to me — as a <b>.json file</b> (best for long résumés) or pasted text.\n\n<pre>You are filling a résumé JSON template. Copy facts VERBATIM from the résumé below — never invent, embellish, or drop anything. Keep every job, project, and bullet. Use \"YYYY-MM\" (or \"YYYY\") for dates and \"Present\" for current roles. Output ONLY the filled JSON.\n\nTEMPLATE:\n{\n  \"personal\": {\n    \"name\": \"\",\n    \"headline\": \"\",\n    \"emails\": [{ \"address\": \"\", \"primary\": true }],\n    \"phones\": [{ \"number\": \"\", \"primary\": true, \"region\": \"US\" }],\n    \"links\": { \"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\" },\n    \"location\": { \"city\": \"\", \"region\": \"\", \"country\": \"\", \"show_on_resume\": false },\n    \"work_authorization\": \"\"\n  },\n  \"summary_bullets\": [],\n  \"experience\": [\n    {\n      \"title\": \"\",\n      \"company\": \"\",\n      \"location\": \"\",\n      \"start_date\": \"YYYY-MM\",\n      \"end_date\": \"YYYY-MM or Present\",\n      \"is_current\": false,\n      \"bullets\": [],\n      \"skills\": [],\n      \"metrics\": []\n    }\n  ],\n  \"projects\": [\n    {\n      \"name\": \"\",\n      \"url\": \"\",\n      \"tech\": [],\n      \"bullets\": [],\n      \"metrics\": []\n    }\n  ],\n  \"education\": [\n    {\n      \"degree\": \"\",\n      \"field\": \"\",\n      \"institution\": \"\",\n      \"location\": \"\",\n      \"start_date\": \"YYYY-MM\",\n      \"end_date\": \"YYYY-MM\",\n      \"gpa\": \"\",\n      \"coursework\": []\n    }\n  ],\n  \"skills\": {\n    \"programming\": [],\n    \"ai_ml\": [],\n    \"data_mlops\": [],\n    \"cloud_devops\": [],\n    \"tools\": [],\n    \"other\": []\n  },\n  \"achievements\": []\n}\n\nRÉSUMÉ:\n(paste your résumé here)</pre>",
+        "text": "={{ '❌ ' + ($json.error || 'Resume setup is incomplete. Upload or paste your resume, preview the bubbles, then tap ✅ to save.') }}",
         "additionalFields": {
-          "parse_mode": "HTML",
-          "disable_web_page_preview": true
+          "parse_mode": "Markdown"
         }
       },
       "id": "24dde83b-1ee3-4788-ad4f-d0b4eae2f2b3",
@@ -2196,7 +2228,7 @@
       "webhookId": "55e5a16b-683b-4f8e-95fe-bb26dafd4ff3",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -2227,6 +2259,7 @@
         "model": "openai/gpt-5.4-mini",
         "options": {
           "maxTokens": 1024,
+          "temperature": 0.1,
           "timeout": 30000
         }
       },
@@ -2240,7 +2273,7 @@
       "name": "OpenRouter Chat Model12",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
+          "id": "iWbOXxs8r5UV0U3l",
           "name": "OpenRouter account"
         }
       }
@@ -2294,7 +2327,7 @@
     {
       "parameters": {
         "chatId": "={{ $('Extract Input').first().json.chat_id || $('Schedule Payload').first().json.chat_id }}",
-        "text": "📄 Got your file — reading it now…",
+        "text": "📄 Got it — I’m extracting your resume into reusable *resume bubbles* now. I’ll show a preview before saving it.",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -2310,7 +2343,7 @@
       "webhookId": "bbc4281b-8fe1-45ad-95e6-283652c2f90f",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -2332,10 +2365,24 @@
       "webhookId": "96904564-7964-4a10-83ed-c597a4dc7032",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract Resume Text (TXT/RTF only) v3 — no zlib/no external modules.\n// DOCX is handled by Mark DOCX As ZIP -> Decompress DOCX Zip -> Extract DOCX Text From XML.\n// PDF is handled by Extract Resume PDF Text.\n\nconst item = $input.first();\nconst json = item.json || {};\nlet extractCtx = {};\ntry { extractCtx = $('Extract Input').first().json || {}; } catch (e) { extractCtx = {}; }\n\nconst fileName = String(extractCtx.document?.file_name || json.fileName || json.file_name || item.binary?.data?.fileName || '').toLowerCase();\nconst mimeType = String(extractCtx.document_mime_type || json.mimeType || json.mime_type || item.binary?.data?.mimeType || '').toLowerCase();\nconst chatId = extractCtx.chat_id || json.chat_id || null;\n\nfunction cleanText(s) {\n  return String(s || '')\n    .replace(/\\u0000/g, '')\n    .replace(/\\x00/g, '')\n    .replace(/\\r\\n/g, '\\n')\n    .replace(/\\r/g, '\\n')\n    .replace(/\\u00A0/g, ' ')\n    .replace(/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]/g, ' ')\n    .replace(/[ \\t]+\\n/g, '\\n')\n    .replace(/\\n[ \\t]+/g, '\\n')\n    .replace(/[ \\t]{2,}/g, ' ')\n    .replace(/\\n{4,}/g, '\\n\\n\\n')\n    .trim();\n}\n\nfunction decodePlainText(buf) {\n  if (buf.length >= 2 && buf[0] === 0xff && buf[1] === 0xfe) return cleanText(buf.slice(2).toString('utf16le'));\n  if (buf.length >= 2 && buf[0] === 0xfe && buf[1] === 0xff) {\n    const swapped = Buffer.alloc(buf.length - 2);\n    for (let i = 2; i + 1 < buf.length; i += 2) { swapped[i - 2] = buf[i + 1]; swapped[i - 1] = buf[i]; }\n    return cleanText(swapped.toString('utf16le'));\n  }\n  if (buf.length >= 3 && buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf) return cleanText(buf.slice(3).toString('utf8'));\n\n  let zeroEven = 0, zeroOdd = 0;\n  const sample = Math.min(buf.length, 4000);\n  for (let i = 0; i < sample; i++) {\n    if (buf[i] === 0) (i % 2 === 0 ? zeroEven++ : zeroOdd++);\n  }\n  if (zeroOdd > sample * 0.2 && zeroEven < sample * 0.03) return cleanText(buf.toString('utf16le'));\n  if (zeroEven > sample * 0.2 && zeroOdd < sample * 0.03) {\n    const swapped = Buffer.alloc(buf.length - (buf.length % 2));\n    for (let i = 0; i + 1 < buf.length; i += 2) { swapped[i] = buf[i + 1]; swapped[i + 1] = buf[i]; }\n    return cleanText(swapped.toString('utf16le'));\n  }\n  return cleanText(buf.toString('utf8').replace(/\\uFFFD/g, ''));\n}\n\nfunction stripRtf(rtf) {\n  return cleanText(String(rtf || '')\n    .replace(/\\\\'[0-9a-fA-F]{2}/g, ' ')\n    .replace(/\\\\par[d]?/g, '\\n')\n    .replace(/\\\\tab/g, '\\t')\n    .replace(/\\\\[a-zA-Z]+-?\\d* ?/g, '')\n    .replace(/[{}]/g, ' '));\n}\n\nlet buffer;\ntry {\n  buffer = await this.helpers.getBinaryDataBuffer(0, 'data');\n} catch (e) {\n  try {\n    const b64 = item.binary?.data?.data;\n    if (b64) buffer = Buffer.from(b64, 'base64');\n  } catch (_) {}\n}\n\nif (!buffer || !Buffer.isBuffer(buffer) || buffer.length < 20) {\n  return [{ json: { chat_id: chatId, _error: 'I could not access the uploaded file binary data. Please paste the resume text or upload another file.' } }];\n}\n\nconst isDocx = mimeType.includes('wordprocessingml.document') || fileName.endsWith('.docx') || buffer.slice(0, 2).toString('binary') === 'PK';\nif (isDocx) {\n  return [{ json: { chat_id: chatId, _error: 'DOCX reached the plain-text extractor. Route DOCX through Mark DOCX As ZIP -> Decompress DOCX Zip -> Extract DOCX Text From XML.' } }];\n}\n\nlet text = decodePlainText(buffer);\nif (mimeType.includes('rtf') || fileName.endsWith('.rtf') || text.startsWith('{\\\\rtf')) {\n  text = stripRtf(text);\n}\n\nif (!text || text.length < 120) {\n  return [{ json: { chat_id: chatId, _error: 'I could not extract enough selectable text from that TXT/RTF file. Please paste the resume body directly or upload a selectable PDF/DOCX.' } }];\n}\n\nreturn [{\n  json: {\n    chat_id: chatId,\n    resume_text: text,\n    extracted_text: text,\n    source: {\n      type: 'telegram_upload',\n      file_name: extractCtx.document?.file_name || item.binary?.data?.fileName || '',\n      mime_type: extractCtx.document_mime_type || item.binary?.data?.mimeType || '',\n      telegram_file_id: extractCtx.document_file_id || '',\n      uploaded_at: new Date().toISOString()\n    },\n    _extractor: 'plain_text_rtf_no_zlib'\n  }\n}];\n"
+      },
+      "id": "06484215-43ae-43b7-ab7d-ceb3492f225e",
+      "name": "Extract Resume Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        23856,
+        43568
+      ],
+      "notes": "v6.3: TXT/RTF only. DOCX is routed through n8n Compression node to avoid requiring NODE_FUNCTION_ALLOW_BUILTIN=zlib."
     },
     {
       "parameters": {
@@ -2414,7 +2461,7 @@
       "webhookId": "e884b15f-6234-40c5-b833-fb5830282377",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -2470,7 +2517,7 @@
       "webhookId": "9a101063-5a00-417a-806a-b74018966a13",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -2505,7 +2552,7 @@
       "name": "You.com",
       "credentials": {
         "youDotComApi": {
-          "id": "s2UBYXUFAom4193K",
+          "id": "eKycdHDaIoKnEogX",
           "name": "You.com account"
         }
       }
@@ -2579,7 +2626,7 @@
       "name": "Serper Job Search",
       "credentials": {
         "httpHeaderAuth": {
-          "id": "aaGlxQQAKSikN3Te",
+          "id": "7Ai2XdkCVrKSiAtp",
           "name": "Serper API"
         }
       }
@@ -2839,7 +2886,7 @@
       "webhookId": "97ea96fb-b932-416f-a08f-6546bed3f9ef",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -2895,7 +2942,7 @@
       "webhookId": "07888d9f-6eef-4a1c-96c5-839ca5d477ed",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -2951,7 +2998,7 @@
       "webhookId": "da46c2c3-3818-4925-a009-a04871302701",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -2988,7 +3035,7 @@
       "webhookId": "627acd6d-a207-46ef-bac8-a31f307ffa14",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -3025,7 +3072,7 @@
       "webhookId": "3729635c-ef40-4dde-ab47-9a89b084b9e9",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -3062,7 +3109,7 @@
       "webhookId": "5efdf524-8ac4-4883-8860-be90ab3ab93c",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -3099,7 +3146,7 @@
       "webhookId": "2b2cbee4-02fe-435a-bc8d-782fefa1b2d9",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -3156,8 +3203,8 @@
       "name": "Firecrawl Search",
       "credentials": {
         "firecrawlApi": {
-          "id": "sTMgw2RCqCvdZKyw",
-          "name": "Firecrawl account"
+          "id": "IMcR3uSmNd9VflLx",
+          "name": "Firecrawl API"
         }
       }
     },
@@ -3206,8 +3253,8 @@
       "typeVersion": 4.4,
       "credentials": {
         "firecrawlApi": {
-          "id": "sTMgw2RCqCvdZKyw",
-          "name": "Firecrawl account"
+          "id": "IMcR3uSmNd9VflLx",
+          "name": "Firecrawl API"
         }
       }
     },
@@ -3379,19 +3426,35 @@
     },
     {
       "parameters": {
-        "fileSelector": "/data/user-data/.cf_pending.json",
-        "options": {}
+        "operation": "getAll",
+        "tableId": "cf_state",
+        "limit": 1,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ 'pending_edit:' + $json.chat_id }}"
+            }
+          ]
+        }
       },
       "id": "8331ab6a-677e-4a5e-9d44-79b2b9f17ef7",
       "name": "Lookup Pending Resume",
-      "type": "n8n-nodes-base.readWriteFile",
-      "typeVersion": 1.1,
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
       "position": [
         21504,
         43136
       ],
       "alwaysOutputData": true,
-      "onError": "continueRegularOutput"
+      "credentials": {
+        "supabaseApi": {
+          "id": "2GX5OhRhgZUQkLjE",
+          "name": "Supabase"
+        }
+      }
     },
     {
       "parameters": {
@@ -3424,6 +3487,58 @@
     },
     {
       "parameters": {
+        "tableId": "cf_state",
+        "dataToSend": "autoMapInputData",
+        "inputsToIgnore": "chat_id,callback_query_id"
+      },
+      "id": "9df3c08e-a952-47cf-86ba-747c1eb5eda8",
+      "name": "Apply Resume",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        22752,
+        42848
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "2GX5OhRhgZUQkLjE",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "cf_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ 'pending_edit:' + $('Extract Callback').first().json.chat_id }}"
+            }
+          ]
+        }
+      },
+      "id": "497d8383-a599-4900-83d0-cb6ccaed38b2",
+      "name": "Delete Pending After Apply",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        22944,
+        42848
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "2GX5OhRhgZUQkLjE",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
         "chatId": "={{ $('Extract Callback').first().json.chat_id }}",
         "text": "✅ *Resume saved!* Your master resume is now stored as reusable resume bubbles. Try `find ML jobs in NYC` or reply with a job number after a search.",
         "additionalFields": {
@@ -3441,7 +3556,7 @@
       "webhookId": "aa0f8ff1-d4dd-4634-9dc9-76e4c5a65950",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -3463,8 +3578,39 @@
       "webhookId": "822f20c1-8e06-4c7d-ae3b-8e2535a16f03",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "cf_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ 'pending_edit:' + $('Extract Callback').first().json.chat_id }}"
+            }
+          ]
+        }
+      },
+      "id": "63817d54-57d8-4027-8f00-4b65ddd1ff3d",
+      "name": "Delete Pending After Cancel",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        21984,
+        43136
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "2GX5OhRhgZUQkLjE",
+          "name": "Supabase"
         }
       }
     },
@@ -3487,7 +3633,7 @@
       "webhookId": "cd66e7b9-24f3-4b3e-9537-064eb38402b4",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -3509,7 +3655,7 @@
       "webhookId": "639ced3a-f704-4f50-8e64-ceeceb0b7520",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -3533,7 +3679,7 @@
       "webhookId": "b0340056-a2d9-4d84-9227-c7eb32ce72eb",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -3555,14 +3701,14 @@
       "webhookId": "e62b4443-c55c-4c48-9d34-b5fa532d06fe",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "// Detect Setup Sub-Intent — long paste vs short prompt request\nconst ctx = $('Extract Input').first().json;\nconst text = ctx.message_text || '';\nconst looksLikeResume = text.length > 800 || /^\\s*\\{/.test(text);\nreturn [{ json: {\n  ...ctx,\n  _setup_action: looksLikeResume ? 'normalize' : 'prompt',\n  resume_text: looksLikeResume ? text : ''\n} }];\n"
+        "jsCode": "// Detect Setup Sub-Intent — long paste vs short prompt request\nconst ctx = $('Extract Input').first().json;\nconst text = ctx.message_text || '';\nconst looksLikeResume = text.length > 800;\nreturn [{ json: {\n  ...ctx,\n  _setup_action: looksLikeResume ? 'normalize' : 'prompt',\n  resume_text: looksLikeResume ? text : ''\n} }];\n"
       },
       "id": "156592a0-1f8e-4ddc-8a94-8600d27091d5",
       "name": "Detect Setup Sub-Intent",
@@ -3607,6 +3753,44 @@
     },
     {
       "parameters": {
+        "chatId": "={{ $('Extract Input').first().json.chat_id }}",
+        "text": "📄 *Send me your resume to set things up!*\n\nUpload a PDF/DOCX/TXT or paste your full resume text. I’ll split it into reusable sections — profile, skills, experience, projects, and education — then show a preview before saving.\n\nNo LLM is used during setup, so this should be much faster.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "fc60bc4e-9d39-4b50-a202-9d1cc106fe01",
+      "name": "Send Setup Prompt",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        24160,
+        43728
+      ],
+      "webhookId": "f2fc74cf-aa6b-4328-91ef-127ec8b2ffe3",
+      "credentials": {
+        "telegramApi": {
+          "id": "tWsQsUCkVljns3az",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare Resume Bubbles v1 — deterministic, no-LLM resume ingestion.\n// Produces a hybrid object compatible with the old structured resume fields\n// AND the new bubble/compact-view model.\n\nconst upstream = $input.first().json || {};\nlet extractCtx = {};\ntry { extractCtx = $('Extract Input').first().json || {}; } catch (e) { extractCtx = {}; }\n\nfunction asStr(v) {\n  if (v === null || v === undefined) return '';\n  if (typeof v === 'string') return v;\n  if (typeof v === 'number' || typeof v === 'boolean') return String(v);\n  return '';\n}\n\nfunction sanitizeTextForPostgresJson(v) {\n  // PostgreSQL jsonb rejects U+0000 / \\u0000 because it cannot be represented as text.\n  // Telegram TXT/DOCX extraction can emit actual NUL bytes, especially from UTF-16 text.\n  return asStr(v)\n    .replace(/\\u0000/gi, '')\n    .replace(/\\x00/gi, '')\n    .replace(/\\0/g, '')\n    .replace(/\\p{C}/gu, ch => (ch === '\\n' || ch === '\\t' ? ch : ' '))\n    .replace(/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]/g, ' ');\n}\nfunction sanitizeJsonForPostgres(value, seen = new WeakSet()) {\n  if (value === null || value === undefined) return value;\n  if (typeof value === 'string') return sanitizeTextForPostgresJson(value);\n  if (typeof value === 'number' || typeof value === 'boolean') return value;\n  if (Array.isArray(value)) return value.map(v => sanitizeJsonForPostgres(v, seen));\n  if (typeof value === 'object') {\n    if (seen.has(value)) return null;\n    seen.add(value);\n    const out = {};\n    for (const [k, v] of Object.entries(value)) {\n      out[sanitizeTextForPostgresJson(k)] = sanitizeJsonForPostgres(v, seen);\n    }\n    return out;\n  }\n  return sanitizeTextForPostgresJson(value);\n}\nfunction collectStrings(obj, depth = 0, out = []) {\n  if (!obj || depth > 4) return out;\n  if (typeof obj === 'string') {\n    if (obj.trim().length > 80) out.push(obj);\n    return out;\n  }\n  if (Array.isArray(obj)) {\n    for (const v of obj) collectStrings(v, depth + 1, out);\n    return out;\n  }\n  if (typeof obj === 'object') {\n    for (const [k, v] of Object.entries(obj)) {\n      if (['reply_markup', 'document', 'binary'].includes(k)) continue;\n      collectStrings(v, depth + 1, out);\n    }\n  }\n  return out;\n}\nfunction pickResumeText() {\n  const direct = [\n    upstream.resume_text,\n    upstream.text,\n    upstream.data,\n    upstream.output,\n    upstream.content,\n    upstream.body,\n    upstream.document_text,\n    upstream.extracted_text,\n    extractCtx.message_text\n  ].map(asStr).filter(s => s.trim().length > 80);\n  if (direct.length) return direct.sort((a, b) => b.length - a.length)[0];\n  const strings = collectStrings(upstream).concat(collectStrings(extractCtx));\n  if (!strings.length) return '';\n  return strings.sort((a, b) => b.length - a.length)[0];\n}\nfunction normalizeText(s) {\n  return sanitizeTextForPostgresJson(s)\n    .replace(/\\r\\n/g, '\\n')\n    .replace(/\\r/g, '\\n')\n    .replace(/\\u00A0/g, ' ')\n    .replace(/[“”]/g, '\"')\n    .replace(/[‘’]/g, \"'\")\n    .replace(/[–—]/g, '-')\n    .replace(/[•●▪▫◦‣]/g, '•')\n    .split('\\n')\n    .map(l => l.replace(/\\t/g, ' ').replace(/[ ]{2,}/g, ' ').trim())\n    .filter((l, i, arr) => {\n      if (!l) return i > 0 && arr[i - 1] && arr[i + 1];\n      if (/^page\\s+\\d+(\\s+of\\s+\\d+)?$/i.test(l)) return false;\n      return true;\n    })\n    .join('\\n')\n    .replace(/\\n{3,}/g, '\\n\\n')\n    .trim();\n}\nfunction slug(s) {\n  return asStr(s).toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 70) || 'item';\n}\nfunction uniq(arr) {\n  const seen = new Set();\n  const out = [];\n  for (const v of arr || []) {\n    const s = asStr(v).trim();\n    if (!s) continue;\n    const k = s.toLowerCase();\n    if (!seen.has(k)) { seen.add(k); out.push(s); }\n  }\n  return out;\n}\nfunction escapeRegExp(s) { return asStr(s).replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'); }\n\nconst rawText = pickResumeText();\n\n// Guardrail: if a DOCX ZIP package was accidentally decoded as text, stop here.\n// This prevents saving PK/[Content_Types].xml/word/document.xml garbage as a resume.\nif (/^\\s*PK[\\s\\S]{0,3000}\\[Content_Types\\]\\.xml/i.test(rawText) || (/\\[Content_Types\\]\\.xml/i.test(rawText) && /word\\/document\\.xml/i.test(rawText))) {\n  return [{\n    json: {\n      chat_id: extractCtx.chat_id || upstream.chat_id || null,\n      _error: 'DOCX ZIP bytes instead of extracted text reached the resume parser. The DOCX extractor did not run correctly; import v6.3, clear pending rows, and re-upload the DOCX or paste the resume text.'\n    }\n  }];\n}\n\nconst cleanText = normalizeText(rawText);\n\nif (!cleanText || cleanText.length < 200) {\n  return [{\n    json: {\n      chat_id: extractCtx.chat_id || upstream.chat_id || null,\n      _error: 'I could not extract enough resume text from that file/message. Try uploading a TXT/PDF/DOCX with selectable text or paste the resume body directly.',\n      _raw_preview: cleanText.slice(0, 500)\n    }\n  }];\n}\n\nconst now = new Date().toISOString();\nconst lines = cleanText.split('\\n').map(l => l.trim()).filter((l, idx, arr) => l || (idx > 0 && arr[idx - 1]));\n\nconst headingAliases = {\n  summary: ['summary', 'professional summary', 'profile', 'objective', 'career objective', 'about'],\n  experience: ['experience', 'work experience', 'professional experience', 'employment', 'employment history', 'career history', 'internship experience', 'relevant experience'],\n  projects: ['projects', 'personal projects', 'selected projects', 'academic projects', 'research projects', 'project experience'],\n  education: ['education', 'academic background', 'academics'],\n  skills: ['skills', 'technical skills', 'core skills', 'core competencies', 'technologies', 'tools and technologies', 'technical competencies'],\n  certifications: ['certifications', 'certificates', 'licenses'],\n  achievements: ['achievements', 'awards', 'honors', 'publications', 'leadership', 'activities']\n};\nfunction normHeading(line) {\n  return asStr(line).toLowerCase().replace(/[:|]+$/g, '').replace(/&/g, 'and').replace(/[^a-z0-9 ]+/g, ' ').replace(/\\s+/g, ' ').trim();\n}\nfunction detectHeading(line) {\n  const t = normHeading(line);\n  if (!t || t.length > 55) return null;\n  if (/[.?!]$/.test(line.trim())) return null;\n  for (const [type, aliases] of Object.entries(headingAliases)) {\n    if (aliases.includes(t)) return type;\n  }\n  return null;\n}\n\nconst sections = { header: [] };\nlet current = 'header';\nfor (const line of lines) {\n  const h = detectHeading(line);\n  if (h) {\n    current = h;\n    if (!sections[current]) sections[current] = [];\n    continue;\n  }\n  if (!sections[current]) sections[current] = [];\n  sections[current].push(line);\n}\n\nconst emailMatches = uniq(cleanText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi) || []);\nconst urlMatches = uniq(cleanText.match(/https?:\\/\\/[^\\s)>\\]]+|(?:linkedin\\.com|github\\.com|www\\.)[^\\s)>\\]]+/gi) || [])\n  .map(u => u.replace(/[.,;]+$/g, ''))\n  .map(u => /^https?:\\/\\//i.test(u) ? u : 'https://' + u);\nconst phoneCandidates = uniq((cleanText.match(/(?:\\+?\\d[\\d\\s().-]{7,}\\d)/g) || [])\n  .map(p => p.replace(/\\s+/g, ' ').trim())\n  .filter(p => p.replace(/\\D/g, '').length >= 10 && p.replace(/\\D/g, '').length <= 15));\n\nconst topLines = (sections.header && sections.header.length ? sections.header : lines.slice(0, 20))\n  .filter(l => l && !detectHeading(l))\n  .slice(0, 25);\n\nfunction isContactLine(l) {\n  return /@|https?:|linkedin\\.com|github\\.com|\\+?\\d[\\d\\s().-]{7,}\\d/i.test(l);\n}\nfunction likelyNameLine(l) {\n  if (!l || isContactLine(l) || /\\d/.test(l)) return false;\n  if (detectHeading(l)) return false;\n  if (l.length > 60) return false;\n  if (/[|:]/.test(l)) return false;\n  if (/\\b(engineer|developer|scientist|analyst|manager|student|assistant|intern|architect|consultant|specialist|researcher)\\b/i.test(l)) return false;\n  const words = l.split(/\\s+/).filter(Boolean);\n  if (words.length < 2 || words.length > 5) return false;\n  return words.every(w => /^[A-Za-z][A-Za-z.'-]*$/.test(w));\n}\nconst nameLine = topLines.find(likelyNameLine) || '';\nconst headlineLine = topLines.find(l =>\n  l !== nameLine &&\n  !isContactLine(l) &&\n  !detectHeading(l) &&\n  l.length <= 140 &&\n  (/[|/•]/.test(l) || /\\b(engineer|developer|scientist|analyst|manager|assistant|research|data|machine learning|AI|software|cloud|MLOps)\\b/i.test(l))\n) || '';\n\nfunction parseLocationLine() {\n  const stateRe = /\\b(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|IA|ID|IL|IN|KS|KY|LA|MA|MD|ME|MI|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA|VT|WA|WI|WV|DC)\\b/;\n  const cleanedCandidates = [];\n  for (const original of topLines) {\n    if (original === nameLine || original === headlineLine || detectHeading(original)) continue;\n    let l = original\n      .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/ig, ' ')\n      .replace(/https?:\\/\\/[^\\s)>\\]]+|(?:linkedin\\.com|github\\.com|www\\.)[^\\s)>\\]]+/ig, ' ')\n      .replace(/(?:\\+?\\d[\\d\\s().-]{7,}\\d)/g, ' ')\n      .replace(/[|•]+/g, ',')\n      .replace(/\\s+/g, ' ')\n      .replace(/^,+|,+$/g, '')\n      .trim();\n    if (!l || l.length > 80) continue;\n    const chunks = l.split(',').map(x => x.trim()).filter(Boolean);\n    for (let i = 0; i < chunks.length; i++) {\n      const chunk = chunks.slice(i, i + 3).join(', ');\n      if ((/,/.test(chunk) || stateRe.test(chunk)) && /[A-Za-z]/.test(chunk)) cleanedCandidates.push(chunk);\n    }\n  }\n  if (!cleanedCandidates.length) return null;\n  const c = cleanedCandidates[0].replace(/\\s+/g, ' ').trim();\n  const parts = c.split(',').map(x => x.trim()).filter(Boolean);\n  if (parts.length >= 2) return { city: parts[0], region: parts[1], country: parts[2] || '', primary: true };\n  const sm = c.match(stateRe);\n  if (sm) return { city: c.replace(stateRe, '').trim(), region: sm[1], country: '', primary: true };\n  return { city: c, region: '', country: '', primary: true };\n}\nconst locObj = parseLocationLine();\n\nfunction classifyLink(url) {\n  const l = url.toLowerCase();\n  if (l.includes('linkedin.com')) return 'linkedin';\n  if (l.includes('github.com')) return 'github';\n  if (l.includes('kaggle.com')) return 'kaggle';\n  if (l.includes('medium.com')) return 'medium';\n  return 'portfolio';\n}\nconst linksObj = {};\nfor (const u of urlMatches) {\n  const k = classifyLink(u);\n  if (!linksObj[k]) linksObj[k] = u;\n}\n\nconst skillBank = {\n  programming: ['Python','Java','JavaScript','TypeScript','C++','C#','C','R','SQL','NoSQL','Scala','Go','Bash','Shell','MATLAB','HTML','CSS','React','Node.js','FastAPI','Flask','Django','Spring Boot'],\n  ai_ml: ['Machine Learning','Deep Learning','NLP','Computer Vision','Generative AI','LLM','RAG','Agents','PyTorch','TensorFlow','Keras','Scikit-learn','XGBoost','LightGBM','Transformers','Hugging Face','LangChain','LlamaIndex','OpenCV','Pandas','NumPy','Feature Engineering','Model Evaluation'],\n  data_mlops: ['Spark','Databricks','Airflow','Kafka','dbt','Snowflake','BigQuery','Redshift','PostgreSQL','MySQL','MongoDB','Redis','Elasticsearch','MLflow','Kubeflow','DVC','Weights & Biases','ETL','Data Pipelines','Vector Database','Pinecone','FAISS','Chroma'],\n  cloud_devops: ['AWS','Azure','GCP','Docker','Kubernetes','Terraform','CI/CD','GitHub Actions','Jenkins','Linux','REST API','Microservices','Serverless','Lambda','EC2','S3'],\n  tools: ['Git','GitHub','GitLab','Jira','Confluence','Tableau','Power BI','Excel','Jupyter','VS Code','Figma','Postman','Notion','Slack'],\n  other: []\n};\nconst labelToCategory = [\n  [/program|language|frontend|backend|framework/i, 'programming'],\n  [/machine|ai|ml|deep|nlp|vision|model|data science/i, 'ai_ml'],\n  [/data|database|mlops|pipeline|warehouse|analytics/i, 'data_mlops'],\n  [/cloud|devops|infrastructure|deployment|platform/i, 'cloud_devops'],\n  [/tool|software|visualization|productivity/i, 'tools']\n];\nfunction splitSkillItems(s) {\n  return uniq(asStr(s)\n    .replace(/[•\\u2022]/g, ',')\n    .split(/[,;|]+|\\s{2,}/)\n    .map(x => x.replace(/^[-–—*]\\s*/, '').replace(/\\([^)]{60,}\\)/g, '').trim())\n    .filter(x => x && x.length <= 45 && !detectHeading(x) && !/^and$/i.test(x)));\n}\nfunction categoryForSkill(skill, label) {\n  const labelHit = labelToCategory.find(([re]) => re.test(label || ''));\n  if (labelHit) return labelHit[1];\n  const s = skill.toLowerCase();\n  for (const [cat, bank] of Object.entries(skillBank)) {\n    if (bank.some(k => k.toLowerCase() === s || (k.length > 2 && s.includes(k.toLowerCase())))) return cat;\n  }\n  if (/\\b(sql|python|java|react|node|fastapi|django|flask)\\b/i.test(skill)) return 'programming';\n  if (/\\b(ml|ai|model|learning|pytorch|tensorflow|llm|rag|nlp|vision)\\b/i.test(skill)) return 'ai_ml';\n  if (/\\b(spark|airflow|database|postgres|mongo|etl|pipeline|mlflow)\\b/i.test(skill)) return 'data_mlops';\n  if (/\\b(aws|azure|gcp|docker|kubernetes|terraform|linux|ci\\/cd)\\b/i.test(skill)) return 'cloud_devops';\n  return 'other';\n}\nconst skills = { programming: [], ai_ml: [], data_mlops: [], cloud_devops: [], tools: [], other: [] };\nconst skillLines = sections.skills || [];\nfor (const line of skillLines) {\n  if (!line || detectHeading(line)) continue;\n  let label = '';\n  let body = line;\n  const colon = line.indexOf(':');\n  if (colon > 0 && colon < 45) {\n    label = line.slice(0, colon);\n    body = line.slice(colon + 1);\n  }\n  for (const item of splitSkillItems(body)) {\n    const cat = categoryForSkill(item, label);\n    skills[cat].push(item);\n  }\n}\n// Scan known explicit skills across full resume too, but keep it conservative.\nfor (const [cat, bank] of Object.entries(skillBank)) {\n  for (const skill of bank) {\n    const re = new RegExp('(^|[^A-Za-z0-9+.#])' + escapeRegExp(skill) + '([^A-Za-z0-9+.#]|$)', 'i');\n    if (re.test(cleanText)) skills[cat].push(skill);\n  }\n}\nfor (const cat of Object.keys(skills)) skills[cat] = uniq(skills[cat]).slice(0, 80);\n\nconst allSkills = uniq(Object.values(skills).flat());\n\nconst monthMap = { jan:'01', january:'01', feb:'02', february:'02', mar:'03', march:'03', apr:'04', april:'04', may:'05', jun:'06', june:'06', jul:'07', july:'07', aug:'08', august:'08', sep:'09', sept:'09', september:'09', oct:'10', october:'10', nov:'11', november:'11', dec:'12', december:'12' };\nconst dateToken = '(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)[a-z]*\\\\s+\\\\d{4}|\\\\d{4}';\nconst dateRangeRe = new RegExp('(' + dateToken + ')\\\\s*(?:-|to|–|—)\\\\s*((?:present|current|now)|' + dateToken + ')', 'i');\nfunction normalizeDateToken(tok) {\n  tok = asStr(tok).trim();\n  if (!tok) return null;\n  if (/^(present|current|now)$/i.test(tok)) return null;\n  const y = tok.match(/\\b(19|20)\\d{2}\\b/);\n  if (!y) return null;\n  const m = tok.match(/[A-Za-z]+/);\n  if (m) {\n    const mm = monthMap[m[0].toLowerCase().slice(0, 3)] || monthMap[m[0].toLowerCase()];\n    if (mm) return y[0] + '-' + mm;\n  }\n  return y[0];\n}\nfunction parseDates(raw) {\n  const m = asStr(raw).match(dateRangeRe);\n  if (!m) {\n    const y = asStr(raw).match(/\\b(19|20)\\d{2}\\b/);\n    return { start_date: y ? y[0] : null, end_date: null, is_current: /present|current/i.test(raw) };\n  }\n  return { start_date: normalizeDateToken(m[1]), end_date: normalizeDateToken(m[2]), is_current: /present|current|now/i.test(m[2]) };\n}\nfunction isBulletLine(l) { return /^\\s*(?:[-*•]|[0-9]+[.)])\\s+/.test(asStr(l)); }\nfunction cleanBullet(l) { return asStr(l).replace(/^\\s*(?:[-*•]|[0-9]+[.)])\\s+/, '').trim(); }\nfunction splitBlocks(sectionLines) {\n  const blocks = [];\n  let cur = [];\n  function push() {\n    const cleaned = cur.map(x => x.trim()).filter(Boolean);\n    if (cleaned.length) blocks.push(cleaned);\n    cur = [];\n  }\n  for (const line of sectionLines || []) {\n    const l = asStr(line).trim();\n    if (!l) { if (cur.length && cur.some(isBulletLine)) push(); continue; }\n    if (detectHeading(l)) continue;\n    const hasDate = dateRangeRe.test(l);\n    const likelyHeader = !isBulletLine(l) && l.length < 130 && (hasDate || /(@|\\bat\\b|\\||,)/i.test(l) || /^[A-Z][A-Za-z0-9&.,'()/ +#-]{2,}$/.test(l));\n    if (cur.length && likelyHeader && cur.some(x => isBulletLine(x) || dateRangeRe.test(x)) && cur.length >= 3) push();\n    cur.push(l);\n  }\n  push();\n  return blocks;\n}\nfunction extractMetrics(raw) {\n  return uniq((asStr(raw).match(/(?:[$€£₹]\\s?\\d[\\d,]*(?:\\.\\d+)?[KMB]?|\\b\\d+(?:\\.\\d+)?\\s?(?:%|x|X|K|M|B|ms|sec|seconds|minutes|hours|GB|MB|TB|users|records|rows|requests|accuracy|AUC|F1|mAP)\\b)/g) || []).slice(0, 20));\n}\nfunction skillsForRaw(raw) {\n  const found = [];\n  const lower = asStr(raw).toLowerCase();\n  for (const s of allSkills) {\n    const sl = s.toLowerCase();\n    if (sl.length <= 2) continue;\n    if (lower.includes(sl)) found.push(s);\n  }\n  return uniq(found).slice(0, 20);\n}\nfunction tagsForRaw(raw, type) {\n  const l = asStr(raw).toLowerCase();\n  const tags = [type];\n  if (/(machine learning|pytorch|tensorflow|model|llm|rag|nlp|vision|ai)/.test(l)) tags.push('ai-ml');\n  if (/(data|sql|etl|pipeline|spark|airflow|analytics)/.test(l)) tags.push('data');\n  if (/(aws|azure|gcp|docker|kubernetes|cloud|deploy|api)/.test(l)) tags.push('cloud-platform');\n  if (/(research|publication|experiment|study)/.test(l)) tags.push('research');\n  if (/(lead|mentor|manage|stakeholder|cross-functional)/.test(l)) tags.push('leadership');\n  return uniq(tags);\n}\nfunction parseHeaderParts(headerLines, raw, type) {\n  const joined = headerLines.join(' | ');\n  let title = headerLines[0] || (type === 'project' ? 'Project' : 'Role');\n  let organization = '';\n  if (/@/.test(joined)) {\n    const parts = joined.split('@');\n    title = parts[0].replace(/\\|.*$/, '').trim() || title;\n    organization = parts.slice(1).join('@').replace(/\\|.*$/, '').trim();\n  } else if (/\\bat\\b/i.test(joined)) {\n    const parts = joined.split(/\\bat\\b/i);\n    title = parts[0].replace(/\\|.*$/, '').trim() || title;\n    organization = parts.slice(1).join(' at ').replace(/\\|.*$/, '').trim();\n  } else if (headerLines.length >= 2) {\n    organization = headerLines[1].replace(dateRangeRe, '').trim();\n  }\n  title = title.replace(dateRangeRe, '').replace(/\\s*\\|\\s*$/, '').trim();\n  organization = organization.replace(dateRangeRe, '').replace(/\\s*\\|\\s*$/, '').trim();\n  if (type === 'project') organization = '';\n  return { title: title || (type === 'project' ? 'Project' : 'Role'), organization };\n}\nfunction blockToBubble(block, type, index) {\n  const raw = block.join('\\n');\n  const dates = parseDates(raw);\n  const bulletIdx = block.findIndex(isBulletLine);\n  let headerLines = bulletIdx >= 0 ? block.slice(0, bulletIdx) : block.slice(0, Math.min(2, block.length));\n  headerLines = headerLines.map(l => l.replace(dateRangeRe, '').trim()).filter(Boolean);\n  let bullets = block.filter(isBulletLine).map(cleanBullet);\n  if (!bullets.length && block.length > headerLines.length) {\n    bullets = block.slice(headerLines.length).filter(l => l.length > 35).map(cleanBullet);\n  }\n  const hp = parseHeaderParts(headerLines, raw, type);\n  const b = {\n    id: `${type}_${slug(hp.organization || hp.title)}_${dates.start_date ? String(dates.start_date).slice(0,4) : index + 1}`,\n    type,\n    title: hp.title,\n    organization: hp.organization,\n    location: '',\n    start_date: dates.start_date,\n    end_date: dates.end_date,\n    is_current: Boolean(dates.is_current),\n    bullets: uniq(bullets).slice(0, 12),\n    skills: skillsForRaw(raw),\n    metrics: extractMetrics(raw),\n    tags: tagsForRaw(raw, type),\n    raw_text: raw,\n    confidence: Math.min(0.9, 0.55 + (bullets.length ? 0.15 : 0) + (dates.start_date ? 0.1 : 0) + (hp.organization ? 0.1 : 0)),\n    order_index: index\n  };\n  if (type === 'project') {\n    b.name = b.title;\n    b.tech = b.skills.slice(0, 12);\n  }\n  return b;\n}\n\nconst summaryLines = (sections.summary || []).filter(l => l && !detectHeading(l));\nconst summary_bullets = uniq(summaryLines.flatMap(l => isBulletLine(l) ? [cleanBullet(l)] : l.length > 80 ? [l] : [])).slice(0, 6);\n\nconst expBlocks = splitBlocks(sections.experience || []);\nconst projectBlocks = splitBlocks(sections.projects || []);\nconst experienceBubbles = expBlocks.map((b, i) => blockToBubble(b, 'experience', i + 1)).filter(b => b.raw_text.length > 20);\nconst projectBubbles = projectBlocks.map((b, i) => blockToBubble(b, 'project', i + 1)).filter(b => b.raw_text.length > 20);\n\nfunction parseEducation() {\n  const blocks = splitBlocks(sections.education || []);\n  return blocks.map((block, i) => {\n    const raw = block.join('\\n');\n    const dates = parseDates(raw);\n    const degreeLine = block.find(l => /\\b(bachelor|master|phd|doctor|b\\.?s\\.?|m\\.?s\\.?|b\\.?e\\.?|btech|mtech|mba|degree|diploma)\\b/i.test(l)) || '';\n    const gpa = (raw.match(/\\bGPA[:\\s]*([0-9.]+\\/?[0-9.]*)/i) || [])[1] || '';\n    const institution = (block.find(l => l !== degreeLine && !dateRangeRe.test(l) && l.length < 110) || block[0] || '').replace(/\\s*\\|.*$/, '').trim();\n    const degree = degreeLine.replace(dateRangeRe, '').trim();\n    return {\n      id: `education_${slug(institution || degree)}_${i + 1}`,\n      type: 'education',\n      title: degree || institution || 'Education',\n      institution: institution || '',\n      organization: institution || '',\n      degree: degree || '',\n      field: '',\n      location: '',\n      start_date: dates.start_date,\n      end_date: dates.end_date,\n      is_current: Boolean(dates.is_current),\n      gpa,\n      bullets: [],\n      skills: skillsForRaw(raw),\n      metrics: gpa ? ['GPA ' + gpa] : [],\n      tags: ['education'],\n      raw_text: raw,\n      confidence: institution || degree ? 0.75 : 0.5,\n      order_index: i + 1\n    };\n  }).filter(e => e.raw_text.length > 10);\n}\nconst educationBubbles = parseEducation();\n\nconst profile = {\n  name: nameLine || '',\n  headline: headlineLine || '',\n  emails: emailMatches.map((e, i) => ({ address: e, primary: i === 0, label: i === 0 ? 'primary' : 'other' })),\n  phones: phoneCandidates.map((p, i) => ({ number: p, primary: i === 0, label: i === 0 ? 'primary' : 'other' })),\n  links: linksObj,\n  locations: locObj ? [locObj] : [],\n  work_authorization: {}\n};\n\nconst bubbles = []\n  .concat(experienceBubbles)\n  .concat(projectBubbles)\n  .concat(educationBubbles)\n  .map((b, i) => ({ ...b, order_index: i + 1 }));\n\nconst experience = experienceBubbles.map(b => ({\n  id: b.id,\n  title: b.title,\n  company: b.organization,\n  organization: b.organization,\n  location: b.location,\n  start_date: b.start_date,\n  end_date: b.end_date,\n  is_current: b.is_current,\n  bullets: b.bullets,\n  projects: [],\n  skills: b.skills,\n  metrics: b.metrics,\n  tags: b.tags,\n  raw_text: b.raw_text\n}));\nconst projects = projectBubbles.map(b => ({\n  id: b.id,\n  name: b.name || b.title,\n  title: b.title,\n  tech: b.tech || b.skills,\n  bullets: b.bullets,\n  start_date: b.start_date,\n  end_date: b.end_date,\n  skills: b.skills,\n  metrics: b.metrics,\n  tags: b.tags,\n  raw_text: b.raw_text\n}));\nconst education = educationBubbles.map(e => ({\n  id: e.id,\n  institution: e.institution,\n  degree: e.degree,\n  field: e.field,\n  location: e.location,\n  start_date: e.start_date,\n  end_date: e.end_date,\n  is_current: e.is_current,\n  gpa: e.gpa,\n  raw_text: e.raw_text\n}));\n\nconst skillIndex = {};\nfor (const [cat, vals] of Object.entries(skills)) {\n  for (const s of vals) {\n    const key = slug(s);\n    if (!skillIndex[key]) skillIndex[key] = { name: s, category: cat, evidence_bubble_ids: [] };\n    for (const b of bubbles) {\n      if (b.skills.some(bs => bs.toLowerCase() === s.toLowerCase()) || b.raw_text.toLowerCase().includes(s.toLowerCase())) {\n        skillIndex[key].evidence_bubble_ids.push(b.id);\n      }\n    }\n    skillIndex[key].evidence_bubble_ids = uniq(skillIndex[key].evidence_bubble_ids);\n  }\n}\n\nfunction bubbleLine(b) {\n  const org = b.organization || b.institution || '';\n  const date = [b.start_date, b.is_current ? 'current' : b.end_date].filter(Boolean).join(' -> ');\n  const bullet = (b.bullets || [])[0] ? ` — ${(b.bullets || [])[0]}` : '';\n  return `${b.type}: ${b.title || b.name || 'Item'}${org ? ' @ ' + org : ''}${date ? ' (' + date + ')' : ''}${bullet}`;\n}\nconst topSkills = uniq(Object.values(skills).flat()).slice(0, 45);\nconst recentRoles = experienceBubbles.slice(0, 4).map(bubbleLine);\nconst projectLines = projectBubbles.slice(0, 4).map(bubbleLine);\nconst eduLines = educationBubbles.slice(0, 3).map(bubbleLine);\n\nconst searchProfile = [\n  profile.name ? `Candidate: ${profile.name}` : '',\n  profile.headline ? `Headline: ${profile.headline}` : '',\n  topSkills.length ? `Core skills: ${topSkills.slice(0, 30).join(', ')}` : '',\n  recentRoles.length ? `Experience themes: ${recentRoles.join(' | ')}` : '',\n  projectLines.length ? `Project themes: ${projectLines.join(' | ')}` : '',\n  eduLines.length ? `Education: ${eduLines.join(' | ')}` : ''\n].filter(Boolean).join('\\n').slice(0, 1800);\n\nconst scoringProfile = [\n  searchProfile,\n  summary_bullets.length ? 'Summary:\\n' + summary_bullets.map(b => '- ' + b).join('\\n') : '',\n  experienceBubbles.slice(0, 5).map(b => `${b.title} @ ${b.organization || ''}\\n${(b.bullets || []).slice(0, 4).map(x => '- ' + x).join('\\n')}`).join('\\n\\n'),\n  projectBubbles.slice(0, 4).map(b => `${b.title}\\n${(b.bullets || []).slice(0, 3).map(x => '- ' + x).join('\\n')}`).join('\\n\\n')\n].filter(Boolean).join('\\n\\n').slice(0, 3500);\n\nconst generationBase = [\n  searchProfile,\n  'Reusable evidence bubbles:',\n  bubbles.slice(0, 12).map(b => `- [${b.id}] ${bubbleLine(b)}${b.skills.length ? ' | skills: ' + b.skills.slice(0, 10).join(', ') : ''}`).join('\\n')\n].filter(Boolean).join('\\n').slice(0, 5000);\n\nlet confidence = 0.35;\nif (profile.name) confidence += 0.12;\nif (profile.emails.length) confidence += 0.12;\nif (topSkills.length >= 5) confidence += 0.13;\nif (experience.length) confidence += 0.12;\nif (projects.length) confidence += 0.08;\nif (education.length) confidence += 0.08;\nconfidence = Math.min(0.95, Math.round(confidence * 100) / 100);\n\nconst warnings = [];\nif (!profile.name) warnings.push('Could not confidently detect a name.');\nif (!profile.emails.length) warnings.push('Could not detect an email.');\nif (!experience.length) warnings.push('No experience entries detected.');\nif (!education.length) warnings.push('No education entries detected.');\nif (confidence < 0.65) warnings.push('Parse confidence is low; review before saving.');\n\nconst resumeDoc = {\n  schema_version: '2.0',\n  kind: 'resume_bubbles',\n  resume_id: 'resume_' + now.slice(0, 10).replace(/-/g, '_'),\n  resume_hash: String(cleanText.length) + '_' + slug(cleanText.slice(0, 40)),\n  source: {\n    type: extractCtx.document_file_id ? 'telegram_upload' : 'telegram_text',\n    file_name: extractCtx.document?.file_name || '',\n    mime_type: extractCtx.document_mime_type || extractCtx.document?.mime_type || '',\n    telegram_file_id: extractCtx.document_file_id || '',\n    uploaded_at: now\n  },\n  personal: profile,\n  profile,\n  summary_bullets,\n  experience,\n  projects,\n  education,\n  skills,\n  bubbles,\n  skill_index: skillIndex,\n  compact_views: {\n    search_profile: searchProfile,\n    scoring_profile: scoringProfile,\n    generation_base: generationBase\n  },\n  raw_text: cleanText,\n  section_hints: Object.fromEntries(Object.entries(sections).map(([k, v]) => [k, (v || []).join('\\n').slice(0, 3000)])),\n  derived: {\n    structured_resume: null,\n    structured_resume_model: null,\n    structured_resume_updated_at: null\n  },\n  metadata: {\n    created_at: now,\n    updated_at: now,\n    source_model: 'deterministic-resume-bubbles-v1',\n    ingestion_version: 2,\n    parse_strategy: 'deterministic_bubbles',\n    parse_confidence: confidence,\n    parse_warnings: warnings,\n    raw_chars: rawText.length,\n    clean_chars: cleanText.length\n  }\n};\n\nreturn [{\n  json: {\n    chat_id: extractCtx.chat_id || upstream.chat_id || null,\n    resume_doc: sanitizeJsonForPostgres(resumeDoc),\n    _meta: {\n      processed_at: now,\n      parse_strategy: 'deterministic_bubbles',\n      parse_confidence: confidence,\n      warnings\n    }\n  }\n}];\n"
+      },
+      "id": "3b63f000-174d-4f92-8588-08cf0493d41e",
+      "name": "Prepare Resume Bubbles",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        24384,
+        43424
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
         "jsCode": "// Build Bubble Preview v2 — HTML-safe Telegram preview for resume_bubbles.\nconst upstream = $input.first().json || {};\nconst r = upstream.resume_doc;\nconst chatId = upstream.chat_id;\n\nfunction arr(v) { return Array.isArray(v) ? v : []; }\nfunction firstPrimary(a) { return arr(a).find(x => x && x.primary) || arr(a)[0] || {}; }\nfunction clean(v) {\n  const s = (v === null || v === undefined) ? '' : String(v).trim();\n  if (!s || s.toLowerCase() === 'undefined' || s.toLowerCase() === 'null') return '';\n  return s;\n}\nfunction esc(v) {\n  return clean(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n}\nfunction locToString(loc) {\n  if (!loc) return '';\n  if (typeof loc === 'string') return clean(loc);\n  return [loc.city, loc.region, loc.country].map(clean).filter(Boolean).join(', ');\n}\nfunction flatSkills(skills) {\n  const out = [];\n  if (skills && typeof skills === 'object') {\n    for (const vals of Object.values(skills)) if (Array.isArray(vals)) out.push(...vals);\n  }\n  return [...new Set(out.map(s => String(s).trim()).filter(Boolean))];\n}\n\nif (upstream._error || !r) {\n  return [{\n    json: {\n      chat_id: chatId,\n      message_text: '⚠️ <b>Resume parse failed</b>\\n\\n' + esc(upstream._error || 'Could not parse resume text.') + '\\n\\nPlease try another PDF/DOCX/TXT or paste the resume body directly.',\n      reply_markup: null,\n      resume_doc: r || null\n    }\n  }];\n}\n\nconst p = r.personal || r.profile || {};\nconst email = firstPrimary(p.emails).address || p.email || '—';\nconst phone = firstPrimary(p.phones).number || p.phone || '—';\nconst loc = locToString(firstPrimary(p.locations)) || clean(p.location) || '—';\nconst expCount = arr(r.experience).length || arr(r.bubbles).filter(b => b.type === 'experience').length;\nconst projCount = arr(r.projects).length || arr(r.bubbles).filter(b => b.type === 'project').length;\nconst eduCount = arr(r.education).length || arr(r.bubbles).filter(b => b.type === 'education').length;\nconst bubbleCount = arr(r.bubbles).length;\nconst skillList = flatSkills(r.skills);\nconst metricCount = arr(r.bubbles).reduce((n, b) => n + arr(b.metrics).length, 0);\nconst confidence = r.metadata?.parse_confidence ?? upstream._meta?.parse_confidence ?? null;\nconst warnings = r.metadata?.parse_warnings || upstream._meta?.warnings || [];\n\nlet msg = '📄 <b>Resume Bubbles — Preview</b>\\n\\n';\nmsg += `<b>Name:</b> ${esc(p.name) || '—'}\\n`;\nif (clean(p.headline)) msg += `<b>Headline:</b> ${esc(clean(p.headline).slice(0, 120))}${clean(p.headline).length > 120 ? '...' : ''}\\n`;\nmsg += `<b>Email:</b> ${esc(email)}\\n`;\nmsg += `<b>Phone:</b> ${esc(phone)}\\n`;\nmsg += `<b>Location:</b> ${esc(loc)}\\n`;\n\nmsg += '\\n<b>Detected bubbles:</b>\\n';\nmsg += `• Experience: ${expCount}\\n`;\nmsg += `• Projects: ${projCount}\\n`;\nmsg += `• Education: ${eduCount}\\n`;\nmsg += `• Total evidence bubbles: ${bubbleCount}\\n`;\nmsg += `• Skills: ${skillList.length}\\n`;\nif (metricCount) msg += `• Metrics found: ${metricCount}\\n`;\nif (confidence !== null) msg += `• Parse confidence: ${Math.round(Number(confidence) * 100)}%\\n`;\n\nif (skillList.length) {\n  msg += '\\n<b>Top skills:</b>\\n';\n  msg += esc(skillList.slice(0, 18).join(', ') + (skillList.length > 18 ? '...' : '')) + '\\n';\n}\n\nconst recent = arr(r.experience)[0] || arr(r.bubbles).find(b => b.type === 'experience');\nif (recent) {\n  msg += '\\n<b>Most recent role:</b>\\n';\n  msg += `${esc(clean(recent.title) || 'Role')}${clean(recent.company || recent.organization) ? ' @ ' + esc(clean(recent.company || recent.organization)) : ''}\\n`;\n  const dates = [clean(recent.start_date), recent.is_current ? 'current' : clean(recent.end_date)].filter(Boolean).join(' → ');\n  if (dates) msg += `${esc(dates)}\\n`;\n}\n\nif (warnings.length) {\n  msg += '\\n⚠️ <b>Review notes:</b>\\n';\n  msg += warnings.slice(0, 3).map(w => '• ' + esc(w)).join('\\n') + '\\n';\n}\n\nmsg += '\\n<i>No LLM was used for this setup parse. I saved sections as reusable resume bubbles so later generation can use only the relevant evidence.</i>';\nmsg += '\\n\\n<i>Tap a button below:</i>';\n\nconst reply_markup = {\n  inline_keyboard: [\n    [\n      { text: '✅ Looks good — save it', callback_data: 'resume:apply' },\n      { text: '❌ Cancel', callback_data: 'resume:cancel' }\n    ],\n    [\n      { text: '✏️ Re-upload / paste again', callback_data: 'resume:redo' }\n    ]\n  ]\n};\n\nreturn [{\n  json: {\n    chat_id: chatId,\n    message_text: msg,\n    reply_markup: JSON.stringify(reply_markup),\n    resume_doc: r\n  }\n}];\n"
       },
       "id": "a2b92eee-299f-46c9-9414-6cf5525b3c04",
@@ -3630,6 +3814,27 @@
         24944,
         43408
       ]
+    },
+    {
+      "parameters": {
+        "tableId": "cf_state",
+        "dataToSend": "autoMapInputData",
+        "inputsToIgnore": "chat_id,message_text,reply_markup"
+      },
+      "id": "890d6b5a-8959-46c4-8f88-35b7e7c45c33",
+      "name": "Save Pending Resume",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        25520,
+        43408
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "2GX5OhRhgZUQkLjE",
+          "name": "Supabase"
+        }
+      }
     },
     {
       "parameters": {
@@ -3687,7 +3892,7 @@
       "webhookId": "053f88d5-f9f1-47df-b3d5-2e63a2846bc7",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -3710,23 +3915,39 @@
     },
     {
       "parameters": {
-        "fileSelector": "/data/user-data/resume_structured.json",
-        "options": {}
+        "operation": "getAll",
+        "tableId": "cf_state",
+        "limit": 1,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "global:resume_structured"
+            }
+          ]
+        }
       },
       "id": "3fa2b5a6-bd0d-4a9d-a79e-58b20ba52925",
       "name": "Read Resume Status",
-      "type": "n8n-nodes-base.readWriteFile",
-      "typeVersion": 1.1,
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
       "position": [
         26288,
         44768
       ],
       "alwaysOutputData": true,
-      "onError": "continueRegularOutput"
+      "credentials": {
+        "supabaseApi": {
+          "id": "2GX5OhRhgZUQkLjE",
+          "name": "Supabase"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "// Format Resume Status v2 — answers \"do you have my resume?\" for resume_bubbles.\nconst rows = $input.all().map(i => i.json || {});\nlet row = rows.find(r => r && (r.id === 'global:resume_structured' || r.value)) || rows[0] || {};\nlet r = row.value || null;\nif (typeof r === 'string') { try { r = JSON.parse(r); } catch(e) {} }\nif (r && r.resume_doc) r = r.resume_doc;\n\nlet chatId = null;\ntry { chatId = $('Extract Input').first().json.chat_id; } catch(e) {}\n\nfunction arr(v) { return Array.isArray(v) ? v : []; }\nfunction clean(v) {\n  const s = (v === null || v === undefined) ? '' : String(v).trim();\n  return (!s || s.toLowerCase() === 'undefined' || s.toLowerCase() === 'null') ? '' : s;\n}\nfunction firstPrimary(a) { return arr(a).find(x => x && x.primary) || arr(a)[0] || {}; }\nfunction flatSkills(skills) {\n  const out = [];\n  if (skills && typeof skills === 'object') for (const vals of Object.values(skills)) if (Array.isArray(vals)) out.push(...vals);\n  return [...new Set(out.map(clean).filter(Boolean))];\n}\n\nif (!r || typeof r !== 'object' || !(r.personal || r.profile)) {\n  return [{ json: { chat_id: chatId, message: '📄 I do *not* have a saved master resume yet.\\n\\nSend /setup to get the JSON template, fill it with your résumé, send it back, then tap ✅ on the preview to save it.' } }];\n}\nconst p = r.personal || r.profile || {};\nconst email = firstPrimary(p.emails).address || p.email || '';\nconst expCount = arr(r.experience).length || arr(r.bubbles).filter(b => b.type === 'experience').length;\nconst projCount = arr(r.projects).length || arr(r.bubbles).filter(b => b.type === 'project').length;\nconst eduCount = arr(r.education).length || arr(r.bubbles).filter(b => b.type === 'education').length;\nconst skillCount = flatSkills(r.skills).length;\nconst bubbleCount = arr(r.bubbles).length;\nconst updated = r.metadata?.updated_at || r.metadata?.created_at || row.updated_at || row.created_at || null;\nconst kind = r.kind === 'resume_bubbles' ? 'resume bubbles' : 'structured resume';\n\nlet msg = `✅ I have your saved ${kind}.\\n\\n`;\nmsg += '*Name:* ' + (p.name || '—') + '\\n';\nif (email) msg += '*Email:* ' + email + '\\n';\nif (p.headline) msg += '*Headline:* ' + p.headline + '\\n';\nmsg += '\\n*Stored content:*\\n';\nmsg += '• Experience: ' + expCount + '\\n';\nmsg += '• Projects: ' + projCount + '\\n';\nmsg += '• Education: ' + eduCount + '\\n';\nmsg += '• Skills: ' + skillCount + '\\n';\nif (bubbleCount) msg += '• Evidence bubbles: ' + bubbleCount + '\\n';\nif (r.metadata?.parse_confidence) msg += '• Parse confidence: ' + Math.round(r.metadata.parse_confidence * 100) + '%\\n';\nif (updated) msg += '\\n_Last updated: ' + new Date(updated).toLocaleString('en-US') + '_';\nmsg += '\\n\\nSend a new resume anytime to replace it.';\nreturn [{ json: { chat_id: chatId, message: msg } }];\n"
+        "jsCode": "// Format Resume Status v2 — answers \"do you have my resume?\" for resume_bubbles.\nconst rows = $input.all().map(i => i.json || {});\nlet row = rows.find(r => r && (r.id === 'global:resume_structured' || r.value)) || rows[0] || {};\nlet r = row.value || null;\nif (typeof r === 'string') { try { r = JSON.parse(r); } catch(e) {} }\nif (r && r.resume_doc) r = r.resume_doc;\n\nlet chatId = null;\ntry { chatId = $('Extract Input').first().json.chat_id; } catch(e) {}\n\nfunction arr(v) { return Array.isArray(v) ? v : []; }\nfunction clean(v) {\n  const s = (v === null || v === undefined) ? '' : String(v).trim();\n  return (!s || s.toLowerCase() === 'undefined' || s.toLowerCase() === 'null') ? '' : s;\n}\nfunction firstPrimary(a) { return arr(a).find(x => x && x.primary) || arr(a)[0] || {}; }\nfunction flatSkills(skills) {\n  const out = [];\n  if (skills && typeof skills === 'object') for (const vals of Object.values(skills)) if (Array.isArray(vals)) out.push(...vals);\n  return [...new Set(out.map(clean).filter(Boolean))];\n}\n\nif (!r || typeof r !== 'object' || !(r.personal || r.profile)) {\n  return [{ json: { chat_id: chatId, message: '📄 I do *not* have a saved master resume yet.\\n\\nSend your resume as pasted text or upload a PDF/DOCX/TXT, then tap ✅ on the preview to save it.' } }];\n}\nconst p = r.personal || r.profile || {};\nconst email = firstPrimary(p.emails).address || p.email || '';\nconst expCount = arr(r.experience).length || arr(r.bubbles).filter(b => b.type === 'experience').length;\nconst projCount = arr(r.projects).length || arr(r.bubbles).filter(b => b.type === 'project').length;\nconst eduCount = arr(r.education).length || arr(r.bubbles).filter(b => b.type === 'education').length;\nconst skillCount = flatSkills(r.skills).length;\nconst bubbleCount = arr(r.bubbles).length;\nconst updated = r.metadata?.updated_at || r.metadata?.created_at || row.updated_at || row.created_at || null;\nconst kind = r.kind === 'resume_bubbles' ? 'resume bubbles' : 'structured resume';\n\nlet msg = `✅ I have your saved ${kind}.\\n\\n`;\nmsg += '*Name:* ' + (p.name || '—') + '\\n';\nif (email) msg += '*Email:* ' + email + '\\n';\nif (p.headline) msg += '*Headline:* ' + p.headline + '\\n';\nmsg += '\\n*Stored content:*\\n';\nmsg += '• Experience: ' + expCount + '\\n';\nmsg += '• Projects: ' + projCount + '\\n';\nmsg += '• Education: ' + eduCount + '\\n';\nmsg += '• Skills: ' + skillCount + '\\n';\nif (bubbleCount) msg += '• Evidence bubbles: ' + bubbleCount + '\\n';\nif (r.metadata?.parse_confidence) msg += '• Parse confidence: ' + Math.round(r.metadata.parse_confidence * 100) + '%\\n';\nif (updated) msg += '\\n_Last updated: ' + new Date(updated).toLocaleString('en-US') + '_';\nmsg += '\\n\\nSend a new resume anytime to replace it.';\nreturn [{ json: { chat_id: chatId, message: msg } }];\n"
       },
       "id": "330ee53d-da58-4468-af13-87ff324bd6cd",
       "name": "Format Resume Status",
@@ -3756,7 +3977,7 @@
       "webhookId": "ffc8ab02-5828-48d9-b2e1-83c0f6e8b24e",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -3796,10 +4017,9 @@
     {
       "parameters": {
         "chatId": "={{ $('Extract Input').first().json.chat_id || $('Schedule Payload').first().json.chat_id }}",
-        "text": "🗂️ <b>I need your résumé as JSON (one-time setup)</b>\n\nI read résumés from a fixed JSON template — deterministic, private, and reliable (no AI guessing in the loop).\n\n<b>How:</b>\n1️⃣ Copy the block below.\n2️⃣ Paste it into ChatGPT / Claude, then paste your résumé under it.\n3️⃣ Send the filled JSON back to me — as a <b>.json file</b> (best for long résumés) or pasted text.\n\n<pre>You are filling a résumé JSON template. Copy facts VERBATIM from the résumé below — never invent, embellish, or drop anything. Keep every job, project, and bullet. Use \"YYYY-MM\" (or \"YYYY\") for dates and \"Present\" for current roles. Output ONLY the filled JSON.\n\nTEMPLATE:\n{\n  \"personal\": {\n    \"name\": \"\",\n    \"headline\": \"\",\n    \"emails\": [{ \"address\": \"\", \"primary\": true }],\n    \"phones\": [{ \"number\": \"\", \"primary\": true, \"region\": \"US\" }],\n    \"links\": { \"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\" },\n    \"location\": { \"city\": \"\", \"region\": \"\", \"country\": \"\", \"show_on_resume\": false },\n    \"work_authorization\": \"\"\n  },\n  \"summary_bullets\": [],\n  \"experience\": [\n    {\n      \"title\": \"\",\n      \"company\": \"\",\n      \"location\": \"\",\n      \"start_date\": \"YYYY-MM\",\n      \"end_date\": \"YYYY-MM or Present\",\n      \"is_current\": false,\n      \"bullets\": [],\n      \"skills\": [],\n      \"metrics\": []\n    }\n  ],\n  \"projects\": [\n    {\n      \"name\": \"\",\n      \"url\": \"\",\n      \"tech\": [],\n      \"bullets\": [],\n      \"metrics\": []\n    }\n  ],\n  \"education\": [\n    {\n      \"degree\": \"\",\n      \"field\": \"\",\n      \"institution\": \"\",\n      \"location\": \"\",\n      \"start_date\": \"YYYY-MM\",\n      \"end_date\": \"YYYY-MM\",\n      \"gpa\": \"\",\n      \"coursework\": []\n    }\n  ],\n  \"skills\": {\n    \"programming\": [],\n    \"ai_ml\": [],\n    \"data_mlops\": [],\n    \"cloud_devops\": [],\n    \"tools\": [],\n    \"other\": []\n  },\n  \"achievements\": []\n}\n\nRÉSUMÉ:\n(paste your résumé here)</pre>",
+        "text": "📄 I found jobs, but I do not have a saved resume to score them against yet.\n\nSend your resume as pasted text or upload a PDF/DOCX, confirm the preview, then run the search again.",
         "additionalFields": {
-          "parse_mode": "HTML",
-          "disable_web_page_preview": true
+          "parse_mode": "Markdown"
         }
       },
       "id": "97026352-e185-4ce2-af05-d23c6cc16ccd",
@@ -3813,7 +4033,7 @@
       "webhookId": "38268152-d35e-4b46-9bb3-27de81e567b4",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -3957,6 +4177,50 @@
     },
     {
       "parameters": {
+        "operation": "delete",
+        "tableId": "cf_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Prep Save Pending Body').first().json.id }}"
+            }
+          ]
+        }
+      },
+      "id": "43503760-785c-41f1-abb8-f9bebdec79ac",
+      "name": "Delete Existing Pending Resume",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        25136,
+        43408
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "2GX5OhRhgZUQkLjE",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Restore only Supabase cf_state columns and scrub payload before insert.\nconst src = $('Prep Save Pending Body').first().json || {};\nfunction cleanString(v) {\n  if (v === null || v === undefined) return '';\n  return String(v)\n    .replace(/\\u0000/gi, '')\n    .replace(/\\x00/gi, '')\n    .replace(/\\0/g, '')\n    .replace(/\\p{C}/gu, ch => (ch === '\\n' || ch === '\\t' ? ch : ' '))\n    .replace(/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]/g, ' ')\n    .trim();\n}\nfunction scrub(value, seen = new WeakSet()) {\n  if (value === null || value === undefined) return value;\n  if (typeof value === 'string') return cleanString(value);\n  if (typeof value === 'number' || typeof value === 'boolean') return value;\n  if (Array.isArray(value)) return value.map(v => scrub(v, seen));\n  if (typeof value === 'object') {\n    if (seen.has(value)) return null;\n    seen.add(value);\n    const out = {};\n    for (const [k, v] of Object.entries(value)) out[cleanString(k)] = scrub(v, seen);\n    return out;\n  }\n  return cleanString(value);\n}\nreturn [{ json: {\n  id: cleanString(src.id),\n  scope: cleanString(src.scope || 'pending'),\n  key: cleanString(src.key || ('resume_setup_' + src.chat_id)),\n  value: scrub(src.value)\n} }];\n"
+      },
+      "id": "95f3d923-b9fc-43f0-b389-e587d2c1ae0b",
+      "name": "Restore Pending Row For Save",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        25312,
+        43408
+      ]
+    },
+    {
+      "parameters": {
         "conditions": {
           "options": {
             "caseSensitive": true,
@@ -3987,6 +4251,37 @@
         22096,
         42960
       ]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "cf_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "global:resume_structured"
+            }
+          ]
+        }
+      },
+      "id": "0a5f8a21-efe6-4eb2-8924-fbe954172439",
+      "name": "Delete Existing Global Resume",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        22352,
+        42848
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "2GX5OhRhgZUQkLjE",
+          "name": "Supabase"
+        }
+      }
     },
     {
       "parameters": {
@@ -4021,7 +4316,7 @@
       "webhookId": "aaef5ef2-40b2-4685-97d0-2dcdbb2b2e13",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
@@ -4038,6 +4333,55 @@
         29232,
         42048
       ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ Boolean(($('Extract Input').first().json.document_mime_type || '').toLowerCase().includes('pdf') || (($('Extract Input').first().json.document?.file_name || '').toLowerCase().endsWith('.pdf'))) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "id": "780a1f6f-f2c9-4d0c-bea5-12db8a5fbf12"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c4237361-8f85-40e5-a604-3b7576ca13e9",
+      "name": "IF: Resume Is PDF?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        23280,
+        43392
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "id": "ee7bd284-fe18-4fcb-878f-07c6cf2a6232",
+      "name": "Extract Resume PDF Text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        23904,
+        43216
+      ],
+      "notes": "v6.2: Native n8n PDF extraction path. DOCX/TXT use the smart Code extractor."
     },
     {
       "parameters": {
@@ -4075,241 +4419,42 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse the JSON file read by the preceding Read/Write Files node (no fs, no extractFromFile).\nlet value = null;\ntry { const buf = await this.helpers.getBinaryDataBuffer(0, 'data'); if (buf && buf.length) value = JSON.parse(buf.toString('utf8')); } catch (e) {}\nreturn [{ json: { value } }];"
-      },
-      "id": "b5b224e9-e0ff-4c7d-9636-284c30588b18",
-      "name": "Read Resume (parse)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        31844,
-        41184
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Parse the JSON file read by the preceding Read/Write Files node (no fs, no extractFromFile).\nlet value = null;\ntry { const buf = await this.helpers.getBinaryDataBuffer(0, 'data'); if (buf && buf.length) value = JSON.parse(buf.toString('utf8')); } catch (e) {}\nreturn [{ json: { value } }];"
-      },
-      "id": "22ad598e-2f21-42eb-9e18-63f34807e2a5",
-      "name": "Read Master Resume (Apply) (parse)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        28884,
-        41968
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Parse the JSON file read by the preceding Read/Write Files node (no fs, no extractFromFile).\nlet value = null;\ntry { const buf = await this.helpers.getBinaryDataBuffer(0, 'data'); if (buf && buf.length) value = JSON.parse(buf.toString('utf8')); } catch (e) {}\nreturn [{ json: { value } }];"
-      },
-      "id": "6b39ef00-6bd2-49d4-bc3c-433c467584ac",
-      "name": "Read Resume Status (parse)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        26468,
-        44768
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Parse the JSON file read by the preceding Read/Write Files node (no fs, no extractFromFile).\nlet value = null;\ntry { const buf = await this.helpers.getBinaryDataBuffer(0, 'data'); if (buf && buf.length) value = JSON.parse(buf.toString('utf8')); } catch (e) {}\nreturn [{ json: { value } }];"
-      },
-      "id": "c3b4e7fb-5c98-4d98-96c9-768c91c7812a",
-      "name": "Lookup Pending Resume (parse)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        21664,
-        43136
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Localized: build the pending-preview row to persist as a JSON file.\nconst j = $input.first().json || {};\nconst v = (j.value && typeof j.value === 'object') ? j.value : {};\nreturn [{ json: {\n  resume_doc: v.resume_doc,\n  created_at: v.created_at || new Date().toISOString(),\n  ttl_seconds: v.ttl_seconds || 900,\n  chat_id: j.chat_id\n} }];"
-      },
-      "id": "bc27e6e6-8a40-44e4-b630-ce9a0501f51e",
-      "name": "Stage Pending Write",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        25114,
-        43408
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "toJson",
-        "mode": "each",
-        "options": {
-          "format": true
-        }
-      },
-      "id": "e40c1c7d-8e26-456e-94e4-33d835aad4b9",
-      "name": "Pending To File",
-      "type": "n8n-nodes-base.convertToFile",
-      "typeVersion": 1.1,
-      "position": [
-        25284,
-        43408
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "write",
-        "fileName": "/data/user-data/.cf_pending.json",
-        "dataPropertyName": "data",
-        "options": {}
-      },
-      "id": "3eb9cb51-4aa1-439b-a5b3-273e27f9d6cb",
-      "name": "Save Pending File",
-      "type": "n8n-nodes-base.readWriteFile",
-      "typeVersion": 1.1,
-      "position": [
-        25454,
-        43408
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Localized: persist confirmed master resume; mirror to staticData fallback.\nconst sd = $getWorkflowStaticData('global');\nconst v = ($input.first().json && $input.first().json.value) || {};\nsd.last_resume_structured = v;\nsd.last_resume_saved_at = new Date().toISOString();\nreturn [{ json: v }];"
-      },
-      "id": "0541d6a0-cf7d-4009-b931-759f50ae5efa",
-      "name": "Stage Global Write",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        22730,
-        42848
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "toJson",
-        "mode": "each",
-        "options": {
-          "format": true
-        }
-      },
-      "id": "23c52fe7-005e-4b45-a228-59417ff79090",
-      "name": "Global To File",
-      "type": "n8n-nodes-base.convertToFile",
-      "typeVersion": 1.1,
-      "position": [
-        22900,
-        42848
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "write",
-        "fileName": "/data/user-data/resume_structured.json",
-        "dataPropertyName": "data",
-        "options": {}
-      },
-      "id": "e18d98fa-4caf-4655-ac7d-67551b0615d4",
-      "name": "Save Global File",
-      "type": "n8n-nodes-base.readWriteFile",
-      "typeVersion": 1.1,
-      "position": [
-        23070,
-        42848
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Read Uploaded File v1 — read an uploaded document's bytes as UTF-8 text (no fs).\n// For a .json resume this yields the JSON string; for PDF/DOCX it yields garbage that\n// Ingest Resume JSON will reject -> the user gets the JSON template instead.\nconst item = $input.first();\nlet extractCtx = {};\ntry { extractCtx = $('Extract Input').first().json || {}; } catch (e) { extractCtx = {}; }\nconst chatId = extractCtx.chat_id || item.json?.chat_id || null;\nconst fileName = String(extractCtx.document?.file_name || item.binary?.data?.fileName || '').toLowerCase();\nconst mimeType = String(extractCtx.document_mime_type || item.binary?.data?.mimeType || '').toLowerCase();\n\nlet buf;\ntry {\n  buf = await this.helpers.getBinaryDataBuffer(0, 'data');\n} catch (e) {\n  try { const b64 = item.binary?.data?.data; if (b64) buf = Buffer.from(b64, 'base64'); } catch (_) {}\n}\n\nlet text = '';\nif (buf && Buffer.isBuffer(buf) && buf.length) {\n  if (buf.length >= 2 && buf[0] === 0xff && buf[1] === 0xfe) text = buf.slice(2).toString('utf16le');\n  else if (buf.length >= 2 && buf[0] === 0xfe && buf[1] === 0xff) {\n    const sw = Buffer.alloc(buf.length - 2);\n    for (let i = 2; i + 1 < buf.length; i += 2) { sw[i - 2] = buf[i + 1]; sw[i - 1] = buf[i]; }\n    text = sw.toString('utf16le');\n  } else if (buf.length >= 3 && buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf) text = buf.slice(3).toString('utf8');\n  else text = buf.toString('utf8');\n}\n\nreturn [{ json: { chat_id: chatId, upload_text: text, file_name: fileName, mime_type: mimeType } }];\n"
-      },
-      "id": "1bfe34c2-a8b2-413d-8e50-a9a37d5be8c1",
-      "name": "Read Uploaded File",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        24024,
-        43424
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Ingest Resume JSON v1 — deterministic, no-LLM. Validates a user-provided resume JSON\n// (filled from the onboarding template) and assembles the resume_bubbles resume_doc.\n// On bad/absent JSON it returns { _needs_template:true } -> Send Resume Template.\nconst j = $input.first().json || {};\nlet extractCtx = {};\ntry { extractCtx = $('Extract Input').first().json || {}; } catch (e) { extractCtx = {}; }\nconst chatId = j.chat_id || extractCtx.chat_id || null;\nconst now = new Date().toISOString();\n\nfunction asStr(v) { if (v == null) return ''; if (typeof v === 'string') return v; if (typeof v === 'number' || typeof v === 'boolean') return String(v); return ''; }\nfunction arr(v) { return Array.isArray(v) ? v : []; }\nfunction clean(v) { return asStr(v).replace(/\\p{C}/gu, ch => (ch === '\\n' || ch === '\\t' ? ch : ' ')).trim(); }\nfunction uniq(a) { const s = new Set(), o = []; for (const v of a || []) { const t = clean(v); if (!t) continue; const k = t.toLowerCase(); if (!s.has(k)) { s.add(k); o.push(t); } } return o; }\nfunction slug(s) { return asStr(s).toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 70) || 'item'; }\nfunction needTemplate(reason) { return [{ json: { chat_id: chatId, _error: reason, _needs_template: true } }]; }\n\n// 1) Get raw JSON text (file upload or paste) and parse robustly.\nconst rawText = asStr(j.upload_text || j.resume_json || j.resume_text || j.message_text || j.text || extractCtx.message_text || '').trim();\nconst stripped = rawText.replace(/^﻿/, '').replace(/^```[a-zA-Z]*\\s*/, '').replace(/\\s*```\\s*$/, '').trim();\nlet data = null;\ntry { data = JSON.parse(stripped); }\ncatch (e) { const m = stripped.match(/\\{[\\s\\S]*\\}/); if (m) { try { data = JSON.parse(m[0]); } catch (_) {} } }\nif (!data || typeof data !== 'object' || Array.isArray(data)) {\n  return needTemplate('That was not a valid resume JSON. Send your resume in the JSON template (as a .json file or pasted text).');\n}\n\n// 2) Validate required structure.\nconst personalIn = data.personal || data.profile || {};\nconst name = clean(personalIn.name);\nconst expIn = arr(data.experience), projIn = arr(data.projects);\nif (!name) return needTemplate('Your resume JSON is missing \"personal.name\". Fill the template and resend.');\nif (!expIn.length && !projIn.length) return needTemplate('Your resume JSON has no experience or projects. Fill the template and resend.');\n\n// 3) Personal.\nfunction normEmails(a) { return arr(a).map((e, i) => { const addr = typeof e === 'string' ? clean(e) : clean(e.address || e.email); return { address: addr, primary: e && e.primary !== undefined ? !!e.primary : i === 0, label: (e && e.label) || (i === 0 ? 'primary' : 'other') }; }).filter(e => e.address); }\nfunction normPhones(a) { return arr(a).map((p, i) => { const num = typeof p === 'string' ? clean(p) : clean(p.number || p.phone); return { number: num, primary: p && p.primary !== undefined ? !!p.primary : i === 0, label: (p && (p.label || p.region)) || (i === 0 ? 'primary' : 'other'), region: clean(p && p.region) }; }).filter(p => p.number); }\nconst locIn = personalIn.location || {};\nconst locObj = (locIn && (locIn.city || locIn.region || locIn.country)) ? { city: clean(locIn.city), region: clean(locIn.region), country: clean(locIn.country), primary: true } : null;\nconst links = {};\nfor (const [k, v] of Object.entries(personalIn.links || {})) { const u = clean(v); if (u) links[k] = u; }\nconst profile = {\n  name, headline: clean(personalIn.headline),\n  emails: normEmails(personalIn.emails), phones: normPhones(personalIn.phones),\n  links, locations: locObj ? [locObj] : [],\n  work_authorization: clean(personalIn.work_authorization),\n  show_location: !!(locIn && locIn.show_on_resume)\n};\n\n// 4) Typed bubbles from structured entries.\nfunction tagsFor(text, type) { const l = asStr(text).toLowerCase(); const t = [type]; if (/(machine learning|pytorch|tensorflow|model|llm|rag|nlp|vision|ai)/.test(l)) t.push('ai-ml'); if (/(data|sql|etl|pipeline|spark|airflow|analytics)/.test(l)) t.push('data'); if (/(aws|azure|gcp|docker|kubernetes|cloud|deploy|api)/.test(l)) t.push('cloud-platform'); if (/(research|publication|experiment|study)/.test(l)) t.push('research'); if (/(lead|mentor|manage|stakeholder|cross-functional)/.test(l)) t.push('leadership'); return uniq(t); }\nconst experienceBubbles = expIn.map((e, i) => {\n  const bullets = uniq(arr(e.bullets)).slice(0, 15);\n  const raw = [e.title, e.company, e.location, bullets.join('\\n')].filter(Boolean).join('\\n');\n  return { id: `experience_${slug(e.company || e.title)}_${asStr(e.start_date).slice(0, 4) || (i + 1)}`, type: 'experience', title: clean(e.title), organization: clean(e.company || e.organization), company: clean(e.company || e.organization), location: clean(e.location), start_date: clean(e.start_date) || null, end_date: clean(e.end_date) || null, is_current: !!e.is_current, bullets, skills: uniq(arr(e.skills)).slice(0, 30), metrics: uniq(arr(e.metrics)).slice(0, 20), tags: tagsFor(raw, 'experience'), raw_text: raw, confidence: 0.95, order_index: i + 1 };\n});\nconst projectBubbles = projIn.map((p, i) => {\n  const bullets = uniq(arr(p.bullets)).slice(0, 15); const tech = uniq(arr(p.tech)).slice(0, 25);\n  const raw = [p.name, tech.join(', '), bullets.join('\\n')].filter(Boolean).join('\\n');\n  return { id: `project_${slug(p.name)}_${i + 1}`, type: 'project', title: clean(p.name), name: clean(p.name), organization: '', url: clean(p.url), tech, skills: tech, start_date: clean(p.start_date) || null, end_date: clean(p.end_date) || null, is_current: false, bullets, metrics: uniq(arr(p.metrics)).slice(0, 20), tags: tagsFor(raw, 'project'), raw_text: raw, confidence: 0.95, order_index: i + 1 };\n});\nconst educationBubbles = arr(data.education).map((ed, i) => {\n  const raw = [ed.institution, ed.degree, ed.field, ed.gpa ? ('GPA ' + ed.gpa) : '', arr(ed.coursework).join(', ')].filter(Boolean).join(' | ');\n  return { id: `education_${slug(ed.institution || ed.degree)}_${i + 1}`, type: 'education', title: clean(ed.degree || ed.institution), institution: clean(ed.institution), organization: clean(ed.institution), degree: clean(ed.degree), field: clean(ed.field), location: clean(ed.location), start_date: clean(ed.start_date) || null, end_date: clean(ed.end_date) || null, is_current: false, gpa: clean(ed.gpa), coursework: uniq(arr(ed.coursework)), bullets: [], skills: [], metrics: ed.gpa ? ['GPA ' + clean(ed.gpa)] : [], tags: ['education'], raw_text: raw, confidence: 0.9, order_index: i + 1 };\n});\n\n// 5) Skills (categorized as given, or flat -> other).\nconst skillsIn = data.skills || {};\nconst skills = { programming: [], ai_ml: [], data_mlops: [], cloud_devops: [], tools: [], other: [] };\nif (Array.isArray(skillsIn)) skills.other = uniq(skillsIn);\nelse for (const [cat, vals] of Object.entries(skillsIn)) { const key = skills[cat] !== undefined ? cat : 'other'; skills[key].push(...arr(vals)); }\nfor (const c of Object.keys(skills)) skills[c] = uniq(skills[c]).slice(0, 120);\nconst summary_bullets = uniq(arr(data.summary_bullets)).slice(0, 12);\nconst achievements = uniq(arr(data.achievements)).slice(0, 30);\n\n// 6) Assemble resume_doc (same shape as the deterministic bubbles model).\nconst bubbles = [].concat(experienceBubbles, projectBubbles, educationBubbles).map((b, i) => ({ ...b, order_index: i + 1 }));\nconst experience = experienceBubbles.map(b => ({ id: b.id, title: b.title, company: b.organization, organization: b.organization, location: b.location, start_date: b.start_date, end_date: b.end_date, is_current: b.is_current, bullets: b.bullets, projects: [], skills: b.skills, metrics: b.metrics, tags: b.tags, raw_text: b.raw_text }));\nconst projects = projectBubbles.map(b => ({ id: b.id, name: b.name, title: b.title, tech: b.tech, url: b.url, bullets: b.bullets, start_date: b.start_date, end_date: b.end_date, skills: b.skills, metrics: b.metrics, tags: b.tags, raw_text: b.raw_text }));\nconst education = educationBubbles.map(e => ({ id: e.id, institution: e.institution, degree: e.degree, field: e.field, location: e.location, start_date: e.start_date, end_date: e.end_date, is_current: e.is_current, gpa: e.gpa, coursework: e.coursework, raw_text: e.raw_text }));\n\nconst allSkillsFlat = uniq(Object.values(skills).flat());\nconst skill_index = {};\nfor (const [cat, vals] of Object.entries(skills)) for (const s of vals) { const key = slug(s); if (!skill_index[key]) skill_index[key] = { name: s, category: cat, evidence_bubble_ids: [] }; for (const b of bubbles) { if (arr(b.skills).some(bs => bs.toLowerCase() === s.toLowerCase()) || asStr(b.raw_text).toLowerCase().includes(s.toLowerCase())) skill_index[key].evidence_bubble_ids.push(b.id); } skill_index[key].evidence_bubble_ids = uniq(skill_index[key].evidence_bubble_ids); }\n\nfunction bubbleLine(b) { const org = b.organization || b.institution || ''; const date = [b.start_date, b.is_current ? 'current' : b.end_date].filter(Boolean).join(' -> '); const bul = (b.bullets || [])[0] ? ` — ${b.bullets[0]}` : ''; return `${b.type}: ${b.title || b.name || 'Item'}${org ? ' @ ' + org : ''}${date ? ' (' + date + ')' : ''}${bul}`; }\nconst topSkills = allSkillsFlat.slice(0, 45);\nconst searchProfile = [profile.name ? `Candidate: ${profile.name}` : '', profile.headline ? `Headline: ${profile.headline}` : '', topSkills.length ? `Core skills: ${topSkills.slice(0, 30).join(', ')}` : '', experienceBubbles.length ? `Experience themes: ${experienceBubbles.slice(0, 4).map(bubbleLine).join(' | ')}` : '', projectBubbles.length ? `Project themes: ${projectBubbles.slice(0, 4).map(bubbleLine).join(' | ')}` : ''].filter(Boolean).join('\\n').slice(0, 1800);\nconst scoringProfile = [searchProfile, summary_bullets.length ? 'Summary:\\n' + summary_bullets.map(b => '- ' + b).join('\\n') : '', experienceBubbles.slice(0, 6).map(b => `${b.title} @ ${b.organization || ''}\\n${b.bullets.slice(0, 4).map(x => '- ' + x).join('\\n')}`).join('\\n\\n'), projectBubbles.slice(0, 5).map(b => `${b.title}\\n${b.bullets.slice(0, 3).map(x => '- ' + x).join('\\n')}`).join('\\n\\n')].filter(Boolean).join('\\n\\n').slice(0, 3500);\nconst generationBase = [searchProfile, 'Reusable evidence bubbles:', bubbles.slice(0, 16).map(b => `- [${b.id}] ${bubbleLine(b)}${arr(b.skills).length ? ' | skills: ' + b.skills.slice(0, 10).join(', ') : ''}`).join('\\n')].filter(Boolean).join('\\n').slice(0, 5000);\nconst rawTextJoined = [profile.name, profile.headline, summary_bullets.join('\\n'), bubbles.map(b => b.raw_text).join('\\n\\n'), achievements.join('\\n')].filter(Boolean).join('\\n\\n');\n\nconst warnings = [];\nif (!profile.emails.length) warnings.push('No email in personal.emails.');\nif (!experience.length) warnings.push('No experience entries.');\nif (!education.length) warnings.push('No education entries.');\n\nconst resumeDoc = {\n  schema_version: '2.0', kind: 'resume_bubbles',\n  resume_id: 'resume_' + now.slice(0, 10).replace(/-/g, '_'),\n  resume_hash: String(rawTextJoined.length) + '_' + slug(profile.name),\n  source: { type: j.upload_text ? 'telegram_json_upload' : 'telegram_json_paste', file_name: extractCtx.document?.file_name || '', uploaded_at: now },\n  personal: profile, profile,\n  summary_bullets, experience, projects, education, achievements, skills, bubbles, skill_index,\n  compact_views: { search_profile: searchProfile, scoring_profile: scoringProfile, generation_base: generationBase },\n  raw_text: rawTextJoined,\n  section_hints: {},\n  derived: { structured_resume: null, structured_resume_model: null, structured_resume_updated_at: null },\n  metadata: { created_at: now, updated_at: now, source_model: 'user-json-template-v1', ingestion_version: 3, parse_strategy: 'json_template', parse_confidence: 0.99, parse_warnings: warnings, raw_chars: rawText.length, clean_chars: rawTextJoined.length }\n};\n\nreturn [{ json: { chat_id: chatId, resume_doc: resumeDoc, _meta: { processed_at: now, parse_strategy: 'json_template', parse_confidence: 0.99, warnings } } }];\n"
-      },
-      "id": "19f8aba9-716b-4952-8b7d-77186e20eea9",
-      "name": "Ingest Resume JSON",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        24384,
-        43424
-      ]
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $json.chat_id }}",
-        "text": "🗂️ <b>I need your résumé as JSON (one-time setup)</b>\n\nI read résumés from a fixed JSON template — deterministic, private, and reliable (no AI guessing in the loop).\n\n<b>How:</b>\n1️⃣ Copy the block below.\n2️⃣ Paste it into ChatGPT / Claude, then paste your résumé under it.\n3️⃣ Send the filled JSON back to me — as a <b>.json file</b> (best for long résumés) or pasted text.\n\n<pre>You are filling a résumé JSON template. Copy facts VERBATIM from the résumé below — never invent, embellish, or drop anything. Keep every job, project, and bullet. Use \"YYYY-MM\" (or \"YYYY\") for dates and \"Present\" for current roles. Output ONLY the filled JSON.\n\nTEMPLATE:\n{\n  \"personal\": {\n    \"name\": \"\",\n    \"headline\": \"\",\n    \"emails\": [{ \"address\": \"\", \"primary\": true }],\n    \"phones\": [{ \"number\": \"\", \"primary\": true, \"region\": \"US\" }],\n    \"links\": { \"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\" },\n    \"location\": { \"city\": \"\", \"region\": \"\", \"country\": \"\", \"show_on_resume\": false },\n    \"work_authorization\": \"\"\n  },\n  \"summary_bullets\": [],\n  \"experience\": [\n    {\n      \"title\": \"\",\n      \"company\": \"\",\n      \"location\": \"\",\n      \"start_date\": \"YYYY-MM\",\n      \"end_date\": \"YYYY-MM or Present\",\n      \"is_current\": false,\n      \"bullets\": [],\n      \"skills\": [],\n      \"metrics\": []\n    }\n  ],\n  \"projects\": [\n    {\n      \"name\": \"\",\n      \"url\": \"\",\n      \"tech\": [],\n      \"bullets\": [],\n      \"metrics\": []\n    }\n  ],\n  \"education\": [\n    {\n      \"degree\": \"\",\n      \"field\": \"\",\n      \"institution\": \"\",\n      \"location\": \"\",\n      \"start_date\": \"YYYY-MM\",\n      \"end_date\": \"YYYY-MM\",\n      \"gpa\": \"\",\n      \"coursework\": []\n    }\n  ],\n  \"skills\": {\n    \"programming\": [],\n    \"ai_ml\": [],\n    \"data_mlops\": [],\n    \"cloud_devops\": [],\n    \"tools\": [],\n    \"other\": []\n  },\n  \"achievements\": []\n}\n\nRÉSUMÉ:\n(paste your résumé here)</pre>",
+        "chatId": "={{ $json.chat_id || $('Extract Input').first().json.chat_id }}",
+        "text": "={{ $json.message_text || (\"⚠️ Resume parse failed\\n\\n\" + ($json._error || $json.error || \"I could not extract enough usable resume text.\") + \"\\n\\nTry uploading a selectable PDF/DOCX/TXT, or paste the resume body directly.\") }}",
         "additionalFields": {
           "appendAttribution": false,
-          "parse_mode": "HTML",
           "disable_web_page_preview": true
         }
       },
-      "id": "2db96282-d841-4c6d-8d4e-2daaa96438cf",
-      "name": "Send Resume Template",
+      "id": "e5d1ae41-5957-4353-8f40-bf7a1132d649",
+      "name": "Send Resume Parse Error",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        24604,
-        43644
+        24784,
+        43616
       ],
-      "webhookId": "f2fc74cf-aa6b-4328-91ef-127ec8b2ffe3",
+      "webhookId": "85632820-ef2d-4899-85f4-dd2a64b9a922",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
+          "id": "tWsQsUCkVljns3az",
           "name": "Telegram account"
         }
       }
     },
     {
       "parameters": {
-        "fileSelector": "/data/user-data/resume_structured.json",
-        "options": {}
-      },
-      "id": "d0c0f95b-3b66-4464-8126-6f9bc7e21ccc",
-      "name": "Gate Read Resume",
-      "type": "n8n-nodes-base.readWriteFile",
-      "typeVersion": 1.1,
-      "position": [
-        26804,
-        41368
-      ],
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "jsCode": "let has = false;\ntry { const buf = await this.helpers.getBinaryDataBuffer(0, 'data'); if (buf && buf.length) { const d = JSON.parse(buf.toString('utf8')); has = !!(d && d.personal && d.personal.name && Array.isArray(d.experience) && d.experience.length); } } catch (e) {}\nlet ctx = {};\ntry { ctx = $('Extract Input').first().json || {}; } catch (e) {}\nreturn [{ json: { ...ctx, _has_resume: has } }];"
-      },
-      "id": "9008c841-3ad1-4bbf-b8a7-de353f2187f2",
-      "name": "Gate Has Resume",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        26964,
-        41368
-      ]
-    },
-    {
-      "parameters": {
         "conditions": {
           "options": {
-            "caseSensitive": true,
+            "caseSensitive": false,
             "leftValue": "",
             "typeValidation": "strict",
             "version": 2
           },
           "conditions": [
             {
-              "id": "bf03e9fb-8038-4a67-9c98-d0d8389a9f60",
-              "leftValue": "={{ $json._has_resume }}",
+              "id": "ae9d5b1b-b398-48e0-977f-1d86b6e09eae",
+              "leftValue": "={{ Boolean(($('Extract Input').first().json.document_mime_type || '').toLowerCase().includes('wordprocessingml.document') || (($('Extract Input').first().json.document?.file_name || '').toLowerCase().endsWith('.docx'))) }}",
               "rightValue": true,
               "operator": {
                 "type": "boolean",
@@ -4322,13 +4467,52 @@
         },
         "options": {}
       },
-      "id": "aaf23965-453d-48c6-aea1-087e517a7b33",
-      "name": "IF: Resume For Search?",
+      "id": "0ef46f89-720b-472d-a0b3-35946ca406ba",
+      "name": "IF: Resume Is DOCX?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        27134,
-        41368
+        23504,
+        43424
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Mark DOCX As ZIP v1 — DOCX is a ZIP archive; Compression node needs zip metadata.\nconst item = $input.first();\nconst json = { ...(item.json || {}) };\nconst binary = { ...(item.binary || {}) };\n\nif (!binary.data) {\n  return [{ json: { ...json, chat_id: json.chat_id || $('Extract Input').first().json.chat_id, _error: 'DOCX file binary data was not found before decompression.' } }];\n}\n\nconst b = { ...binary.data };\nconst originalName = b.fileName || $('Extract Input').first().json.document?.file_name || 'resume.docx';\nb.fileName = String(originalName).replace(/\\.docx$/i, '.zip');\nif (!/\\.zip$/i.test(b.fileName)) b.fileName += '.zip';\nb.fileExtension = 'zip';\nb.mimeType = 'application/zip';\nbinary.data = b;\n\njson._original_docx_name = originalName;\njson._docx_zip_ready = true;\njson.chat_id = json.chat_id || $('Extract Input').first().json.chat_id;\n\nreturn [{ json, binary }];\n"
+      },
+      "id": "5081ce45-e0c5-4a88-9275-807696195420",
+      "name": "Mark DOCX As ZIP",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        23760,
+        43408
+      ]
+    },
+    {
+      "parameters": {
+        "outputPrefix": "docx_"
+      },
+      "id": "20557843-23a4-48a6-8b52-ac9c6dced4ba",
+      "name": "Decompress DOCX Zip",
+      "type": "n8n-nodes-base.compression",
+      "typeVersion": 1.1,
+      "position": [
+        23920,
+        43408
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract DOCX Text From XML v1 — reads decompressed DOCX XML files, no zlib/no modules.\nconst item = $input.first();\nconst binary = item.binary || {};\nlet extractCtx = {};\ntry { extractCtx = $('Extract Input').first().json || {}; } catch (e) { extractCtx = {}; }\nconst chatId = extractCtx.chat_id || item.json?.chat_id || null;\n\nfunction cleanText(s) {\n  return String(s || '')\n    .replace(/\\u0000/g, '')\n    .replace(/\\x00/g, '')\n    .replace(/\\r\\n/g, '\\n')\n    .replace(/\\r/g, '\\n')\n    .replace(/\\u00A0/g, ' ')\n    .replace(/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]/g, ' ')\n    .replace(/[ \\t]+\\n/g, '\\n')\n    .replace(/\\n[ \\t]+/g, '\\n')\n    .replace(/[ \\t]{2,}/g, ' ')\n    .replace(/\\n{4,}/g, '\\n\\n\\n')\n    .trim();\n}\nfunction decodeXml(s) {\n  return String(s || '')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&amp;/g, '&')\n    .replace(/&quot;/g, '\"')\n    .replace(/&apos;/g, \"'\")\n    .replace(/&#(\\d+);/g, (_, n) => String.fromCodePoint(Number(n)))\n    .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCodePoint(parseInt(n, 16)));\n}\nfunction xmlToText(xml) {\n  const out = [];\n  const re = /<w:t\\b[^>]*>([\\s\\S]*?)<\\/w:t>|<w:tab\\b[^>]*\\/>|<w:br\\b[^>]*\\/>|<w:cr\\b[^>]*\\/>|<\\/w:p>|<\\/w:tc>|<\\/w:tr>/gi;\n  let m;\n  while ((m = re.exec(xml)) !== null) {\n    const token = m[0].toLowerCase();\n    if (m[1] !== undefined) out.push(decodeXml(m[1]));\n    else if (token.includes('w:tab') || token.includes('/w:tc')) out.push('\\t');\n    else out.push('\\n');\n  }\n  let text = out.join('');\n  if (!text.trim()) text = decodeXml(String(xml || '').replace(/<[^>]+>/g, ' '));\n  return cleanText(text)\n    .split('\\n')\n    .map(l => l.replace(/[ \\t]{2,}/g, ' ').trim())\n    .join('\\n')\n    .replace(/\\n{3,}/g, '\\n\\n')\n    .trim();\n}\nfunction rankName(name) {\n  const n = String(name || '').toLowerCase();\n  if (/word\\/document\\.xml$/.test(n) || /(^|\\/)document\\.xml$/.test(n)) return 0;\n  if (/word\\/header\\d+\\.xml$/.test(n) || /(^|\\/)header\\d+\\.xml$/.test(n)) return 1;\n  if (/word\\/(footnotes|endnotes|comments)\\.xml$/.test(n) || /(^|\\/)(footnotes|endnotes|comments)\\.xml$/.test(n)) return 2;\n  if (/word\\/footer\\d+\\.xml$/.test(n) || /(^|\\/)footer\\d+\\.xml$/.test(n)) return 3;\n  return 99;\n}\nfunction isWantedXml(name) {\n  const n = String(name || '').replace(/\\\\/g, '/').toLowerCase();\n  return /^word\\/(document|header\\d+|footer\\d+|footnotes|endnotes|comments)\\.xml$/.test(n)\n    || /(^|\\/)(document|header\\d+|footer\\d+|footnotes|endnotes|comments)\\.xml$/.test(n);\n}\n\nconst entries = Object.entries(binary).map(([key, b]) => ({ key, b, name: b?.fileName || key }))\n  .filter(e => isWantedXml(e.name))\n  .sort((a, b) => rankName(a.name) - rankName(b.name) || String(a.name).localeCompare(String(b.name)));\n\nif (!entries.length) {\n  const names = Object.values(binary).map(b => b?.fileName).filter(Boolean).slice(0, 12).join(', ');\n  return [{ json: { chat_id: chatId, _error: 'DOCX decompressed, but word/document.xml was not found. Files seen: ' + (names || 'none') } }];\n}\n\nconst chunks = [];\nfor (const entry of entries) {\n  const buf = await this.helpers.getBinaryDataBuffer(0, entry.key);\n  const xml = buf.toString('utf8');\n  const text = xmlToText(xml);\n  if (text) chunks.push(text);\n}\n\nconst text = cleanText(chunks.join('\\n\\n'));\nif (!text || text.length < 120) {\n  return [{ json: { chat_id: chatId, _error: 'DOCX was unpacked, but I could not extract enough readable resume text. Try exporting as PDF/TXT or paste the resume body.' } }];\n}\n\nreturn [{\n  json: {\n    chat_id: chatId,\n    resume_text: text,\n    extracted_text: text,\n    source: {\n      type: 'telegram_upload',\n      file_name: extractCtx.document?.file_name || item.json?._original_docx_name || '',\n      mime_type: extractCtx.document_mime_type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',\n      telegram_file_id: extractCtx.document_file_id || '',\n      uploaded_at: new Date().toISOString()\n    },\n    _extractor: 'docx_compression_xml_no_zlib',\n    _docx_parts_used: entries.map(e => e.name)\n  }\n}];\n"
+      },
+      "id": "f852e243-5b9f-40d4-bb3c-85f6aba9f4af",
+      "name": "Extract DOCX Text From XML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        24112,
+        43408
       ]
     }
   ],
@@ -4378,7 +4562,7 @@
         ],
         [
           {
-            "node": "Gate Read Resume",
+            "node": "Prep Expand Input",
             "type": "main",
             "index": 0
           }
@@ -4505,7 +4689,7 @@
       "main": [
         [
           {
-            "node": "Read Resume (parse)",
+            "node": "Build Scorer Input",
             "type": "main",
             "index": 0
           }
@@ -4589,7 +4773,7 @@
       "main": [
         [
           {
-            "node": "Read Master Resume (Apply) (parse)",
+            "node": "Parse Personal Info",
             "type": "main",
             "index": 0
           }
@@ -5526,7 +5710,7 @@
       "main": [
         [
           {
-            "node": "Read Uploaded File",
+            "node": "IF: Resume Is PDF?",
             "type": "main",
             "index": 0
           }
@@ -5606,6 +5790,17 @@
         [
           {
             "node": "Build Cover LaTeX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Resume Text": {
+      "main": [
+        [
+          {
+            "node": "Prepare Resume Bubbles",
             "type": "main",
             "index": 0
           }
@@ -6115,7 +6310,7 @@
       "main": [
         [
           {
-            "node": "Lookup Pending Resume (parse)",
+            "node": "Route Callback Action",
             "type": "main",
             "index": 0
           }
@@ -6133,7 +6328,7 @@
         ],
         [
           {
-            "node": "Send Cancel Confirm",
+            "node": "Delete Pending After Cancel",
             "type": "main",
             "index": 0
           }
@@ -6158,11 +6353,44 @@
         ]
       ]
     },
+    "Apply Resume": {
+      "main": [
+        [
+          {
+            "node": "Delete Pending After Apply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Pending After Apply": {
+      "main": [
+        [
+          {
+            "node": "Send Apply Confirm",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Send Apply Confirm": {
       "main": [
         [
           {
             "node": "Answer Apply Callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Pending After Cancel": {
+      "main": [
+        [
+          {
+            "node": "Send Cancel Confirm",
             "type": "main",
             "index": 0
           }
@@ -6206,14 +6434,14 @@
       "main": [
         [
           {
-            "node": "Ingest Resume JSON",
+            "node": "Prepare Resume Bubbles",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Send Resume Template",
+            "node": "Send Setup Prompt",
             "type": "main",
             "index": 0
           }
@@ -6224,7 +6452,18 @@
       "main": [
         [
           {
-            "node": "Stage Pending Write",
+            "node": "Delete Existing Pending Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Pending Resume": {
+      "main": [
+        [
+          {
+            "node": "Send Resume Preview",
             "type": "main",
             "index": 0
           }
@@ -6235,7 +6474,7 @@
       "main": [
         [
           {
-            "node": "Read Resume Status (parse)",
+            "node": "Format Resume Status",
             "type": "main",
             "index": 0
           }
@@ -6333,11 +6572,33 @@
         ]
       ]
     },
+    "Delete Existing Pending Resume": {
+      "main": [
+        [
+          {
+            "node": "Restore Pending Row For Save",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore Pending Row For Save": {
+      "main": [
+        [
+          {
+            "node": "Save Pending Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "IF: Pending Resume Valid?": {
       "main": [
         [
           {
-            "node": "Restore Apply Row For Save",
+            "node": "Delete Existing Global Resume",
             "type": "main",
             "index": 0
           }
@@ -6351,11 +6612,22 @@
         ]
       ]
     },
+    "Delete Existing Global Resume": {
+      "main": [
+        [
+          {
+            "node": "Restore Apply Row For Save",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Restore Apply Row For Save": {
       "main": [
         [
           {
-            "node": "Stage Global Write",
+            "node": "Apply Resume",
             "type": "main",
             "index": 0
           }
@@ -6367,6 +6639,17 @@
         [
           {
             "node": "Answer Apply Callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Resume Bubbles": {
+      "main": [
+        [
+          {
+            "node": "IF: Resume Parse OK?",
             "type": "main",
             "index": 0
           }
@@ -6395,6 +6678,35 @@
         ]
       ]
     },
+    "IF: Resume Is PDF?": {
+      "main": [
+        [
+          {
+            "node": "Extract Resume PDF Text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF: Resume Is DOCX?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Resume PDF Text": {
+      "main": [
+        [
+          {
+            "node": "Prepare Resume Bubbles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "IF: Resume Parse OK?": {
       "main": [
         [
@@ -6406,179 +6718,58 @@
         ],
         [
           {
-            "node": "Send Resume Template",
+            "node": "Send Resume Parse Error",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Read Resume (parse)": {
+    "IF: Resume Is DOCX?": {
       "main": [
         [
           {
-            "node": "Build Scorer Input",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Read Master Resume (Apply) (parse)": {
-      "main": [
-        [
-          {
-            "node": "Parse Personal Info",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Read Resume Status (parse)": {
-      "main": [
-        [
-          {
-            "node": "Format Resume Status",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Lookup Pending Resume (parse)": {
-      "main": [
-        [
-          {
-            "node": "Route Callback Action",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Stage Pending Write": {
-      "main": [
-        [
-          {
-            "node": "Pending To File",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Pending To File": {
-      "main": [
-        [
-          {
-            "node": "Save Pending File",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Save Pending File": {
-      "main": [
-        [
-          {
-            "node": "Send Resume Preview",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Stage Global Write": {
-      "main": [
-        [
-          {
-            "node": "Global To File",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Global To File": {
-      "main": [
-        [
-          {
-            "node": "Save Global File",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Save Global File": {
-      "main": [
-        [
-          {
-            "node": "Send Apply Confirm",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Read Uploaded File": {
-      "main": [
-        [
-          {
-            "node": "Ingest Resume JSON",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Ingest Resume JSON": {
-      "main": [
-        [
-          {
-            "node": "IF: Resume Parse OK?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Gate Read Resume": {
-      "main": [
-        [
-          {
-            "node": "Gate Has Resume",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Gate Has Resume": {
-      "main": [
-        [
-          {
-            "node": "IF: Resume For Search?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IF: Resume For Search?": {
-      "main": [
-        [
-          {
-            "node": "Prep Expand Input",
+            "node": "Mark DOCX As ZIP",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Send Resume Template",
+            "node": "Extract Resume Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark DOCX As ZIP": {
+      "main": [
+        [
+          {
+            "node": "Decompress DOCX Zip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decompress DOCX Zip": {
+      "main": [
+        [
+          {
+            "node": "Extract DOCX Text From XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract DOCX Text From XML": {
+      "main": [
+        [
+          {
+            "node": "Prepare Resume Bubbles",
             "type": "main",
             "index": 0
           }
@@ -6586,7 +6777,7 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
@@ -6599,5 +6790,6 @@
     "templateCredsSetupCompleted": true,
     "instanceId": "370a1c8e5379514ef09090789957cdd40c65172027dff384f9140646b5eedf09"
   },
+  "id": "TfQzygYaPF05t13b",
   "tags": []
 }

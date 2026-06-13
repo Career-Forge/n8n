@@ -1,0 +1,143 @@
+{
+  "name": "CareerForge — ATS Poller",
+  "nodes": [
+    {
+      "id": "170e944c-30af-49cf-9949-b559b81495b1",
+      "name": "Poll Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [220, 300],
+      "parameters": { "rule": { "interval": [{ "field": "minutes", "minutesInterval": 15 }] } }
+    },
+    {
+      "id": "43d3502e-3a31-4061-b517-5bff506af177",
+      "name": "Run Start",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [380, 300],
+      "parameters": { "mode": "manual", "includeOtherFields": false, "assignments": { "assignments": [{ "id": "rs", "name": "run_start", "value": "={{ $now.toISO() }}", "type": "string" }] } }
+    },
+    {
+      "id": "dad1b0ff-d1ce-48aa-b669-626da586f167",
+      "name": "Select Due Companies",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [540, 300],
+      "parameters": { "operation": "executeQuery", "query": "SELECT id AS company_id, name, ats_type, slug, COALESCE(api_base,'') AS api_base, (ats_type || ':' || slug) AS board, COALESCE(etag,'') AS etag FROM companies WHERE is_active AND next_poll_at <= now() ORDER BY next_poll_at ASC LIMIT 25" },
+      "credentials": { "postgres": { "id": "5pQq6UUmmGU7e04S", "name": "CareerForge Postgres" } }
+    },
+    {
+      "id": "eb6f9f22-da53-40e6-accb-321d61506634",
+      "name": "Build Requests",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 300],
+      "parameters": { "mode": "runOnceForAllItems", "language": "javaScript", "jsCode": "const items = $input.all();\nconst IMPLEMENTED = ['greenhouse', 'lever', 'ashby', 'workable', 'recruitee'];\nconst mkUrl = (t, slug) => ({\n  greenhouse: 'https://boards-api.greenhouse.io/v1/boards/' + slug + '/jobs?content=true',\n  lever:      'https://api.lever.co/v0/postings/' + slug + '?mode=json',\n  ashby:      'https://api.ashbyhq.com/posting-api/job-board/' + slug + '?includeCompensation=true',\n  workable:   'https://apply.workable.com/api/v1/widget/accounts/' + slug + '?details=true',\n  recruitee:  'https://' + slug + '.recruitee.com/api/offers',\n}[t]);\nconst out = [];\nfor (const it of items) {\n  const c = it.json;\n  if (IMPLEMENTED.indexOf(c.ats_type) === -1) continue;\n  const u = mkUrl(c.ats_type, c.slug);\n  if (!u) continue;\n  out.push({ json: { company_id: c.company_id, board: c.board, ats_type: c.ats_type, slug: c.slug, url: u } });\n}\nreturn out;" }
+    },
+    {
+      "id": "337f38b4-4636-484d-8d58-82d460208d62",
+      "name": "Fetch ATS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [860, 300],
+      "parameters": { "method": "GET", "url": "={{ $json.url }}", "options": { "timeout": 20000, "response": { "response": { "neverError": true, "responseFormat": "text", "outputPropertyName": "data" } } } },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "aab3500b-1213-40c3-90aa-309047bdc8e8",
+      "name": "Parse Jobs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1020, 300],
+      "parameters": { "mode": "runOnceForAllItems", "language": "javaScript", "jsCode": "const reqs = $('Build Requests').all();\nconst resps = $input.all();\nconst CAP = 25;\nconst count = {};\nconst jobs = [];\nconst push = (board, obj) => { count[board] = (count[board] || 0); if (count[board] >= CAP) return; count[board]++; jobs.push(obj); };\nconst dec = s => String(s == null ? '' : s).split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>').split('&quot;').join('\"').split('&#39;').join(\"'\").split('&#x27;').join(\"'\");\nconst strip = s => dec(dec(s)).replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim();\nconst iso = v => { try { const d = new Date(v); return isNaN(d.getTime()) ? null : d.toISOString(); } catch (e) { return null; } };\nconst isRemote = s => /remote/i.test(String(s || ''));\nfor (let i = 0; i < resps.length; i++) {\n  const company = (reqs[i] || {}).json || {};\n  const t = company.ats_type;\n  let body = null;\n  try { body = JSON.parse(((resps[i] || {}).json || {}).data); } catch (e) { body = null; }\n  if (!body || body.error) continue;\n  try {\n    if (t === 'greenhouse') {\n      for (const j of (body.jobs || [])) push(company.board, { company_id: company.company_id, board: company.board, external_id: String(j.id), title: j.title || '', jd_text: strip(j.content), location: (j.location && j.location.name) || '', remote: isRemote(j.location && j.location.name), apply_url: j.absolute_url || '', posted_at: iso(j.updated_at || j.first_published) });\n    } else if (t === 'lever') {\n      const arr = Array.isArray(body) ? body : (body.data || []);\n      for (const j of arr) push(company.board, { company_id: company.company_id, board: company.board, external_id: String(j.id), title: j.text || '', jd_text: j.descriptionPlain || strip(j.description), location: (j.categories && j.categories.location) || '', remote: isRemote(((j.categories && j.categories.location) || '') + ' ' + (j.workplaceType || '')), apply_url: j.hostedUrl || j.applyUrl || '', posted_at: iso(j.createdAt) });\n    } else if (t === 'ashby') {\n      for (const j of (body.jobs || [])) { if (j.isListed === false) continue; push(company.board, { company_id: company.company_id, board: company.board, external_id: String(j.id), title: j.title || '', jd_text: j.descriptionPlain || strip(j.descriptionHtml), location: j.location || '', remote: !!j.isRemote, apply_url: j.jobUrl || j.applyUrl || '', posted_at: iso(j.publishedAt) }); }\n    } else if (t === 'workable') {\n      for (const j of (body.jobs || [])) push(company.board, { company_id: company.company_id, board: company.board, external_id: String(j.shortcode || j.id), title: j.title || '', jd_text: strip(j.description), location: [j.city, j.state, j.country].filter(Boolean).join(', '), remote: isRemote(j.workplace || (j.location && j.location.location)), apply_url: j.url || j.application_url || '', posted_at: iso(j.published_on) });\n    } else if (t === 'recruitee') {\n      for (const j of (body.offers || [])) { if (j.status && j.status !== 'published') continue; push(company.board, { company_id: company.company_id, board: company.board, external_id: String(j.id), title: j.title || '', jd_text: strip((j.description || '') + ' ' + (j.requirements || '')), location: j.location || [j.city, j.country].filter(Boolean).join(', '), remote: isRemote(j.location), apply_url: j.careers_url || j.url || '', posted_at: iso(j.published_at) }); }\n    }\n  } catch (e) {}\n}\nreturn jobs.map(j => ({ json: Object.assign({}, j, { embed_input: ((j.title || '') + '\\n' + (j.jd_text || '')).slice(0, 8000) }) }));" }
+    },
+    {
+      "id": "b22dae00-433f-4bfe-a7ab-0401c62d57ff",
+      "name": "Chunk For Embed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1180, 300],
+      "parameters": { "mode": "runOnceForAllItems", "language": "javaScript", "jsCode": "const items = $input.all().map(i => i.json);\nconst CHUNK = 32;\nconst out = [];\nfor (let i = 0; i < items.length; i += CHUNK) {\n  const slice = items.slice(i, i + CHUNK);\n  out.push({ json: { inputs: slice.map(j => String(j.embed_input || j.title || '').slice(0, 2000)), jobs: slice } });\n}\nreturn out;" }
+    },
+    {
+      "id": "252f8be7-f163-4053-a9ac-9ddcf0cf84bd",
+      "name": "Embed Batch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1340, 300],
+      "parameters": { "method": "POST", "url": "http://ollama-service:11434/api/embed", "sendBody": true, "contentType": "json", "specifyBody": "json", "jsonBody": "={{ { \"model\": \"bge-m3\", \"input\": $json.inputs } }}", "options": { "timeout": 120000, "response": { "response": { "neverError": true } } } },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "f3617af1-8b22-47ae-a657-b921b4d8e4ef",
+      "name": "Expand To Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1500, 300],
+      "parameters": { "mode": "runOnceForAllItems", "language": "javaScript", "jsCode": "const chunks = $('Chunk For Embed').all();\nconst resps = $input.all();\nconst rows = [];\nfor (let i = 0; i < resps.length; i++) {\n  const jobs = ((chunks[i] || {}).json || {}).jobs || [];\n  const embs = (((resps[i] || {}).json) || {}).embeddings || [];\n  for (let k = 0; k < jobs.length; k++) {\n    const job = jobs[k];\n    const emb = embs[k];\n    const vec = (Array.isArray(emb) && emb.length === 1024) ? '[' + emb.map(Number).join(',') + ']' : '';\n    rows.push({ json: { company_id: job.company_id, board: job.board, external_id: job.external_id, title: job.title || '', jd_text: job.jd_text || '', location: job.location || '', remote: !!job.remote, apply_url: job.apply_url || '', posted_at: job.posted_at || '', vec: vec } });\n  }\n}\nreturn rows;" }
+    },
+    {
+      "id": "a40c7787-2022-4d40-b9e1-b6f7205cb6c3",
+      "name": "Upsert Jobs",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [1660, 300],
+      "parameters": { "operation": "executeQuery", "query": "INSERT INTO jobs (company_id, board, external_id, title, jd_text, location, remote, apply_url, posted_at, embedding, status, last_seen) VALUES ($1,$2,$3,$4,$5,$6,$7,$8, NULLIF($9,'')::timestamptz, NULLIF($10,'')::vector, 'active', now()) ON CONFLICT (board, external_id) DO UPDATE SET title=EXCLUDED.title, jd_text=EXCLUDED.jd_text, location=EXCLUDED.location, remote=EXCLUDED.remote, apply_url=EXCLUDED.apply_url, posted_at=EXCLUDED.posted_at, embedding=COALESCE(EXCLUDED.embedding, jobs.embedding), last_seen=now(), status='active', closed_at=NULL", "options": { "queryReplacement": "={{ [$json.company_id, $json.board, $json.external_id, $json.title, $json.jd_text, $json.location, $json.remote, $json.apply_url, $json.posted_at, $json.vec] }}", "queryBatching": "independently" } },
+      "credentials": { "postgres": { "id": "5pQq6UUmmGU7e04S", "name": "CareerForge Postgres" } }
+    },
+    {
+      "id": "b1b714b4-973f-42a8-92aa-1191f6827841",
+      "name": "Tick Bookkeeping",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1820, 300],
+      "parameters": { "mode": "runOnceForAllItems", "language": "javaScript", "jsCode": "const boards = Array.from(new Set($('Parse Jobs').all().map(i => i.json.board)));\nconst run_start = $('Run Start').first().json.run_start;\nreturn [{ json: { boards_csv: boards.join(','), run_start: run_start } }];" },
+      "executeOnce": true
+    },
+    {
+      "id": "34355b4b-5512-42d0-ad6b-b425ca394e6e",
+      "name": "Close Stale Jobs",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [1980, 300],
+      "parameters": { "operation": "executeQuery", "query": "UPDATE jobs SET status='closed', closed_at=now() WHERE board = ANY(string_to_array($1, ',')) AND status='active' AND last_seen < $2::timestamptz", "options": { "queryReplacement": "={{ [$('Tick Bookkeeping').first().json.boards_csv, $('Tick Bookkeeping').first().json.run_start] }}" } },
+      "credentials": { "postgres": { "id": "5pQq6UUmmGU7e04S", "name": "CareerForge Postgres" } }
+    },
+    {
+      "id": "83890b65-15cf-4978-9cba-2101ad5cb800",
+      "name": "Advance Poll State",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [2140, 300],
+      "parameters": { "operation": "executeQuery", "query": "UPDATE companies SET last_polled_at=now(), next_poll_at=now()+poll_interval, consecutive_failures=0 WHERE (ats_type || ':' || slug) = ANY(string_to_array($1, ','))", "options": { "queryReplacement": "={{ [$('Tick Bookkeeping').first().json.boards_csv] }}" } },
+      "credentials": { "postgres": { "id": "5pQq6UUmmGU7e04S", "name": "CareerForge Postgres" } }
+    },
+    {
+      "id": "5333e8bf-2022-4e60-9286-a877c76bc4c4",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [170, 250],
+      "parameters": { "content": "## ATS Poller\nSchedule → select due boards → fetch ATS (text) → parse (cap 25/board) → chunk → batch-embed via Ollama /api/embed → upsert jobs → close vanished (liveness) → advance poll.\n\nOllama URL/model hardcoded (n8n blocks $env in expressions). Postgres cred pre-bound. bge-m3 pulled by ollama-init.", "color": 5, "width": 2220, "height": 200 }
+    }
+  ],
+  "connections": {
+    "Poll Schedule": { "main": [[{ "node": "Run Start", "type": "main", "index": 0 }]] },
+    "Run Start": { "main": [[{ "node": "Select Due Companies", "type": "main", "index": 0 }]] },
+    "Select Due Companies": { "main": [[{ "node": "Build Requests", "type": "main", "index": 0 }]] },
+    "Build Requests": { "main": [[{ "node": "Fetch ATS", "type": "main", "index": 0 }]] },
+    "Fetch ATS": { "main": [[{ "node": "Parse Jobs", "type": "main", "index": 0 }]] },
+    "Parse Jobs": { "main": [[{ "node": "Chunk For Embed", "type": "main", "index": 0 }]] },
+    "Chunk For Embed": { "main": [[{ "node": "Embed Batch", "type": "main", "index": 0 }]] },
+    "Embed Batch": { "main": [[{ "node": "Expand To Rows", "type": "main", "index": 0 }]] },
+    "Expand To Rows": { "main": [[{ "node": "Upsert Jobs", "type": "main", "index": 0 }]] },
+    "Upsert Jobs": { "main": [[{ "node": "Tick Bookkeeping", "type": "main", "index": 0 }]] },
+    "Tick Bookkeeping": { "main": [[{ "node": "Close Stale Jobs", "type": "main", "index": 0 }]] },
+    "Close Stale Jobs": { "main": [[{ "node": "Advance Poll State", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": {}
+}

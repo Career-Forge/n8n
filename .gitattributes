@@ -1,0 +1,5 @@
+# Shell scripts and SQL run inside Linux containers — force LF so a
+# Windows checkout (core.autocrlf=true) can't inject CRLF and break them.
+*.sh   text eol=lf
+*.sql  text eol=lf
+ollama-entrypoint.sh text eol=lf

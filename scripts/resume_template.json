@@ -1,0 +1,55 @@
+{
+  "personal": {
+    "name": "",
+    "headline": "",
+    "emails": [{ "address": "", "primary": true }],
+    "phones": [{ "number": "", "primary": true, "region": "US" }],
+    "links": { "linkedin": "", "github": "", "portfolio": "" },
+    "location": { "city": "", "region": "", "country": "", "show_on_resume": false },
+    "work_authorization": ""
+  },
+  "summary_bullets": [],
+  "experience": [
+    {
+      "title": "",
+      "company": "",
+      "location": "",
+      "start_date": "YYYY-MM",
+      "end_date": "YYYY-MM or Present",
+      "is_current": false,
+      "bullets": [],
+      "skills": [],
+      "metrics": []
+    }
+  ],
+  "projects": [
+    {
+      "name": "",
+      "url": "",
+      "tech": [],
+      "bullets": [],
+      "metrics": []
+    }
+  ],
+  "education": [
+    {
+      "degree": "",
+      "field": "",
+      "institution": "",
+      "location": "",
+      "start_date": "YYYY-MM",
+      "end_date": "YYYY-MM",
+      "gpa": "",
+      "coursework": []
+    }
+  ],
+  "skills": {
+    "programming": [],
+    "ai_ml": [],
+    "data_mlops": [],
+    "cloud_devops": [],
+    "tools": [],
+    "other": []
+  },
+  "achievements": []
+}

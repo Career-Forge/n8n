@@ -51,6 +51,23 @@ services:
       - YOUCOM_API_KEY=${YOUCOM_API_KEY}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
 
+      # ── ATS engine — job cache + embeddings + generation ──
+      # (read in Code/HTTP nodes via $env; Postgres itself uses an n8n credential)
+      - OLLAMA_URL=${OLLAMA_URL:-http://ollama-service:11434}
+      - EMBED_MODEL=${EMBED_MODEL:-bge-m3}
+      - GEN_MODEL=${GEN_MODEL:-google/gemini-3.5-flash}
+      # Per-ATS provider toggles (poller fan-out branches)
+      - ATS_GREENHOUSE_ENABLED=${ATS_GREENHOUSE_ENABLED:-true}
+      - ATS_LEVER_ENABLED=${ATS_LEVER_ENABLED:-true}
+      - ATS_ASHBY_ENABLED=${ATS_ASHBY_ENABLED:-true}
+      - ATS_WORKABLE_ENABLED=${ATS_WORKABLE_ENABLED:-true}
+      - ATS_RECRUITEE_ENABLED=${ATS_RECRUITEE_ENABLED:-true}
+      - ATS_PERSONIO_ENABLED=${ATS_PERSONIO_ENABLED:-true}
+      - ATS_SMARTRECRUITERS_ENABLED=${ATS_SMARTRECRUITERS_ENABLED:-true}
+      - ATS_WORKDAY_ENABLED=${ATS_WORKDAY_ENABLED:-false}
+      - ATS_SCRAPE_ENABLED=${ATS_SCRAPE_ENABLED:-false}
+      - LIVE_SEARCH_SUPPLEMENT=${LIVE_SEARCH_SUPPLEMENT:-false}
+
       # File access
       - N8N_RESTRICT_FILE_ACCESS_TO=/data;/home/node/.n8n-files
       - N8N_BLOCK_FILE_ACCESS_TO_N8N_FILES=false
@@ -71,6 +88,10 @@ services:
 
     depends_on:
       latex:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      ollama:
         condition: service_started
 
     healthcheck:
@@ -96,5 +117,67 @@ services:
       retries: 3
       start_period: 30s
 
+  # ── Postgres + pgvector — job cache & embeddings ───────────
+  #  App data only (registry, jobs, résumé embeddings). n8n's own
+  #  DB stays SQLite — this is reached via an n8n Postgres credential
+  #  (host: postgres-service). schema.sql auto-runs on first boot.
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: careerforge_postgres
+    hostname: postgres-service
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-careerforge}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-cf_local_dev}
+      - POSTGRES_DB=${POSTGRES_DB:-careerforge}
+    ports:
+      - "5433:5432"          # host:5433 (5432 often taken); n8n uses postgres-service:5432 internally
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ../db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-careerforge} -d ${POSTGRES_DB:-careerforge}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # ── Ollama — local bge-m3 embeddings (1024-d) ──────────────
+  #  Default entrypoint (serve). The bge-m3 model is pulled by the
+  #  one-shot ollama-init service below (more reliable than a custom
+  #  entrypoint, which proved flaky). Healthcheck only verifies serve.
+  ollama:
+    image: ollama/ollama:latest
+    container_name: careerforge_ollama
+    hostname: ollama-service
+    restart: unless-stopped
+    ports:
+      - "11434:11434"        # dev convenience; remove in prod
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ── Ollama init — pulls bge-m3 once, then exits ────────────
+  #  Talks to the ollama server over the network (OLLAMA_HOST) so the
+  #  model downloads into the shared ollama_data volume. Idempotent:
+  #  a no-op once the model is present. Runs on every `up`, exits 0.
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: careerforge_ollama_init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama-service:11434
+    entrypoint: ["/bin/sh", "-c", "ollama pull bge-m3 && echo 'bge-m3 ready'"]
+    restart: "no"
+
 volumes:
   n8n_data:
+  pg_data:
+  ollama_data:
