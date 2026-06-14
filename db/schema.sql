@@ -142,3 +142,13 @@ CREATE TABLE IF NOT EXISTS company_writing_profiles (
   source      TEXT NOT NULL DEFAULT 'seed',
   fetched_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ── S1: app_settings — generic single-user key/value config ──
+--  Deterministic, out-of-git settings store (read by Code nodes via an
+--  upstream Postgres node, since $env is unreliable in the JS task runner).
+--  Holds: telegraph_token (S1), and the Apollo/Hunter daily call budget (S8).
+CREATE TABLE IF NOT EXISTS app_settings (
+  key        TEXT PRIMARY KEY,
+  value      TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
