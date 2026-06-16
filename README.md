@@ -4,6 +4,8 @@ A single Telegram bot that handles your entire job search — morning digests, t
 
 Demoed live at **n8n NYC Meetup, April 2026**.
 
+> **Setting it up?** See **[SETUP.md](SETUP.md)** for the full clone-and-BYOK guide — Docker stack, the credentials to create, `app_settings` rows, free-vs-premium providers, the central model map, and how to switch on premium contacts (Apollo/Hunter).
+
 ---
 
 ## How It Works
