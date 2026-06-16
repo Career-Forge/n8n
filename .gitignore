@@ -60,3 +60,6 @@ scripts/patch_workflow*.py
 
 # Workflow backups (the script creates these as safety, no need to commit)
 workflows/*.backup*.json
+
+# harness scratch output
+scripts/_tmp_s6b1/
