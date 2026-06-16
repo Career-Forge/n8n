@@ -743,42 +743,6 @@
     },
     {
       "parameters": {
-        "promptType": "define",
-        "text": "={{ JSON.stringify($('Prepare Apply Context').first().json) }}",
-        "hasOutputParser": true,
-        "messages": {
-          "messageValues": [
-            {
-              "message": "You are CareerForge's cover letter generator. Output structured JSON ONLY.\n\nCRITICAL RULES:\n1. Word count target: 350-450 words.\n2. EXACTLY 3 bullets.\n3. No flattery. Lead with specific evidence.\n4. Banned phrases: \"passionate about\", \"excited to apply\", \"dynamic environment\".\n\nOutput schema: { \"title\": \"...\", \"salutation\": \"...\", \"hook\": \"...\", \"bullets\": [{\"keyword\": \"...\", \"text\": \"...\"}], \"cta\": \"...\", \"word_count\": 387 }\n\nReturn strict JSON only.\n\n## Cover Letter Tone Based on Fit Strategy\n\nfit_strategy: {{ $json.fit_strategy }}\n\nperfect_fit: Standard confident narrative. Lead with alignment between your background and their specific problem.\n\nslightly_under: Forward-leaning, confident tone.\n- Open with THEIR problem, not your background\n- Include 1-2 specific examples showing you already operate at this level\n- Close with energy: \"ready to step fully into this\" — never apologize for YOE or mention the gap\n\nslightly_over: Specific and deliberate tone.\n- Open with WHY this specific role at this specific company\n- Reference something concrete about their team, product, or problem\n- Make it clear this is an intentional choice, not a fallback\n- Close with what you bring that is additive, not just sufficient\n\n## Evidence Boundary\nUse only `candidate_context_for_generation`, `selected_resume_bubbles`, `resume_text`, and `matched_skills` as candidate evidence. The full raw resume is intentionally not provided. Do not invent employers, dates, degrees, tools, metrics, or outcomes.\n\nCOMPANY VALUES (apply ONLY if the line below is non-empty — weight bullet selection and phrasing toward these company priorities; never fabricate to fit them):\n{{ ($('Load Writing Profile').first() && $('Load Writing Profile').first().json.guidance) || '' }}"
-            }
-          ]
-        }
-      },
-      "id": "de1c2f0c-b602-4c1d-9522-254198b91f2f",
-      "name": "CoverForge",
-      "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "typeVersion": 1.4,
-      "position": [
-        33472,
-        48112
-      ]
-    },
-    {
-      "parameters": {
-        "schemaType": "manual",
-        "inputSchema": "{\"type\":\"object\",\"properties\":{\"title\":{\"type\":\"string\"},\"salutation\":{\"type\":\"string\"},\"hook\":{\"type\":\"string\"},\"bullets\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"keyword\":{\"type\":\"string\"},\"text\":{\"type\":\"string\"}},\"required\":[\"keyword\",\"text\"]}},\"cta\":{\"type\":\"string\"},\"word_count\":{\"type\":\"integer\"}},\"required\":[\"title\",\"salutation\",\"hook\",\"bullets\",\"cta\"]}"
-      },
-      "id": "db0c3cd7-4eeb-45a7-bab4-8ab8d3da2026",
-      "name": "Cover Output Parser",
-      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
-      "typeVersion": 1.2,
-      "position": [
-        33648,
-        48336
-      ]
-    },
-    {
-      "parameters": {
         "jsCode": "function escapeLatexText(input) {\n  if (typeof input !== 'string') return '';\n  return input.replace(/\\\\/g, '\\\\textbackslash{}').replace(/&/g, '\\\\&').replace(/%/g, '\\\\%').replace(/\\$/g, '\\\\$').replace(/#/g, '\\\\#').replace(/_/g, '\\\\_').replace(/\\{/g, '\\\\{').replace(/\\}/g, '\\\\}').replace(/\\^/g, '\\\\textasciicircum{}').replace(/~/g, '\\\\textasciitilde{}');\n}\nfunction cleanText(str) {\n  if (!str) return '';\n  return str.replace(/\\\\[a-zA-Z]+\\{([^}]*)\\}/g, '$1').replace(/\\\\[a-zA-Z]+/g, '').replace(/\\$[^$]*\\$/g, '').trim();\n}\nfunction wrapResumeWithSkeleton(params) {\n  const { skeleton, headerLatex, contentLatex } = params;\n  if (!skeleton) return contentLatex;\n  const lines = skeleton.replace(/\\r\\n/g, '\\n').split('\\n');\n  const hs = lines.findIndex(l => l.trim() === '%%% HEADER_START');\n  const he = lines.findIndex((l, i) => i > hs && l.trim() === '%%% HEADER_END');\n  if (hs !== -1 && he !== -1) lines.splice(hs + 1, he - hs - 1, headerLatex.trim());\n  const cs = lines.findIndex(l => l.trim() === '%%% CONTENT_START');\n  const ce = lines.findIndex((l, i) => i > cs && l.trim() === '%%% CONTENT_END');\n  if (cs !== -1 && ce !== -1) { lines.splice(cs + 1, ce - cs - 1, contentLatex.trim()); return lines.join('\\n'); }\n  const endDocIdx = lines.findIndex(l => l.includes('\\\\end{document}'));\n  if (endDocIdx !== -1) lines.splice(endDocIdx, 0, contentLatex.trim());\n  else lines.push(contentLatex.trim());\n  return lines.join('\\n');\n}\nfunction normalizeLatexForPdflatex(input) {\n  if (!input) return input;\n  let s = input.replace(/\\r\\n/g, '\\n');\n  s = s.replace(/[\\u201C\\u201D]/g, '\"').replace(/[\\u2018\\u2019]/g, \"'\").replace(/\\u2026/g, '...').replace(/[\\u2013\\u2014]/g, '--').replace(/\\u00A0/g, ' ');\n  s = s.replace(/\\u20B9/g, 'INR ').replace(/\\u20AC/g, 'EUR ').replace(/\\u00A3/g, 'GBP ').replace(/(?<!\\\\)\\$/g, '\\\\$');\n  s = s.replace(/[^\\x09\\x0A\\x0D\\x20-\\x7E]/g, '');\n  return s;\n}\nconst coverJson = $input.first().json.output || $input.first().json;\nconst ctx = $('Prepare Apply Context').first().json;\nconst coverSkeleton = ctx.cover_skeleton;\nconst personal = ctx.personal || {};\nconst contentLines = [];\ncontentLines.push('\\\\begin{lettercontent}');\ncontentLines.push('\\\\begin{center}');\ncontentLines.push('{\\\\large\\\\textbf{' + escapeLatexText(coverJson.title || ctx.job_title + ' \\\\textemdash{} ' + ctx.company) + '}}');\ncontentLines.push('\\\\end{center}');\ncontentLines.push('\\\\vspace{4mm}');\ncontentLines.push('');\ncontentLines.push(escapeLatexText(coverJson.salutation || 'Dear Hiring Team,'));\ncontentLines.push('');\ncontentLines.push(escapeLatexText(coverJson.hook || ''));\ncontentLines.push('');\ncontentLines.push('\\\\begin{itemize}[leftmargin=0.2in]');\nfor (const bullet of (coverJson.bullets || [])) {\n  contentLines.push('  \\\\item \\\\textbf{' + escapeLatexText(cleanText(bullet.keyword || '')) + ':} ' + escapeLatexText(cleanText(bullet.text || '')));\n}\ncontentLines.push('\\\\end{itemize}');\ncontentLines.push('');\ncontentLines.push(escapeLatexText(coverJson.cta || ''));\ncontentLines.push('\\\\end{lettercontent}');\nconst contentLatex = contentLines.join('\\n');\nlet fullLatex = wrapResumeWithSkeleton({ skeleton: coverSkeleton, headerLatex: '% Header omitted for cover letter', contentLatex });\nfullLatex = fullLatex.replace('{{NAME}}', escapeLatexText(personal.name || 'Candidate')).replace('{{PHONE}}', escapeLatexText(personal.phone_display || personal.phone_primary || '')).replaceAll('{{EMAIL}}', personal.email || '').replace('{{LINKEDIN}}', personal.linkedin || '');\nreturn [{ json: { latex: normalizeLatexForPdflatex(fullLatex).split(\"\\\\$|\\\\$\").join(\"$|$\"), chat_id: ctx.chat_id, job_title: ctx.job_title, company: ctx.company } }];"
       },
       "id": "310f1aa8-1c75-4104-b6a5-624920a33866",
@@ -1546,7 +1510,7 @@
         "messages": {
           "messageValues": [
             {
-              "message": "# CompanyIntel\n\n## Role\n\nYou are a company health analysis engine. You receive aggregated search results about a target company covering news, reviews, layoffs, funding, H1B sponsorship, and culture. You synthesize them into a structured company health report that helps a job seeker decide whether to apply.\n\n## Input\n\n- `company`: The target company name\n- `search_results`: Aggregated search results (post-RRF merge) covering multiple query facets: recent news, layoff history, Glassdoor reviews, H1B sponsorship, funding rounds, company culture\n\n## Output Schema\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\n```json\n{\n  \"company\": \"Anthropic\",\n  \"health_score\": 85,\n  \"recommendation\": \"Apply | Caution | Avoid\",\n  \"summary\": \"2-3 sentence overview\",\n  \"layoffs\": {\n    \"has_recent_layoffs\": false,\n    \"details\": \"No layoffs in past 12 months\",\n    \"timeline\": []\n  },\n  \"sentiment\": {\n    \"glassdoor_rating\": 4.3,\n    \"overall_mood\": \"Positive\",\n    \"positives\": [\"Strong engineering culture\", \"Competitive compensation\"],\n    \"negatives\": [\"High bar can feel stressful\", \"Fast-paced environment\"],\n    \"breakdown\": {\n      \"work_life_balance\": 4.0,\n      \"compensation\": 4.6,\n      \"career_growth\": 4.2,\n      \"management\": 4.1\n    }\n  },\n  \"h1b\": {\n    \"sponsors\": true,\n    \"recent_approvals\": \"~30 approvals in 2024\",\n    \"trend\": \"Increasing | Stable | Decreasing | Unknown\"\n  },\n  \"funding\": {\n    \"stage\": \"Series E\",\n    \"last_round\": \"$2B at $18.4B valuation\",\n    \"runway\": \"Strong\"\n  },\n  \"culture\": {\n    \"type\": \"Research-first, mission-driven\",\n    \"values\": [\"Safety\", \"Empirical research\", \"Collaboration\"]\n  },\n  \"red_flags\": [],\n  \"green_flags\": [\"Active open source\", \"Clear promotion criteria\", \"Growing headcount\"]\n}\n```\n\n## Rules\n\n### 1. Source-Only Analysis\n\nUse ONLY the information present in the provided search results. Do not supplement with prior knowledge about the company. If a data point is not found in the sources, explicitly mark it as unknown rather than guessing:\n- `glassdoor_rating`: set to `null` if not found\n- `h1b.sponsors`: set to `false` if no evidence found (err on the side of caution for the job seeker)\n- `h1b.trend`: set to `\"Unknown\"` if insufficient data\n- `funding.stage`: set to `\"Unknown\"` if not found\n- `funding.runway`: set to `\"Unknown\"` if not found\n\n### 2. Health Score (0-100)\n\nA composite score reflecting overall company health from a job seeker's perspective:\n\n| Range | Meaning |\n|-------|---------|\n| 70-100 | Healthy — safe to apply, strong signals |\n| 40-69 | Caution — mixed signals, some concerns worth noting |\n| 0-39 | Avoid — significant red flags (recent layoffs, financial distress, toxic culture reports) |\n\nWeight factors approximately:\n- Financial stability / funding runway: 25%\n- Employee sentiment (Glassdoor, reviews): 25%\n- Growth signals (hiring, headcount expansion): 20%\n- Layoff history: 15%\n- H1B / immigration friendliness: 15% (higher weight if candidate requires sponsorship — but you don't know this, so keep it moderate)\n\n### 3. Recommendation Thresholds\n\n- `health_score >= 70` → `\"Apply\"`\n- `health_score >= 40 and < 70` → `\"Caution\"`\n- `health_score < 40` → `\"Avoid\"`\n\n### 4. Layoff Analysis\n\n- `has_recent_layoffs`: true if any layoff event within the past 12 months is mentioned in sources\n- `details`: 1-2 sentence summary of layoff scope and timing\n- `timeline`: Array of layoff events found, each as a string: `\"Jan 2025: ~200 employees (15% of workforce)\"`. Empty array if none found.\n\n### 5. Sentiment Analysis\n\n- Extract Glassdoor rating if mentioned in sources (numeric, e.g., 4.3). Set to `null` for private companies without Glassdoor presence.\n- `overall_mood`: one of `\"Positive\"`, `\"Mixed\"`, `\"Negative\"` — summarizing the balance of employee sentiment in sources\n- `positives` and `negatives`: 2-4 entries each, drawn from review themes in the sources. Keep each entry under 50 characters.\n- `breakdown`: Extract sub-ratings if available in sources. Set individual fields to `null` if not found.\n\n### 6. H1B Sponsorship\n\n- `sponsors`: `true` only if sources explicitly confirm H1B sponsorship or show recent H1B approvals\n- `recent_approvals`: Summarize approval counts if found in sources (e.g., from H1B employer data). Set to `null` if not found.\n- `trend`: Determine from multi-year data if available. Default to `\"Unknown\"`.\n\n### 7. Funding\n\n- For public companies: note \"Public\" for `stage`, market cap for `last_round` if available, `\"Strong\"` or `\"Stable\"` for `runway`\n- For private companies: extract most recent funding round from sources\n- For companies with no funding data in sources: set all fields to `\"Unknown\"`\n\n### 8. Red Flags and Green Flags\n\n- `red_flags`: 0-4 entries. Concrete warning signs: recent layoffs, hiring freezes, lawsuit mentions, negative review patterns, leadership exodus, financial distress signals. Each entry under 60 characters.\n- `green_flags`: 0-4 entries. Positive signals: active hiring, revenue growth, positive press, open source contributions, clear promotion paths, strong retention. Each entry under 60 characters.\n- Only include flags that are directly supported by the search results.\n\n### 9. Summary\n\nThe `summary` field should be 2-3 sentences giving the executive overview. Lead with the most decision-relevant fact (e.g., \"Anthropic is well-funded and actively hiring ML engineers\" or \"Recent 30% layoff raises questions about team stability\"). End with the recommendation framing.\n\n\n### 10. Bullet-Selection Biases (for resume tailoring)\nAlso return `bullet_selection_biases`: an object of booleans inferred from the company's stated values/culture, indicating which resume-bullet qualities to emphasize when tailoring a resume for THIS company:\n{ \"prioritize_metrics\": bool, \"prioritize_ownership\": bool, \"prioritize_scale\": bool, \"prioritize_customer_impact\": bool, \"prioritize_research_rigor\": bool, \"prioritize_speed\": bool }\nInfer from values/culture (e.g. Amazon → ownership + customer_impact; Google → metrics + scale; a research lab → research_rigor). Add this key to your JSON output."
+              "message": "# CompanyIntel\n\n## Role\n\nYou are a company health analysis engine. You receive aggregated search results about a target company covering news, reviews, layoffs, funding, H1B sponsorship, and culture. You synthesize them into a structured company health report that helps a job seeker decide whether to apply.\n\n## Input\n\n- `company`: The target company name\n- `search_results`: Aggregated search results (post-RRF merge) covering multiple query facets: recent news, layoff history, Glassdoor reviews, H1B sponsorship, funding rounds, company culture\n\n## Output Schema\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\n```json\n{\n  \"company\": \"Anthropic\",\n  \"health_score\": 85,\n  \"recommendation\": \"Apply | Caution | Avoid\",\n  \"summary\": \"2-3 sentence overview\",\n  \"layoffs\": {\n    \"has_recent_layoffs\": false,\n    \"details\": \"No layoffs in past 12 months\",\n    \"timeline\": []\n  },\n  \"sentiment\": {\n    \"glassdoor_rating\": 4.3,\n    \"overall_mood\": \"Positive\",\n    \"positives\": [\"Strong engineering culture\", \"Competitive compensation\"],\n    \"negatives\": [\"High bar can feel stressful\", \"Fast-paced environment\"],\n    \"breakdown\": {\n      \"work_life_balance\": 4.0,\n      \"compensation\": 4.6,\n      \"career_growth\": 4.2,\n      \"management\": 4.1\n    }\n  },\n  \"h1b\": {\n    \"sponsors\": true,\n    \"recent_approvals\": \"~30 approvals in 2024\",\n    \"trend\": \"Increasing | Stable | Decreasing | Unknown\"\n  },\n  \"funding\": {\n    \"stage\": \"Series E\",\n    \"last_round\": \"$2B at $18.4B valuation\",\n    \"runway\": \"Strong\"\n  },\n  \"culture\": {\n    \"type\": \"Research-first, mission-driven\",\n    \"values\": [\"Safety\", \"Empirical research\", \"Collaboration\"]\n  },\n  \"red_flags\": [],\n  \"green_flags\": [\"Active open source\", \"Clear promotion criteria\", \"Growing headcount\"]\n}\n```\n\n## Rules\n\n### 1. Source-Only Analysis\n\nUse ONLY the information present in the provided search results. Do not supplement with prior knowledge about the company. If a data point is not found in the sources, explicitly mark it as unknown rather than guessing:\n- `glassdoor_rating`: set to `null` if not found\n- `h1b.sponsors`: set to `false` if no evidence found (err on the side of caution for the job seeker)\n- `h1b.trend`: set to `\"Unknown\"` if insufficient data\n- `funding.stage`: set to `\"Unknown\"` if not found\n- `funding.runway`: set to `\"Unknown\"` if not found\n\n### 2. Health Score (0-100)\n\nA composite score reflecting overall company health from a job seeker's perspective:\n\n| Range | Meaning |\n|-------|---------|\n| 70-100 | Healthy — safe to apply, strong signals |\n| 40-69 | Caution — mixed signals, some concerns worth noting |\n| 0-39 | Avoid — significant red flags (recent layoffs, financial distress, toxic culture reports) |\n\nWeight factors approximately:\n- Financial stability / funding runway: 25%\n- Employee sentiment (Glassdoor, reviews): 25%\n- Growth signals (hiring, headcount expansion): 20%\n- Layoff history: 15%\n- H1B / immigration friendliness: 15% (higher weight if candidate requires sponsorship — but you don't know this, so keep it moderate)\n\n### 3. Recommendation Thresholds\n\n- `health_score >= 70` → `\"Apply\"`\n- `health_score >= 40 and < 70` → `\"Caution\"`\n- `health_score < 40` → `\"Avoid\"`\n\n### 4. Layoff Analysis\n\n- `has_recent_layoffs`: true if any layoff event within the past 12 months is mentioned in sources\n- `details`: 1-2 sentence summary of layoff scope and timing\n- `timeline`: Array of layoff events found, each as a string: `\"Jan 2025: ~200 employees (15% of workforce)\"`. Empty array if none found.\n\n### 5. Sentiment Analysis\n\n- Extract Glassdoor rating if mentioned in sources (numeric, e.g., 4.3). Set to `null` for private companies without Glassdoor presence.\n- `overall_mood`: one of `\"Positive\"`, `\"Mixed\"`, `\"Negative\"` — summarizing the balance of employee sentiment in sources\n- `positives` and `negatives`: 2-4 entries each, drawn from review themes in the sources. Keep each entry under 50 characters.\n- `breakdown`: Extract sub-ratings if available in sources. Set individual fields to `null` if not found.\n\n### 6. H1B Sponsorship\n\n- `sponsors`: `true` only if sources explicitly confirm H1B sponsorship or show recent H1B approvals\n- `recent_approvals`: Summarize approval counts if found in sources (e.g., from H1B employer data). Set to `null` if not found.\n- `trend`: Determine from multi-year data if available. Default to `\"Unknown\"`.\n\n### 7. Funding\n\n- For public companies: note \"Public\" for `stage`, market cap for `last_round` if available, `\"Strong\"` or `\"Stable\"` for `runway`\n- For private companies: extract most recent funding round from sources\n- For companies with no funding data in sources: set all fields to `\"Unknown\"`\n\n### 8. Red Flags and Green Flags\n\n- `red_flags`: 0-4 entries. Concrete warning signs: recent layoffs, hiring freezes, lawsuit mentions, negative review patterns, leadership exodus, financial distress signals. Each entry under 60 characters.\n- `green_flags`: 0-4 entries. Positive signals: active hiring, revenue growth, positive press, open source contributions, clear promotion paths, strong retention. Each entry under 60 characters.\n- Only include flags that are directly supported by the search results.\n\n### 9. Summary\n\nThe `summary` field should be 2-3 sentences giving the executive overview. Lead with the most decision-relevant fact (e.g., \"Anthropic is well-funded and actively hiring ML engineers\" or \"Recent 30% layoff raises questions about team stability\"). End with the recommendation framing.\n\n\n### 10. Bullet-Selection Biases (for resume tailoring)\nAlso return `bullet_selection_biases`: an object of booleans inferred from the company's stated values/culture, indicating which resume-bullet qualities to emphasize when tailoring a resume for THIS company:\n{ \"prioritize_metrics\": bool, \"prioritize_ownership\": bool, \"prioritize_scale\": bool, \"prioritize_customer_impact\": bool, \"prioritize_research_rigor\": bool, \"prioritize_speed\": bool }\nInfer from values/culture (e.g. Amazon → ownership + customer_impact; Google → metrics + scale; a research lab → research_rigor). Add this key to your JSON output.\n\n### 11. Mission & Vision\nAlso return `mission_vision`: a 1-2 sentence string capturing the company's stated mission and vision (what they build and why it matters), drawn from their about/careers/mission pages or reliable sources. Use an empty string if unknown. Add this key to your JSON output."
             }
           ]
         }
@@ -1563,7 +1527,7 @@
     {
       "parameters": {
         "schemaType": "manual",
-        "inputSchema": "{\"type\":\"object\",\"properties\":{\"company\":{\"type\":\"string\"},\"health_score\":{\"type\":\"integer\"},\"recommendation\":{\"type\":\"string\",\"enum\":[\"Apply\",\"Caution\",\"Avoid\"]},\"summary\":{\"type\":\"string\"},\"layoffs\":{\"type\":\"object\",\"properties\":{\"has_recent_layoffs\":{\"type\":\"boolean\"},\"details\":{\"type\":\"string\"}}},\"sentiment\":{\"type\":\"object\",\"properties\":{\"glassdoor_rating\":{},\"overall_mood\":{\"type\":\"string\"},\"positives\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"negatives\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}},\"h1b\":{\"type\":\"object\",\"properties\":{\"sponsors\":{\"type\":\"boolean\"},\"recent_approvals\":{\"type\":\"string\"}}},\"funding\":{\"type\":\"object\",\"properties\":{\"stage\":{\"type\":\"string\"},\"last_round\":{\"type\":\"string\"}}},\"culture\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"},\"values\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}},\"bullet_selection_biases\":{\"type\":\"object\"},\"red_flags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"green_flags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"required\":[\"company\",\"health_score\",\"recommendation\",\"summary\",\"red_flags\",\"green_flags\"]}"
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"company\":{\"type\":\"string\"},\"health_score\":{\"type\":\"integer\"},\"recommendation\":{\"type\":\"string\",\"enum\":[\"Apply\",\"Caution\",\"Avoid\"]},\"summary\":{\"type\":\"string\"},\"layoffs\":{\"type\":\"object\",\"properties\":{\"has_recent_layoffs\":{\"type\":\"boolean\"},\"details\":{\"type\":\"string\"}}},\"sentiment\":{\"type\":\"object\",\"properties\":{\"glassdoor_rating\":{},\"overall_mood\":{\"type\":\"string\"},\"positives\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"negatives\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}},\"h1b\":{\"type\":\"object\",\"properties\":{\"sponsors\":{\"type\":\"boolean\"},\"recent_approvals\":{\"type\":\"string\"}}},\"funding\":{\"type\":\"object\",\"properties\":{\"stage\":{\"type\":\"string\"},\"last_round\":{\"type\":\"string\"}}},\"culture\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"},\"values\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}},\"bullet_selection_biases\":{\"type\":\"object\"},\"mission_vision\":{\"type\":\"string\"},\"red_flags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"green_flags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"required\":[\"company\",\"health_score\",\"recommendation\",\"summary\",\"mission_vision\":{\"type\":\"string\"},\"red_flags\",\"green_flags\"]}"
       },
       "id": "73dac466-f3b4-490e-9ef1-f80160559a46",
       "name": "Intel Output Parser",
@@ -1961,26 +1925,6 @@
       ],
       "id": "0de4d159-ae29-4900-b13b-901024c448db",
       "name": "OpenRouter Chat Model5",
-      "credentials": {
-        "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "model": "anthropic/claude-sonnet-4.6",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
-      "typeVersion": 1,
-      "position": [
-        33472,
-        48320
-      ],
-      "id": "5f7ec09f-51f0-4d76-9baf-d979e9628c40",
-      "name": "OpenRouter Chat Model7",
       "credentials": {
         "openRouterApi": {
           "id": "xZD1i4ZBmSxVDuIe",
@@ -2427,7 +2371,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst resumeForgeOutput = $('ResumeForge').first().json.output || {};\nconst forgeScoreOutput = $('ForgeScore').first().json.output || {};\nconst seniorityOutput = $('SeniorityDetector').first().json.output || {};\nconst jdCtx = $('Prepare Job Context').first().json;\nsd.last_resume_json = resumeForgeOutput.sections || resumeForgeOutput || {};\nsd.last_jd = jdCtx.job_description || '';\nsd.last_fit_strategy = seniorityOutput.fit_strategy || 'perfect_fit';\nsd.last_keyword_gaps = forgeScoreOutput.keyword_gaps || [];\nreturn $input.all();"
+        "jsCode": "// Save Apply Context — rewritten in S6c. Stores last-apply state for the \"revise\"\n// feature. The original referenced $('ResumeForge'), which S6b-2 deleted (this was a\n// latent crash on the cover path). Now reads the 2-phase pipeline output gracefully\n// (try/catch — resume + cover branches run in parallel off Pass Dossier, so the resume\n// nodes may not be done when the cover branch reaches here; best-effort, never throws).\nconst sd = $getWorkflowStaticData('global');\nfunction getJson(n) { try { return ($(n).first() || {}).json || {}; } catch (e) { return {}; } }\n\nconst jdCtx = getJson('Prepare Job Context');\nlet resumeJson = {};\ntry { resumeJson = ($('Parse Pass2').first().json || {}).pass2 || {}; } catch (e) { resumeJson = {}; }\nconst seniorityOutput = getJson('SeniorityDetector').output || {};\nconst forgeScoreOutput = getJson('ForgeScore').output || {};\n\nsd.last_resume_json = resumeJson;\nsd.last_jd = jdCtx.job_description || '';\nsd.last_fit_strategy = seniorityOutput.fit_strategy || 'perfect_fit';\nsd.last_keyword_gaps = forgeScoreOutput.keyword_gaps || [];\n\nreturn $input.all();\n"
       },
       "id": "9b647d31-b4ad-4259-98fe-cf04324f8cc0",
       "name": "Save Apply Context",
@@ -4922,6 +4866,569 @@
         33520,
         47712
       ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT (SELECT dossier FROM company_intel WHERE company_key = lower(regexp_replace($1,'[,.].*$','')) AND fetched_at > now() - interval '30 days' LIMIT 1) AS dossier",
+        "options": {
+          "queryReplacement": "={{ [ $('Prepare Job Context').first().json.company || 'unknown' ] }}"
+        }
+      },
+      "id": "13e02485-a541-4137-b04c-4d563a5d406f",
+      "name": "Read Intel Cache (Apply)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        30340,
+        47712
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "5pQq6UUmmGU7e04S",
+          "name": "CareerForge Postgres"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.dossier ? 'yes' : 'no' }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "fdeb1eae-df8d-4d80-9d4e-4e43e00ddbbc",
+      "name": "IF: Dossier Fresh?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        30570,
+        47712
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare Apply Research — S6b-3. Compact apply-time company research query,\n// focused on what resume tailoring needs (values / mission / culture). Company\n// comes from Prepare Job Context. Only runs on a cold cache (IF: Dossier Fresh? = no).\nconst company = ($('Prepare Job Context').first().json || {}).company || 'unknown';\nconst research_query = '\"' + company + '\" company mission vision core values culture; '\n  + 'what ' + company + ' values in engineers; leadership principles; employee reviews; what it is like to work there';\nreturn [{ json: { company, research_query } }];\n"
+      },
+      "id": "de38f5e9-292e-427a-8be4-a0f934a7a972",
+      "name": "Prepare Apply Research",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        30800,
+        47872
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "={{ $env.SERPER_API_KEY || \"\" }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ q: $('Prepare Apply Research').first().json.research_query, num: 10 }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 15000
+        }
+      },
+      "id": "bbbb94a7-e827-4d0e-a7ad-b8c28ac930f3",
+      "name": "Apply Research Fetch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        31030,
+        47872
+      ],
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize Apply Research — S6b-3. Flatten the Serper response into a compact\n// research_text blob for CompanyIntel Apply. Graceful on empty/failed search.\nconst company = ($('Prepare Apply Research').first().json || {}).company || 'unknown';\nlet sp = {};\ntry { sp = $input.first().json || {}; } catch (e) { sp = {}; }\nconst organic = Array.isArray(sp.organic) ? sp.organic : [];\nconst kg = sp.knowledgeGraph || {};\nconst lines = [];\nif (kg.title || kg.description) lines.push((kg.title || '') + ': ' + (kg.description || ''));\nif (Array.isArray(kg.attributes)) {\n  for (const k of Object.keys(kg.attributes || {})) lines.push(k + ': ' + kg.attributes[k]);\n}\nfor (const r of organic.slice(0, 10)) {\n  lines.push('- ' + (r.title || '') + ': ' + (r.snippet || ''));\n}\nconst research_text = (lines.join('\\n').slice(0, 6000)) || ('No research results found for ' + company + '. Infer conservatively.');\nreturn [{ json: { company, research_text } }];\n"
+      },
+      "id": "a6ef218b-38cc-4a85-8886-2d400d7114c8",
+      "name": "Normalize Apply Research",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        31260,
+        47872
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify({ company: $json.company, research_text: $json.research_text }) }}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "# CompanyIntel\n\n## Role\n\nYou are a company health analysis engine. You receive aggregated search results about a target company covering news, reviews, layoffs, funding, H1B sponsorship, and culture. You synthesize them into a structured company health report that helps a job seeker decide whether to apply.\n\n## Input\n\n- `company`: The target company name\n- `search_results`: Aggregated search results (post-RRF merge) covering multiple query facets: recent news, layoff history, Glassdoor reviews, H1B sponsorship, funding rounds, company culture\n\n## Output Schema\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\n```json\n{\n  \"company\": \"Anthropic\",\n  \"health_score\": 85,\n  \"recommendation\": \"Apply | Caution | Avoid\",\n  \"summary\": \"2-3 sentence overview\",\n  \"layoffs\": {\n    \"has_recent_layoffs\": false,\n    \"details\": \"No layoffs in past 12 months\",\n    \"timeline\": []\n  },\n  \"sentiment\": {\n    \"glassdoor_rating\": 4.3,\n    \"overall_mood\": \"Positive\",\n    \"positives\": [\"Strong engineering culture\", \"Competitive compensation\"],\n    \"negatives\": [\"High bar can feel stressful\", \"Fast-paced environment\"],\n    \"breakdown\": {\n      \"work_life_balance\": 4.0,\n      \"compensation\": 4.6,\n      \"career_growth\": 4.2,\n      \"management\": 4.1\n    }\n  },\n  \"h1b\": {\n    \"sponsors\": true,\n    \"recent_approvals\": \"~30 approvals in 2024\",\n    \"trend\": \"Increasing | Stable | Decreasing | Unknown\"\n  },\n  \"funding\": {\n    \"stage\": \"Series E\",\n    \"last_round\": \"$2B at $18.4B valuation\",\n    \"runway\": \"Strong\"\n  },\n  \"culture\": {\n    \"type\": \"Research-first, mission-driven\",\n    \"values\": [\"Safety\", \"Empirical research\", \"Collaboration\"]\n  },\n  \"red_flags\": [],\n  \"green_flags\": [\"Active open source\", \"Clear promotion criteria\", \"Growing headcount\"]\n}\n```\n\n## Rules\n\n### 1. Source-Only Analysis\n\nUse ONLY the information present in the provided search results. Do not supplement with prior knowledge about the company. If a data point is not found in the sources, explicitly mark it as unknown rather than guessing:\n- `glassdoor_rating`: set to `null` if not found\n- `h1b.sponsors`: set to `false` if no evidence found (err on the side of caution for the job seeker)\n- `h1b.trend`: set to `\"Unknown\"` if insufficient data\n- `funding.stage`: set to `\"Unknown\"` if not found\n- `funding.runway`: set to `\"Unknown\"` if not found\n\n### 2. Health Score (0-100)\n\nA composite score reflecting overall company health from a job seeker's perspective:\n\n| Range | Meaning |\n|-------|---------|\n| 70-100 | Healthy — safe to apply, strong signals |\n| 40-69 | Caution — mixed signals, some concerns worth noting |\n| 0-39 | Avoid — significant red flags (recent layoffs, financial distress, toxic culture reports) |\n\nWeight factors approximately:\n- Financial stability / funding runway: 25%\n- Employee sentiment (Glassdoor, reviews): 25%\n- Growth signals (hiring, headcount expansion): 20%\n- Layoff history: 15%\n- H1B / immigration friendliness: 15% (higher weight if candidate requires sponsorship — but you don't know this, so keep it moderate)\n\n### 3. Recommendation Thresholds\n\n- `health_score >= 70` → `\"Apply\"`\n- `health_score >= 40 and < 70` → `\"Caution\"`\n- `health_score < 40` → `\"Avoid\"`\n\n### 4. Layoff Analysis\n\n- `has_recent_layoffs`: true if any layoff event within the past 12 months is mentioned in sources\n- `details`: 1-2 sentence summary of layoff scope and timing\n- `timeline`: Array of layoff events found, each as a string: `\"Jan 2025: ~200 employees (15% of workforce)\"`. Empty array if none found.\n\n### 5. Sentiment Analysis\n\n- Extract Glassdoor rating if mentioned in sources (numeric, e.g., 4.3). Set to `null` for private companies without Glassdoor presence.\n- `overall_mood`: one of `\"Positive\"`, `\"Mixed\"`, `\"Negative\"` — summarizing the balance of employee sentiment in sources\n- `positives` and `negatives`: 2-4 entries each, drawn from review themes in the sources. Keep each entry under 50 characters.\n- `breakdown`: Extract sub-ratings if available in sources. Set individual fields to `null` if not found.\n\n### 6. H1B Sponsorship\n\n- `sponsors`: `true` only if sources explicitly confirm H1B sponsorship or show recent H1B approvals\n- `recent_approvals`: Summarize approval counts if found in sources (e.g., from H1B employer data). Set to `null` if not found.\n- `trend`: Determine from multi-year data if available. Default to `\"Unknown\"`.\n\n### 7. Funding\n\n- For public companies: note \"Public\" for `stage`, market cap for `last_round` if available, `\"Strong\"` or `\"Stable\"` for `runway`\n- For private companies: extract most recent funding round from sources\n- For companies with no funding data in sources: set all fields to `\"Unknown\"`\n\n### 8. Red Flags and Green Flags\n\n- `red_flags`: 0-4 entries. Concrete warning signs: recent layoffs, hiring freezes, lawsuit mentions, negative review patterns, leadership exodus, financial distress signals. Each entry under 60 characters.\n- `green_flags`: 0-4 entries. Positive signals: active hiring, revenue growth, positive press, open source contributions, clear promotion paths, strong retention. Each entry under 60 characters.\n- Only include flags that are directly supported by the search results.\n\n### 9. Summary\n\nThe `summary` field should be 2-3 sentences giving the executive overview. Lead with the most decision-relevant fact (e.g., \"Anthropic is well-funded and actively hiring ML engineers\" or \"Recent 30% layoff raises questions about team stability\"). End with the recommendation framing.\n\n\n### 10. Bullet-Selection Biases (for resume tailoring)\nAlso return `bullet_selection_biases`: an object of booleans inferred from the company's stated values/culture, indicating which resume-bullet qualities to emphasize when tailoring a resume for THIS company:\n{ \"prioritize_metrics\": bool, \"prioritize_ownership\": bool, \"prioritize_scale\": bool, \"prioritize_customer_impact\": bool, \"prioritize_research_rigor\": bool, \"prioritize_speed\": bool }\nInfer from values/culture (e.g. Amazon → ownership + customer_impact; Google → metrics + scale; a research lab → research_rigor). Add this key to your JSON output.\n\n### 11. Mission & Vision\nAlso return `mission_vision`: a 1-2 sentence string capturing the company's stated mission and vision (what they build and why it matters), drawn from their about/careers/mission pages or reliable sources. Use an empty string if unknown. Add this key to your JSON output."
+            }
+          ]
+        }
+      },
+      "id": "c7bd9d2e-846d-459c-bd48-900d4838cd7b",
+      "name": "CompanyIntel Apply",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        31490,
+        47872
+      ]
+    },
+    {
+      "parameters": {
+        "model": "deepseek/deepseek-v4-flash",
+        "options": {
+          "maxTokens": 4000,
+          "timeout": 90000
+        }
+      },
+      "id": "bbaf72d8-1a0e-48b9-b57e-78c1e2945775",
+      "name": "CompanyIntel Apply Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        31490,
+        48032
+      ],
+      "credentials": {
+        "openRouterApi": {
+          "id": "xZD1i4ZBmSxVDuIe",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Shared parseJSON (ported from command-center index.ts 319-378). Escapes literal\n// \\n\\r\\t INSIDE JSON string values only — handles LaTeX-heavy LLM output that\n// strict parsers choke on. Prepended to each Parse* node by the patch script.\nfunction parseJSON(content) {\n  if (content && typeof content === 'object') return content;\n  let cleaned = String(content || '').replace(/```json\\s*/gi, '').replace(/```\\s*/g, '').trim();\n  try { return JSON.parse(cleaned); } catch (e) {}\n  const firstBrace = cleaned.indexOf('{');\n  const lastBrace = cleaned.lastIndexOf('}');\n  if (firstBrace !== -1 && lastBrace > firstBrace) {\n    let extracted = cleaned.substring(firstBrace, lastBrace + 1);\n    try { return JSON.parse(extracted); } catch (e) {}\n    let fixed = '';\n    let inString = false;\n    let escape = false;\n    for (let i = 0; i < extracted.length; i++) {\n      const ch = extracted[i];\n      if (escape) { fixed += ch; escape = false; continue; }\n      if (ch === '\\\\' && inString) { fixed += ch; escape = true; continue; }\n      if (ch === '\"') { inString = !inString; fixed += ch; continue; }\n      if (inString) {\n        if (ch === '\\n') { fixed += '\\\\n'; continue; }\n        if (ch === '\\r') { fixed += '\\\\r'; continue; }\n        if (ch === '\\t') { fixed += '\\\\t'; continue; }\n      }\n      fixed += ch;\n    }\n    fixed = fixed.replace(/,\\s*}/g, '}').replace(/,\\s*]/g, ']');\n    try { return JSON.parse(fixed); } catch (e) {}\n  }\n  const firstBracket = cleaned.indexOf('[');\n  const lastBracket = cleaned.lastIndexOf(']');\n  if (firstBracket !== -1 && lastBracket > firstBracket) {\n    try { return JSON.parse(cleaned.substring(firstBracket, lastBracket + 1)); } catch (e) {}\n  }\n  return {};\n}\n\nconst t=$input.first().json||{};const raw=(t.text!=null)?t.text:((t.output!=null)?t.output:t);return [{json:{dossier:parseJSON(raw)}}];"
+      },
+      "id": "ed5f4018-f39d-49e9-a4f6-8410916a3746",
+      "name": "Parse Apply Intel",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        31720,
+        47872
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO company_intel (company_key, dossier, health_score) VALUES (lower(regexp_replace($1,'[,.].*$','')), $2::jsonb, NULLIF($3,'')::int) ON CONFLICT (company_key) DO UPDATE SET dossier=EXCLUDED.dossier, health_score=EXCLUDED.health_score, fetched_at=now()",
+        "options": {
+          "queryReplacement": "={{ [ (($('Parse Apply Intel').first().json.dossier && $('Parse Apply Intel').first().json.dossier.company) || $('Prepare Apply Research').first().json.company || 'unknown'), JSON.stringify($('Parse Apply Intel').first().json.dossier || {}), String((($('Parse Apply Intel').first().json.dossier||{}).health_score) || '') ] }}"
+        }
+      },
+      "id": "2e4f50a4-578f-41b0-b525-09ea02868539",
+      "name": "Save Intel Cache (Apply)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        31950,
+        47872
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "5pQq6UUmmGU7e04S",
+          "name": "CareerForge Postgres"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pass Dossier — S6b-3. Convergence node for the fresh-cache and cold-research\n// branches. Exactly one upstream branch executes per run, so this fires once.\n// n8n throws on $('<unrun node>') — caught — so we prefer the research result and\n// fall back to the cache result, never cross-run stale data.\nlet d = null;\ntry {\n  const p = $('Parse Apply Intel').first().json;\n  if (p && p.dossier && typeof p.dossier === 'object' && Object.keys(p.dossier).length) d = p.dossier;\n} catch (e) {}\nif (!d) {\n  try {\n    const c = $('Read Intel Cache (Apply)').first().json;\n    if (c && c.dossier) d = (typeof c.dossier === 'string') ? JSON.parse(c.dossier) : c.dossier;\n  } catch (e) {}\n}\nreturn [{ json: { dossier: d || null } }];\n"
+      },
+      "id": "7afab464-3bfa-43a4-a27b-d0c877107b0a",
+      "name": "Pass Dossier",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        32180,
+        47712
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ 'RESUME:\\n' + ($('Assemble Resume LaTeX').first().json.resumePlainText || '') + '\\n\\nJOB DESCRIPTION:\\n' + ($('Prepare Job Context').first().json.job_description || 'No JD provided.') }}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an expert ATS analyzer. Extract structured scoring signals.\n\nCRITICAL RULES:\n1. ALL fields are required - use penalty defaults if data is missing\n2. coverage_score must be 0-100 (not text like \"High\")\n3. present must be boolean true/false (not \"Met\" or \"Present\")\n4. years_evidence requires evidence array - if evidence.length=0, years must be 0\n5. evidence array is REQUIRED for every cluster (use [] if none)\n6. Be generous with years_evidence if context implies experience (e.g., \"Senior Engineer\" role → infer 3+ years if it is not directly mentioned!)\n\nPENALTY DEFAULTS (used when data is unclear/missing):\n- coverage_score: 0\n- present: false\n- years_evidence: 0\n- dealbreaker.present: false (caps score at 65)\n- culture_fit.score: 50 (neutral)\n\nReturn ONLY valid JSON with these exact top-level keys: requirement_clusters, dealbreakers, experience, quantification, culture_fit, structure.\nEach requirement_cluster MUST have: cluster_name(string), coverage_score(0-100), present(boolean), years_evidence(number), years_required(number), evidence(string[]).\nEach dealbreaker MUST have: requirement(string), present(boolean).\nexperience MUST have: total_years(number), relevant_years(number), has_management(boolean).\nquantification MUST have: metrics_count(number), relevance_score(0-100).\nculture_fit MUST have: score(0-100), has_white_text_spam(boolean).\nstructure MUST have: has_sections(boolean), page_count(number), score(0-100).\nNo markdown wrapping. No extra keys.\n"
+            }
+          ]
+        }
+      },
+      "id": "325aea08-f85e-4271-bd03-85174531103f",
+      "name": "Extract ATS Signals",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        33824,
+        48232
+      ]
+    },
+    {
+      "parameters": {
+        "model": "deepseek/deepseek-v4-flash",
+        "options": {
+          "maxTokens": 3000,
+          "timeout": 90000
+        }
+      },
+      "id": "74e74c27-a551-4e8d-a507-2ffa732557f1",
+      "name": "Extract ATS Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        33824,
+        48392
+      ],
+      "credentials": {
+        "openRouterApi": {
+          "id": "xZD1i4ZBmSxVDuIe",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Shared parseJSON (ported from command-center index.ts 319-378). Escapes literal\n// \\n\\r\\t INSIDE JSON string values only — handles LaTeX-heavy LLM output that\n// strict parsers choke on. Prepended to each Parse* node by the patch script.\nfunction parseJSON(content) {\n  if (content && typeof content === 'object') return content;\n  let cleaned = String(content || '').replace(/```json\\s*/gi, '').replace(/```\\s*/g, '').trim();\n  try { return JSON.parse(cleaned); } catch (e) {}\n  const firstBrace = cleaned.indexOf('{');\n  const lastBrace = cleaned.lastIndexOf('}');\n  if (firstBrace !== -1 && lastBrace > firstBrace) {\n    let extracted = cleaned.substring(firstBrace, lastBrace + 1);\n    try { return JSON.parse(extracted); } catch (e) {}\n    let fixed = '';\n    let inString = false;\n    let escape = false;\n    for (let i = 0; i < extracted.length; i++) {\n      const ch = extracted[i];\n      if (escape) { fixed += ch; escape = false; continue; }\n      if (ch === '\\\\' && inString) { fixed += ch; escape = true; continue; }\n      if (ch === '\"') { inString = !inString; fixed += ch; continue; }\n      if (inString) {\n        if (ch === '\\n') { fixed += '\\\\n'; continue; }\n        if (ch === '\\r') { fixed += '\\\\r'; continue; }\n        if (ch === '\\t') { fixed += '\\\\t'; continue; }\n      }\n      fixed += ch;\n    }\n    fixed = fixed.replace(/,\\s*}/g, '}').replace(/,\\s*]/g, ']');\n    try { return JSON.parse(fixed); } catch (e) {}\n  }\n  const firstBracket = cleaned.indexOf('[');\n  const lastBracket = cleaned.lastIndexOf(']');\n  if (firstBracket !== -1 && lastBracket > firstBracket) {\n    try { return JSON.parse(cleaned.substring(firstBracket, lastBracket + 1)); } catch (e) {}\n  }\n  return {};\n}\n\n// Validate ATS Signals — S6b-4. parseJSON the raw extractor output, then enforce\n// deterministic types + penalty defaults. Ported from command-center validateSignals\n// (index.ts 933-1019; console dropped). In: chainLlm {text}. Out: {signals}.\nfunction validateSignals(rawSignals) {\n  const safeNumber = (val, dflt) => (typeof val === 'number' && !isNaN(val) && isFinite(val)) ? val : dflt;\n  const safeBool = (val, dflt) => (typeof val === 'boolean') ? val : dflt;\n\n  const clusters = (Array.isArray(rawSignals.requirement_clusters) ? rawSignals.requirement_clusters : []).map((cluster) => {\n    const yearsEvidence = safeNumber(cluster.years_evidence, 0);\n    const evidence = Array.isArray(cluster.evidence) ? cluster.evidence : [];\n    return {\n      cluster_name: cluster.cluster_name || 'Unknown',\n      coverage_score: safeNumber(cluster.coverage_score, 0),\n      present: safeBool(cluster.present, false),\n      years_evidence: evidence.length > 0 ? yearsEvidence : 0,\n      years_required: safeNumber(cluster.years_required, 0),\n      evidence: evidence.slice(0, 3),\n    };\n  });\n  const dealbreakers = (Array.isArray(rawSignals.dealbreakers) ? rawSignals.dealbreakers : []).map((db) => ({\n    requirement: db.requirement || 'Unknown',\n    present: safeBool(db.present, false),\n  }));\n  const e = rawSignals.experience || {};\n  const experience = { total_years: safeNumber(e.total_years, 0), relevant_years: safeNumber(e.relevant_years, 0), has_management: safeBool(e.has_management, false) };\n  const q = rawSignals.quantification || {};\n  const quantification = { metrics_count: safeNumber(q.metrics_count, 0), relevance_score: safeNumber(q.relevance_score, 0) };\n  const cf = rawSignals.culture_fit || {};\n  const culture_fit = { score: safeNumber(cf.score, 50), has_white_text_spam: safeBool(cf.has_white_text_spam, false) };\n  const st = rawSignals.structure || {};\n  const structure = { has_sections: safeBool(st.has_sections, true), page_count: safeNumber(st.page_count, 1), score: safeNumber(st.score, 50) };\n\n  return { requirement_clusters: clusters, dealbreakers, experience, quantification, culture_fit, structure };\n}\n\n// PARSEJSON_PLACEHOLDER (patch script prepends the shared parseJSON above this line)\nconst t = $input.first().json || {};\nconst raw = (t.text != null) ? t.text : ((t.output != null) ? t.output : t);\nconst rawSignals = parseJSON(raw);\nreturn [{ json: { signals: validateSignals(rawSignals) } }];\n"
+      },
+      "id": "7cff8f53-7b14-4813-9859-b51b9492c7e2",
+      "name": "Validate ATS Signals",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        34054,
+        48232
+      ],
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculate ATS Score — S6b-4. Deterministic weighted scorer ported verbatim from\n// command-center calculateATSScore (index.ts 1021-1160; console + frontend-compat\n// fields dropped). 6 signals: semantic 35 / experience 30 / hard-req 15 / quant 10 /\n// company 5 / structure 5; hard-req<8 caps total at 65. In: {signals}. Out: {ats, summary_text}.\nfunction calculateATSScore(signals) {\n  let semanticPoints = 0;\n  const clusters = signals.requirement_clusters || [];\n  for (const cluster of clusters) {\n    const coverageScore = cluster.coverage_score || 0;\n    const yearsRatio = cluster.years_required === 0 ? 1.0 : Math.min(cluster.years_evidence / cluster.years_required, 1.0);\n    semanticPoints += (coverageScore / 100) * yearsRatio * 10;\n  }\n  const semanticCoverage = Math.min(semanticPoints, 35);\n\n  const exp = signals.experience || { total_years: 0, relevant_years: 0, has_management: false };\n  const relevanceRatio = exp.total_years > 0 ? exp.relevant_years / exp.total_years : 0;\n  const managementBonus = exp.has_management ? 5 : 0;\n  const experienceQuality = Math.min((relevanceRatio * 25) + managementBonus, 30);\n\n  const dealbreakers = signals.dealbreakers || [];\n  const missingDealbreakers = dealbreakers.filter((db) => !db.present);\n  const missingCount = missingDealbreakers.length;\n  const hardReqScore = missingCount === 0 ? 15 : missingCount === 1 ? 8 : 0;\n\n  const quant = signals.quantification || { metrics_count: 0, relevance_score: 0 };\n  const quantBase = Math.min(quant.metrics_count * 1.5, 7);\n  const quantRelevance = (quant.relevance_score / 100) * 3;\n  const quantification = Math.min(quantBase + quantRelevance, 10);\n\n  const culture = signals.culture_fit || { score: 50, has_white_text_spam: false };\n  let companyAlignment = (culture.score / 100) * 5;\n  if (culture.has_white_text_spam) companyAlignment -= 8;\n  companyAlignment = Math.max(Math.min(companyAlignment, 5), 0);\n\n  const struct = signals.structure || { has_sections: true, score: 50 };\n  const structure = struct.has_sections ? (struct.score / 100) * 5 : 0;\n\n  let total = semanticCoverage + experienceQuality + hardReqScore + quantification + companyAlignment + structure;\n  if (hardReqScore < 8) total = Math.min(total, 65);\n  total = Math.round(total);\n\n  const confidence = (semanticCoverage >= 28 && hardReqScore >= 12) ? 'high'\n    : (semanticCoverage >= 21 && hardReqScore >= 8) ? 'medium' : 'low';\n  const rating = total >= 85 ? 'Exceptional Match' : total >= 70 ? 'Strong Match'\n    : total >= 55 ? 'Moderate Match' : total >= 40 ? 'Weak Match' : 'Poor Match';\n  const gaps = [].concat(\n    missingDealbreakers.map((d) => 'Missing dealbreaker: ' + d.requirement),\n    clusters.filter((c) => c.coverage_score < 25).map((c) => 'Weak/missing requirement: ' + c.cluster_name)\n  );\n\n  return {\n    overall_score: total,\n    breakdown: {\n      semanticCoverage: Math.round(semanticCoverage), experienceQuality: Math.round(experienceQuality),\n      hardReqScore, quantification: Math.round(quantification),\n      companyAlignment: Math.round(companyAlignment), structure: Math.round(structure),\n    },\n    confidence, rating, gaps,\n  };\n}\n\nconst signals = ($input.first().json || {}).signals || {};\nconst ats = calculateATSScore(signals);\nconst g = (ats.gaps || []).slice(0, 3);\nlet summary_text = '📊 *ATS ' + ats.overall_score + '/100* — ' + ats.rating\n  + ' _(confidence: ' + ats.confidence + ')_';\nif (g.length) summary_text += '\\n\\nTop gaps:\\n' + g.map((x) => '• ' + x).join('\\n');\nif (ats.overall_score < 70) summary_text += '\\n\\n↻ Regenerating an improved version to address these…';\nreturn [{ json: { ats, summary_text } }];\n"
+      },
+      "id": "3c55b6d9-195c-4fa4-858f-026ac4886258",
+      "name": "Calculate ATS Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        34284,
+        48232
+      ],
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Prepare Apply Context').first().json.chat_id }}",
+        "text": "={{ $json.summary_text }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "996d4a96-9cb3-4db6-81e3-af190e35c400",
+      "name": "Send ATS Summary",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        34514,
+        48392
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.ats.overall_score }}",
+              "rightValue": 70,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f7f4880a-a47f-48a6-94d9-775fedbc3530",
+      "name": "IF: ATS Low?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        34514,
+        48232
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build Pass2 Regen Input — S6b-4. On a low ATS score, rebuild the Pass-2 user\n// message reusing the existing Pass-1 selection + Step-0 clusters, plus the ATS\n// gaps as targeted (truthful, no-fabrication) strengthening guidance. Out: {pass2_user, pass1}.\nconst pass1 = ($('Parse Pass1').first().json || {}).pass1 || {};\nlet step0 = {};\ntry { step0 = ($('Parse Step0').first().json || {}).step0 || {}; } catch (e) { step0 = {}; }\nconst ats = ($('Calculate ATS Score').first().json || {}).ats || {};\nconst gaps = (ats.gaps || []).slice(0, 5);\n\nconst antiHalluc = '\\n\\nCRITICAL ANTI-HALLUCINATION RULES:\\n'\n  + '- NEVER mention company values, leadership principles, or culture keywords by name in any bullet\\n'\n  + '- Bullets must read as natural achievements, not value-signaling statements\\n'\n  + '- Use ONLY the verbatim excerpts from Pass 1 decisions as source material — do NOT invent metrics, technologies, or achievements';\nconst atsGuidance = '\\n\\n== ATS RETRY ==\\nThe previous resume scored ' + (ats.overall_score || 0) + '/100. '\n  + 'Without fabricating anything, surface TRUTHFUL coverage of these weak/missing areas by choosing wording and emphasis from the existing excerpts that legitimately addresses them: '\n  + (gaps.length ? gaps.join('; ') : 'overall keyword alignment') + '. '\n  + 'If an excerpt genuinely covers a gap, make that coverage explicit; if no excerpt covers it, leave it out (do not invent).';\n\nconst pass2Input = JSON.stringify({ decisions: pass1, jdRequirements: step0.clusters || [] });\nconst pass2_user = 'Generate LaTeX content based on selection decisions. The decisions contain VERBATIM resume excerpts — use them as the SOLE source for STAR bullets.'\n  + antiHalluc + atsGuidance + '\\n\\n' + pass2Input;\n\nreturn [{ json: { pass2_user, pass1 } }];\n"
+      },
+      "id": "17e8626f-29b8-4173-bffe-96b4084d8115",
+      "name": "Build Pass2 Regen Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        34744,
+        48232
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Build Pass2 Regen Input').first().json.pass2_user }}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are ResuMake Pass 2 — the adaptive LaTeX content generator. You receive selection decisions from Pass 1 (which contain VERBATIM resume excerpts) and generate ONLY the LaTeX content snippets. Use the verbatim excerpts as your SOLE source for content — do NOT invent achievements, metrics, or technologies not present in the excerpts.\n\nCRITICAL: You generate LaTeX FRAGMENTS, not complete documents. No preamble, no \\\\begin{document}.\n\nReturn ONLY valid JSON with these slots (include only the sections that appear in sectionOrder from Pass 1):\n{\n  \"header\": \"<LaTeX for header — centered name, contact info with \\\\small, pipes between items>\",\n  \"summary_content\": \"<LaTeX for summary — ONLY if tier is senior, otherwise empty string>\",\n  \"experience_entries\": \"<LaTeX for experience entries>\",\n  \"internship_entries\": \"<LaTeX for internship entries — ONLY if tier is fresher/junior with internships>\",\n  \"project_entries\": \"<LaTeX for project entries>\",\n  \"skills_content\": \"<LaTeX for skills — \\\\textbf{Category:} skill1, skill2 \\\\\\\\ format>\",\n  \"education_entries\": \"<LaTeX for education entries>\",\n  \"certification_entries\": \"<LaTeX for certification entries — ONLY if certifications are selected>\",\n  \"achievement_entries\": \"<LaTeX for achievement entries — concise single-line bullets for awards, honors, competitions>\",\n  \"activity_entries\": \"<LaTeX for activity entries — ONLY if activities are selected>\",\n  \"improvements\": [\"<list of improvements made>\"],\n  \"resumePlainText\": \"<complete plain text version of the resume for downstream use>\"\n}\n\n═══════════════════════════════════════════════════════════════\nACTION VERB CALIBRATION BY TIER\n═══════════════════════════════════════════════════════════════\n\nMatch verb intensity to the candidate's experience level:\n- SENIOR: Architected, Spearheaded, Drove, Orchestrated, Championed, Pioneered, Transformed\n- MID: Led, Designed, Implemented, Optimized, Developed, Streamlined, Delivered\n- JUNIOR: Built, Created, Developed, Contributed, Supported, Assisted, Collaborated\n- FRESHER: Built, Designed, Developed, Implemented, Created, Learned, Applied\n\nNEVER use senior verbs for freshers or vice versa — it feels inauthentic.\n\n═══════════════════════════════════════════════════════════════\nSTAR BULLET WRITING WITH COMPANY SENTIMENT\n═══════════════════════════════════════════════════════════════\n\nEvery bullet MUST follow the STAR method: Action verb + Context + Technology + Metric + Impact.\n\nADDITIONALLY, use the \"companySentiment\" data from Pass 1 to frame bullets:\n- If the target company values \"ownership\": emphasize autonomous decision-making in bullets.\n- If they value \"data-driven\": lead with metrics and quantified outcomes.\n- If they value \"customer obsession\": frame impact in terms of user/customer benefit.\n- If they value \"collaboration\": highlight cross-team work and stakeholder management.\n\nThis alignment maximizes interview callback rates by speaking the hiring team's language.\n\n═══════════════════════════════════════════════════════════════\nQUANTIFICATION ENFORCEMENT\n═══════════════════════════════════════════════════════════════\n\nEvery bullet SHOULD have a quantified result. If the original resume bullet lacks metrics:\n- Attempt to infer reasonable quantifiers (team size, approximate scale, % improvement).\n- If truly impossible to quantify, use scope indicators: \"across N services\", \"for M users\", \"within K sprints\".\n- Flag unquantified bullets in the \"improvements\" array.\n\n═══════════════════════════════════════════════════════════════\nSTACKED MULTI-ROLE RENDERING\n═══════════════════════════════════════════════════════════════\n\nWhen Pass 1 marks a company with \"renderAsStacked\": true:\n- Render ONE \\resumeSubheading for the company with the most recent title and total date range.\n- Then render each sub-role as a smaller entry with its own date range and bullets.\n- Example:\n  \\resumeSubheading{Senior Engineer → Staff Engineer}{Jan 2020 -- Present}{Google}{Mountain View, CA}\n  \\resumeItemListStart\n    \\resumeItem{\\textit{Staff Engineer (2023--Present):} Led platform migration...}\n    \\resumeItem{\\textit{Senior Engineer (2020--2023):} Built microservices...}\n  \\resumeItemListEnd\n\n═══════════════════════════════════════════════════════════════\nLATEX FORMATTING RULES\n═══════════════════════════════════════════════════════════════\n\n- Use \\resumeSubheading{Title}{Date}{Company}{Location} for experiences/internships\n- Use \\resumeItem{Achievement bullet} inside \\resumeItemListStart...\\resumeItemListEnd\n- Use \\resumeProjectHeading{\\textbf{Name} $|$ \\emph{Tech Stack}}{Date} for projects\n- Use \\textbf{Category:} items \\\\ for skills\n- Escape special LaTeX chars: % → \\%, & → \\&, $ → \\$, # → \\#\n- Use \\href{url}{text} for links\n- CRITICAL: Everything MUST fit on a single page. Trim ruthlessly if needed.\n\n═══════════════════════════════════════════════════════════════\nCAREER GAP DATE FORMAT\n═══════════════════════════════════════════════════════════════\n\nIf Pass 1 indicates career gaps >2 years, use YEAR-ONLY dates: \"2019 -- 2022\" instead of \"Jan 2019 -- Mar 2022\".\n\n═══════════════════════════════════════════════════════════════\nEDUCATION RENDERING BY TIER\n═══════════════════════════════════════════════════════════════\n\n- FRESHER/JUNIOR: Include GPA (if ≥3.5), relevant coursework (up to 6 courses), honors/awards. Education takes prominent space.\n- MID: Include degree, school, graduation date. Coursework only if directly relevant to JD.\n- SENIOR: Minimal — degree, school, year only. No coursework, no GPA.\n\n═══════════════════════════════════════════════════════════════\nCERTIFICATION RENDERING\n═══════════════════════════════════════════════════════════════\n\nRender as: \\resumeProjectHeading{\\textbf{Cert Name} $|$ \\emph{Issuer}}{Date}\nOnly include certifications marked as selected by Pass 1.\n\n═══════════════════════════════════════════════════════════════\nACTIVITIES RENDERING (FRESHER ONLY)\n═══════════════════════════════════════════════════════════════\n\nRender clubs, leadership roles, volunteering as:\n\\resumeProjectHeading{\\textbf{Role/Activity} $|$ \\emph{Organization}}{Date}\nwith 1-2 bullet points each.\n\n═══════════════════════════════════════════════════════════════\nPLAIN TEXT VERSION\n═══════════════════════════════════════════════════════════════\n\nGenerate a clean plain text version of the entire resume content for downstream modules (CoverForge, ForgeScore). Include all sections in readable format without any LaTeX markup.\n\nEXAMPLE header:\n{\\centering\n  {\\LARGE \\scshape John Doe} \\\\ \\vspace{1pt}\n  \\small 973-555-1234 $|$ \\href{mailto:john@email.com}{john@email.com} $|$\n  \\href{https://linkedin.com/in/johndoe}{linkedin.com/in/johndoe} $|$\n  \\href{https://johndoe.dev}{johndoe.dev}\n\\par}"
+            }
+          ]
+        }
+      },
+      "id": "148f5f4f-9fb9-41b8-8371-702043e23947",
+      "name": "Pass2 Regen",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        34974,
+        48232
+      ]
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-sonnet-4.6",
+        "options": {
+          "maxTokens": 8000,
+          "temperature": 0.3,
+          "timeout": 120000
+        }
+      },
+      "id": "2e300999-3846-4877-a71c-4eec25163817",
+      "name": "Pass2 Regen Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        34974,
+        48392
+      ],
+      "credentials": {
+        "openRouterApi": {
+          "id": "xZD1i4ZBmSxVDuIe",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Shared parseJSON (ported from command-center index.ts 319-378). Escapes literal\n// \\n\\r\\t INSIDE JSON string values only — handles LaTeX-heavy LLM output that\n// strict parsers choke on. Prepended to each Parse* node by the patch script.\nfunction parseJSON(content) {\n  if (content && typeof content === 'object') return content;\n  let cleaned = String(content || '').replace(/```json\\s*/gi, '').replace(/```\\s*/g, '').trim();\n  try { return JSON.parse(cleaned); } catch (e) {}\n  const firstBrace = cleaned.indexOf('{');\n  const lastBrace = cleaned.lastIndexOf('}');\n  if (firstBrace !== -1 && lastBrace > firstBrace) {\n    let extracted = cleaned.substring(firstBrace, lastBrace + 1);\n    try { return JSON.parse(extracted); } catch (e) {}\n    let fixed = '';\n    let inString = false;\n    let escape = false;\n    for (let i = 0; i < extracted.length; i++) {\n      const ch = extracted[i];\n      if (escape) { fixed += ch; escape = false; continue; }\n      if (ch === '\\\\' && inString) { fixed += ch; escape = true; continue; }\n      if (ch === '\"') { inString = !inString; fixed += ch; continue; }\n      if (inString) {\n        if (ch === '\\n') { fixed += '\\\\n'; continue; }\n        if (ch === '\\r') { fixed += '\\\\r'; continue; }\n        if (ch === '\\t') { fixed += '\\\\t'; continue; }\n      }\n      fixed += ch;\n    }\n    fixed = fixed.replace(/,\\s*}/g, '}').replace(/,\\s*]/g, ']');\n    try { return JSON.parse(fixed); } catch (e) {}\n  }\n  const firstBracket = cleaned.indexOf('[');\n  const lastBracket = cleaned.lastIndexOf(']');\n  if (firstBracket !== -1 && lastBracket > firstBracket) {\n    try { return JSON.parse(cleaned.substring(firstBracket, lastBracket + 1)); } catch (e) {}\n  }\n  return {};\n}\n\nconst t=$input.first().json||{};const raw=(t.text!=null)?t.text:((t.output!=null)?t.output:t);const pass1=($('Build Pass2 Regen Input').first().json||{}).pass1||{};return [{json:{pass1:pass1,pass2:parseJSON(raw)}}];"
+      },
+      "id": "3e7ddf40-8e4a-4d46-8388-48cc6da319c0",
+      "name": "Parse Pass2 Regen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        35204,
+        48232
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// Assemble Resume LaTeX — S6b-1 (node jsCode source of truth)\n// ═══════════════════════════════════════════════════════════════\n// Deterministic LaTeX assembly. Adopts the command-center slot mechanism\n// (SECTION_LATEX + buildFallbackSlots = the reliability net: renders a real\n// resume from Pass-1 VERBATIM data even if Pass-2 produced nothing) onto the\n// bot's proven Lato/ATS-parsable skeleton + macros.\n//\n// Ported from careerforge-command-center/supabase/functions/document-ai/index.ts:\n//   buildFallbackSlots 1409-1455, assembly loop 1457-1497, SECTION_LATEX 124-173,\n//   sanitizeLatexContent/escapeLatexText/firstNonEmpty 1368-1407.\n// Plus the bot's normalizeLatexForPdflatex + the s6a $|$ restore + empty-body throw.\n//\n// IMPORTANT: the upstream Pass-1/Pass-2 LLM nodes emit RAW text (no structured\n// output parser — that path failed on LaTeX-heavy JSON in S2b). Parse* Code nodes\n// run the ported parseJSON before this node. We still defensively parseJSON here\n// if a string slips through.\n//\n// Header is built DETERMINISTICALLY from ctx.personal (not the LLM) — this kills\n// the entire {{EMAIL}}/$|$ render-bug class at the source.\n//\n// In:  $input.first().json = { pass1, pass2 }   (pass2 optional; fallback covers it)\n//      $('Prepare Apply Context').first().json = { personal, chat_id, job_title, company, ... }\n// Out: [{ json: { latex, chat_id, job_title, company, resumePlainText } }]   (matches\n//      the old Build Resume LaTeX output shape so Compile/Send are untouched)\n\n// ─── ONE skeleton (bot preamble + macros, retrofitted to command-center slots) ───\n// The 3 seniority .tex skeletons were byte-identical except header placeholders\n// (now code-built) and section-order comments (now driven by pass1.sectionOrder),\n// so they collapse to one. Tier still drives selection/order via Pass-1, not here.\nconst SKELETON = String.raw`\\documentclass[letterpaper,11pt]{article}\n\n\\usepackage{latexsym}\n\\usepackage[empty]{fullpage}\n\\usepackage{titlesec}\n\\usepackage{marvosym}\n\\usepackage[usenames,dvipsnames]{color}\n\\usepackage{verbatim}\n\\usepackage{enumitem}\n\\usepackage[hidelinks]{hyperref}\n\\usepackage{fancyhdr}\n\\usepackage[english]{babel}\n\\usepackage{tabularx}\n\\input{glyphtounicode}\n\n\\usepackage[default]{lato}\n\\usepackage[T1]{fontenc}\n\n\\usepackage[top=0.45in, bottom=0.45in, left=0.55in, right=0.55in]{geometry}\n\n\\pagestyle{fancy}\n\\fancyhf{}\n\\fancyfoot{}\n\\renewcommand{\\headrulewidth}{0pt}\n\\renewcommand{\\footrulewidth}{0pt}\n\n\\urlstyle{same}\n\\raggedbottom\n\\raggedright\n\\setlength{\\tabcolsep}{0in}\n\n\\titleformat{\\section}{\n  \\vspace{-5pt}\\scshape\\raggedright\\large\n}{}{0em}{}[\\color{black}\\titlerule \\vspace{-4pt}]\n\n\\pdfgentounicode=1\n\n\\newcommand{\\resumeItem}[1]{\n  \\item\\small{\n    {#1}\n  }\n}\n\\newcommand{\\resumeSubheading}[4]{\n  \\vspace{-1pt}\\item\n    \\begin{tabular*}{0.97\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}\n      \\textbf{#1} & #2 \\\\\n      \\textit{\\small#3} & \\textit{\\small #4} \\\\\n    \\end{tabular*}\\vspace{-5pt}\n}\n\\newcommand{\\resumeSubSubheading}[2]{\n    \\item\n    \\begin{tabular*}{0.97\\textwidth}{l@{\\extracolsep{\\fill}}r}\n      \\textit{\\small#1} & \\textit{\\small #2} \\\\\n    \\end{tabular*}\\vspace{-5pt}\n}\n\\newcommand{\\resumeProjectHeading}[2]{\n    \\item\n    \\begin{tabular*}{0.97\\textwidth}{l@{\\extracolsep{\\fill}}r}\n      \\small#1 & #2 \\\\\n    \\end{tabular*}\\vspace{-5pt}\n}\n\\newcommand{\\resumeSubItem}[1]{\\resumeItem{#1}\\vspace{-4pt}}\n\\renewcommand\\labelitemi{\\textbullet}\n\\renewcommand\\labelitemii{$\\vcenter{\\hbox{\\tiny$\\bullet$}}$}\n\\newcommand{\\resumeSubHeadingListStart}{\\begin{itemize}[leftmargin=0.15in, label={}]}\n\\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}}\n\\newcommand{\\resumeItemListStart}{\\begin{itemize}[noitemsep, topsep=0pt, parsep=0pt, partopsep=0pt]}\n\\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-4pt}}\n\n\\begin{document}\n\n%%% SLOT: header\n\n%%% CONTENT_SECTIONS\n\n\\end{document}`;\n\n// ─── SECTION_LATEX (command-center 124-173; uses bot-compatible macros) ───\nconst SECTION_LATEX = {\n  summary: String.raw`\\section{Summary}\n\\resumeSubHeadingListStart\n  \\small{\\item{\n%%% SLOT: summary_content\n  }}\n\\resumeSubHeadingListEnd`,\n  experience: String.raw`\\section{Experience}\n\\resumeSubHeadingListStart\n%%% SLOT: experience_entries\n\\resumeSubHeadingListEnd`,\n  internships: String.raw`\\section{Internships}\n\\resumeSubHeadingListStart\n%%% SLOT: internship_entries\n\\resumeSubHeadingListEnd`,\n  projects: String.raw`\\section{Projects}\n\\resumeSubHeadingListStart\n%%% SLOT: project_entries\n\\resumeSubHeadingListEnd`,\n  skills: String.raw`\\section{Technical Skills}\n\\resumeSubHeadingListStart\n  \\small{\\item{\n%%% SLOT: skills_content\n  }}\n\\resumeSubHeadingListEnd`,\n  education: String.raw`\\section{Education}\n\\resumeSubHeadingListStart\n%%% SLOT: education_entries\n\\resumeSubHeadingListEnd`,\n  certifications: String.raw`\\section{Certifications}\n\\resumeSubHeadingListStart\n%%% SLOT: certification_entries\n\\resumeSubHeadingListEnd`,\n  achievements: String.raw`\\section{Achievements}\n\\resumeSubHeadingListStart\n%%% SLOT: achievement_entries\n\\resumeSubHeadingListEnd`,\n  activities: String.raw`\\section{Activities \\& Leadership}\n\\resumeSubHeadingListStart\n%%% SLOT: activity_entries\n\\resumeSubHeadingListEnd`,\n};\n\nconst SLOT_MARKER = {\n  summary: '%%% SLOT: summary_content',\n  experience: '%%% SLOT: experience_entries',\n  internships: '%%% SLOT: internship_entries',\n  projects: '%%% SLOT: project_entries',\n  skills: '%%% SLOT: skills_content',\n  education: '%%% SLOT: education_entries',\n  certifications: '%%% SLOT: certification_entries',\n  achievements: '%%% SLOT: achievement_entries',\n  activities: '%%% SLOT: activity_entries',\n};\n\n// ─── Helpers ───\nfunction escapeLatexText(value) {\n  return String(value == null ? '' : value)\n    .replace(/\\\\/g, '\\\\textbackslash{}')\n    .replace(/([#$%&_{}])/g, '\\\\$1')\n    .replace(/~/g, '\\\\textasciitilde{}')\n    .replace(/\\^/g, '\\\\textasciicircum{}');\n}\n\nfunction sanitizeLatexContent(content) {\n  if (!content) return content;\n  let s = content;\n  s = s.replace(/(?<!\\\\)#(?!\\{)/g, '\\\\#');\n  s = s.replace(/(?<!\\\\)%/g, '\\\\%');\n  s = s.replace(/(?<!\\\\)&/g, '\\\\&');\n  s = s.replace(/(?<!\\\\)_(?![a-zA-Z]*\\})/g, '\\\\_');\n  s = s.replace(/\\\\begin\\{document\\}/g, '');\n  s = s.replace(/\\\\end\\{document\\}/g, '');\n  s = s.replace(/\\\\documentclass[^{]*\\{[^}]*\\}/g, '');\n  s = s.replace(/\\\\usepackage(\\[[^\\]]*\\])?\\{[^}]*\\}/g, '');\n  return s;\n}\n\nfunction firstNonEmpty(...values) {\n  return values.find((v) => String(v == null ? '' : v).trim().length > 0) ?? '';\n}\n\nfunction bulletItems(items) {\n  return (items || [])\n    .filter(Boolean)\n    .slice(0, 4)\n    .map((item) => '    \\\\resumeItem{' + escapeLatexText(item) + '}')\n    .join('\\n');\n}\n\n// Deterministic header from the parsed master resume (NOT the LLM).\nfunction buildHeaderFromPersonal(p) {\n  p = p || {};\n  const name = escapeLatexText(firstNonEmpty(p.name, 'Candidate'));\n  const parts = [];\n  const phone = firstNonEmpty(p.phone_display, p.phone);\n  if (phone) parts.push(escapeLatexText(phone));\n  if (p.email) parts.push('\\\\href{mailto:' + p.email + '}{\\\\underline{' + p.email + '}}');\n  if (p.linkedin) parts.push('\\\\href{' + p.linkedin + '}{\\\\underline{LinkedIn}}');\n  if (p.github) parts.push('\\\\href{' + p.github + '}{\\\\underline{GitHub}}');\n  if (p.portfolio) parts.push('\\\\href{' + p.portfolio + '}{\\\\underline{Portfolio}}');\n  if (p.show_location && p.location) parts.push(escapeLatexText(p.location));\n  const contact = parts.length ? '\\\\small ' + parts.join(' $|$ ') : '';\n  return '\\\\begin{center}\\n  \\\\textbf{\\\\Huge \\\\scshape ' + name + '} \\\\\\\\ \\\\vspace{4pt}\\n  ' + contact + '\\n\\\\end{center}';\n}\n\n// command-center buildFallbackSlots 1409-1455 (non-compact only; bot has no compact template)\nfunction buildFallbackSlots(pass1) {\n  const slots = {};\n  const itemEnd = '\\\\resumeItemListEnd';\n  const itemStart = '\\\\resumeItemListStart';\n  const subheading = '\\\\resumeSubheading';\n  slots.summary = pass1.summary ? escapeLatexText(pass1.summary) : '';\n\n  slots.experience = (pass1.companies || []).flatMap((company) =>\n    (company.positions || []).filter((pos) => pos.isSelected !== false).map((pos) => {\n      const bullets = bulletItems(pos.keyAchievements || []);\n      if (!bullets) return '';\n      return subheading + '{' + escapeLatexText(pos.title) + '}{' + escapeLatexText((pos.startDate || '') + ' -- ' + (pos.endDate || '')) + '}{' + escapeLatexText(company.company) + '}{' + escapeLatexText(pos.location) + '}\\n' + itemStart + '\\n' + bullets + '\\n' + itemEnd;\n    })\n  ).filter(Boolean).join('\\n');\n\n  slots.internships = (pass1.selectedInternships || []).map((intern) => {\n    const bullets = bulletItems(intern.keyAchievements || []);\n    if (!bullets) return '';\n    return subheading + '{' + escapeLatexText(intern.title) + '}{' + escapeLatexText((intern.startDate || '') + ' -- ' + (intern.endDate || '')) + '}{' + escapeLatexText(intern.company) + '}{' + escapeLatexText(intern.location) + '}\\n' + itemStart + '\\n' + bullets + '\\n' + itemEnd;\n  }).filter(Boolean).join('\\n');\n\n  slots.projects = (pass1.selectedProjects || []).map((project) => {\n    const bullets = bulletItems(project.descriptionPoints || []);\n    if (!bullets) return '';\n    return '\\\\resumeProjectHeading{\\\\textbf{' + escapeLatexText(project.name) + '} $|$ \\\\emph{' + escapeLatexText(project.techStack) + '}}{' + escapeLatexText(project.date) + '}\\n' + itemStart + '\\n' + bullets + '\\n' + itemEnd;\n  }).filter(Boolean).join('\\n');\n\n  slots.skills = (pass1.skillsCategories || []).map((cat) => {\n    const skills = Array.isArray(cat.skills) ? cat.skills.join(', ') : '';\n    return skills ? '\\\\textbf{' + escapeLatexText(cat.category) + ':} ' + escapeLatexText(skills) + ' \\\\\\\\' : '';\n  }).filter(Boolean).join('\\n');\n\n  slots.education = (pass1.education || []).slice(0, 2).map((edu) =>\n    '\\\\resumeSubheading{' + escapeLatexText([edu.degree, edu.major].filter(Boolean).join(' -- ')) + '}{' + escapeLatexText(edu.graduationDate) + '}{' + escapeLatexText(edu.institution) + '}{' + escapeLatexText(edu.gpa ? 'GPA: ' + edu.gpa : '') + '}'\n  ).join('\\n');\n\n  slots.certifications = (pass1.certifications || []).filter((cert) => cert.qualityTier !== 'completion_only').map((cert) =>\n    '\\\\resumeProjectHeading{\\\\textbf{' + escapeLatexText(cert.name) + '} $|$ \\\\emph{' + escapeLatexText(cert.issuer) + '}}{' + escapeLatexText(cert.date) + '}'\n  ).join('\\n');\n\n  slots.achievements = (pass1.selectedAchievements || []).map((a) => '\\\\resumeItem{' + escapeLatexText(firstNonEmpty(a.description, a.title)) + '}').join('\\n');\n\n  slots.activities = (pass1.activities || []).map((act) =>\n    '\\\\resumeProjectHeading{\\\\textbf{' + escapeLatexText(act.name) + '} $|$ \\\\emph{' + escapeLatexText(act.organization) + '}}{' + escapeLatexText(act.date) + '}\\n' + itemStart + '\\n    \\\\resumeItem{' + escapeLatexText(act.description) + '}\\n' + itemEnd\n  ).join('\\n');\n\n  return slots;\n}\n\nfunction normalizeLatexForPdflatex(input) {\n  if (!input) return input;\n  let s = input.replace(/\\r\\n/g, '\\n');\n  s = s.replace(/[“”]/g, '\"').replace(/[‘’]/g, \"'\")\n    .replace(/…/g, '...').replace(/[–—]/g, '--').replace(/ /g, ' ');\n  s = s.replace(/₹/g, 'INR ').replace(/€/g, 'EUR ').replace(/£/g, 'GBP ')\n    .replace(/(?<!\\\\)\\$/g, '\\\\$');\n  s = s.replace(/[^\\x09\\x0A\\x0D\\x20-\\x7E]/g, '');\n  return s;\n}\n\n// Defensive: parse LaTeX-heavy JSON if a raw string reached us (escapes literal\n// \\n\\r\\t inside string values only). Ported from index.ts 319-378.\nfunction parseJSON(content) {\n  if (content && typeof content === 'object') return content;\n  let cleaned = String(content || '').replace(/```json\\s*/gi, '').replace(/```\\s*/g, '').trim();\n  try { return JSON.parse(cleaned); } catch (e) {}\n  const firstBrace = cleaned.indexOf('{');\n  const lastBrace = cleaned.lastIndexOf('}');\n  if (firstBrace !== -1 && lastBrace > firstBrace) {\n    let extracted = cleaned.substring(firstBrace, lastBrace + 1);\n    try { return JSON.parse(extracted); } catch (e) {}\n    let fixed = '';\n    let inString = false;\n    let escape = false;\n    for (let i = 0; i < extracted.length; i++) {\n      const ch = extracted[i];\n      if (escape) { fixed += ch; escape = false; continue; }\n      if (ch === '\\\\' && inString) { fixed += ch; escape = true; continue; }\n      if (ch === '\"') { inString = !inString; fixed += ch; continue; }\n      if (inString) {\n        if (ch === '\\n') { fixed += '\\\\n'; continue; }\n        if (ch === '\\r') { fixed += '\\\\r'; continue; }\n        if (ch === '\\t') { fixed += '\\\\t'; continue; }\n      }\n      fixed += ch;\n    }\n    fixed = fixed.replace(/,\\s*}/g, '}').replace(/,\\s*]/g, ']');\n    try { return JSON.parse(fixed); } catch (e) {}\n  }\n  return {};\n}\n\nfunction derivePlainText(pass1) {\n  const L = [];\n  for (const comp of (pass1.companies || [])) {\n    for (const pos of (comp.positions || [])) {\n      if (pos.isSelected === false) continue;\n      L.push((pos.title || '') + ' at ' + (comp.company || '') + ' (' + (pos.startDate || '') + ' - ' + (pos.endDate || '') + ')');\n      for (const a of (pos.keyAchievements || [])) L.push('- ' + a);\n      L.push('');\n    }\n  }\n  for (const intern of (pass1.selectedInternships || [])) {\n    L.push((intern.title || '') + ' at ' + (intern.company || ''));\n    for (const a of (intern.keyAchievements || [])) L.push('- ' + a);\n    L.push('');\n  }\n  for (const proj of (pass1.selectedProjects || [])) {\n    L.push('Project: ' + (proj.name || '') + ' | ' + (proj.techStack || ''));\n    for (const d of (proj.descriptionPoints || [])) L.push('- ' + d);\n    L.push('');\n  }\n  if ((pass1.skillsCategories || []).length) {\n    L.push('Skills:');\n    for (const cat of pass1.skillsCategories) L.push((cat.category || '') + ': ' + ((cat.skills || []).join(', ')));\n    L.push('');\n  }\n  for (const edu of (pass1.education || [])) {\n    L.push((edu.degree || '') + ' in ' + (edu.major || '') + ' - ' + (edu.institution || '') + ' (' + (edu.graduationDate || '') + ')');\n  }\n  return L.join('\\n');\n}\n\n// ─── Main ───\nconst data = $input.first().json || {};\nconst pass1 = parseJSON(data.pass1 || {});\nconst pass2 = parseJSON(data.pass2 || {});\nconst ctx = $('Prepare Apply Context').first().json || {};\nconst personal = ctx.personal || {};\n\nconst sectionOrder = (Array.isArray(pass1.sectionOrder) && pass1.sectionOrder.length)\n  ? pass1.sectionOrder\n  : ['experience', 'projects', 'skills', 'education'];\n\nconst fallbackSlots = buildFallbackSlots(pass1);\n\nconst slotMap = {\n  summary: pass2.summary_content || fallbackSlots.summary || '',\n  experience: pass2.experience_entries || fallbackSlots.experience || '',\n  internships: pass2.internship_entries || fallbackSlots.internships || '',\n  projects: pass2.project_entries || fallbackSlots.projects || '',\n  skills: pass2.skills_content || fallbackSlots.skills || '',\n  education: pass2.education_entries || fallbackSlots.education || '',\n  certifications: pass2.certification_entries || fallbackSlots.certifications || '',\n  achievements: pass2.achievement_entries || fallbackSlots.achievements || '',\n  activities: pass2.activity_entries || fallbackSlots.activities || '',\n};\n\nconst contentSections = sectionOrder.map((section) => {\n  const tpl = SECTION_LATEX[section];\n  if (!tpl) return '';\n  const slotContent = slotMap[section];\n  if (slotContent === undefined || slotContent === '') return '';\n  // split/join (never String.replace — slot content carries $ and \\, which the\n  // replacement-string parser would mangle: the $-in-replace footgun)\n  return tpl.split(SLOT_MARKER[section]).join(sanitizeLatexContent(slotContent));\n}).filter(Boolean).join('\\n\\n');\n\nconst headerLatex = buildHeaderFromPersonal(personal);\n\nconst finalLatex = SKELETON\n  .split('%%% SLOT: header').join(headerLatex)\n  .split('%%% CONTENT_SECTIONS').join(contentSections);\n\n// normalize, then restore the intentional $|$ separators normalize over-escapes (s6a)\nconst normalized = normalizeLatexForPdflatex(finalLatex).split('\\\\$|\\\\$').join('$|$');\n\n// never ship a blank resume — guard the assembled body\nconst body = (normalized.match(/\\\\begin\\{document\\}([\\s\\S]*?)\\\\end\\{document\\}/) || [])[1] || '';\nconst bodyClean = body.replace(/%.*$/gm, '').replace(/\\\\(begin|end)\\{center\\}/g, '').trim();\nif (!bodyClean || contentSections.trim().length === 0) {\n  throw new Error('Assemble Resume LaTeX produced an empty body (sections=' + sectionOrder.join(',') + '). Refusing to compile a blank resume.');\n}\n\nreturn [{\n  json: {\n    latex: normalized,\n    chat_id: ctx.chat_id,\n    job_title: ctx.job_title,\n    company: ctx.company,\n    resumePlainText: pass2.resumePlainText || derivePlainText(pass1),\n  },\n}];\n"
+      },
+      "id": "b198234a-6e02-435f-ac29-43a9ab25e18c",
+      "name": "Assemble Regen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        35434,
+        48232
+      ],
+      "onError": "continueErrorOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pick Resume LaTeX — S6b-4. Convergence before Compile: use the regenerated resume\n// if the ATS-low retry ran this execution, else the original assembly. Exactly one of\n// the two upstream branches fires per run; n8n throws on $('<unrun node>') (caught).\n// Out: { latex, chat_id, job_title, company, resumePlainText } (Compile reads .latex).\nlet r = null;\ntry { const a = $('Assemble Regen').first().json; if (a && a.latex) r = a; } catch (e) {}\nif (!r) { try { const o = $('Assemble Resume LaTeX').first().json; if (o && o.latex) r = o; } catch (e) {} }\nr = r || {};\nreturn [{ json: { latex: r.latex, chat_id: r.chat_id, job_title: r.job_title, company: r.company, resumePlainText: r.resumePlainText } }];\n"
+      },
+      "id": "be7999ea-6a0d-40b9-ad5c-9f157a5a2b57",
+      "name": "Pick Resume LaTeX",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        35664,
+        48232
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify({ resume: $('Prepare Apply Context').first().json.resume_text, jd: $('Prepare Apply Context').first().json.job_description, company: $('Prepare Apply Context').first().json.company, dossier: ($('Pass Dossier').first().json||{}).dossier, tier: $('Prepare Apply Context').first().json.seniority_mode }) }}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are CoverForge Pass 1 — the adaptive selection engine for cover letters. Analyze the resume and JD, detect the candidate's career tier, and decide which achievements to highlight.\n\nIMPORTANT: Extract the company name and role/position from the job description text. Do NOT expect them as separate inputs.\n\nReturn ONLY valid JSON:\n{\n  \"extractedCompany\": \"<company name extracted from JD>\",\n  \"extractedRole\": \"<role/position extracted from JD>\",\n  \"tier\": \"<fresher|junior|mid|senior>\",\n  \"selectedAchievements\": [\n    {\n      \"id\": \"<short id>\",\n      \"title\": \"<achievement title>\",\n      \"sourceExperience\": \"<company/project where this happened>\",\n      \"starSituation\": \"<brief situation>\",\n      \"starAction\": \"<what you did>\",\n      \"starResult\": \"<quantified result>\",\n      \"jdKeywordsToWeave\": [\"<relevant JD keywords>\"],\n      \"personalTouch\": \"<authentic personal element>\"\n    }\n  ],\n  \"companyResearch\": {\n    \"mission\": \"<company mission/values>\",\n    \"recentNews\": \"<recent initiative, product, or funding>\",\n    \"techStack\": \"<relevant tech they use>\",\n    \"whyExcited\": \"<genuine reason for excitement>\",\n    \"companySentiment\": [\"<what this company values most, e.g. ownership, innovation, customer-first>\"]\n  },\n  \"competitivePositioning\": {\n    \"unique_differentiator\": \"<What makes this candidate different from typical applicants? Look for: prior work with this company's platform/product, unique skill combinations, rare domain expertise, notable achievements (hackathon wins, open source contributions, speaking engagements).>\",\n    \"insider_advantage\": \"<Does candidate already know the company/product/team? Evidence: used their APIs, attended their events, contributed to their ecosystem, worked with their technology, cited their research. Return 'None identified' if no evidence.>\",\n    \"domain_edge\": \"<Rare combination of skills/industries. Example: 'Healthcare + Finance experience = understands regulated industries.' Look for 2+ domains that rarely overlap. Return 'None identified' if not applicable.>\",\n    \"timing_advantage\": \"<Why NOW is the perfect time for this candidate to join. Look for: just completed relevant project, transitioning from research to production, location alignment, visa/availability timing. Return 'None identified' if not clear.>\"\n  },\n  \"buyer_persona\": \"<enterprise_cto|technical_manager|startup_founder|hr_recruiter>\",\n  \"openingHook\": \"<attention-grabbing opening approach adapted to tier, competitive positioning, AND buyer persona>\",\n  \"closingAngle\": \"<specific contribution to mention in closing>\",\n  \"toneNotes\": \"<how to calibrate tone for this company, this tier, AND the detected buyer persona>\",\n  \"personalizationScore\": <0-100>,\n  \"keywordMatch\": <0-100>\n}\n\n═══════════════════════════════════════════════════════════════\nTIER DETECTION (same rules as ResumeForge)\n═══════════════════════════════════════════════════════════════\n\n- FRESHER (0 years full-time): Projects, coursework, internships only.\n- JUNIOR (1-3 years): Limited professional experience.\n- MID (4-9 years): Solid experience across roles.\n- SENIOR (10+ years): Leadership, strategic impact.\n\n═══════════════════════════════════════════════════════════════\nACHIEVEMENT COUNT BY TIER\n═══════════════════════════════════════════════════════════════\n\n- SENIOR: Select exactly 3 achievements (deep, strategic, leadership-focused).\n- MID: Select exactly 3 achievements (mix of technical and impact).\n- JUNIOR: Select exactly 2 achievements + flag for \"eager to bring\" paragraph.\n- FRESHER: Select 1-2 achievements (from projects/internships) + flag for \"passion & potential\" paragraph.\n\n═══════════════════════════════════════════════════════════════\nOPENING HOOK BY TIER\n═══════════════════════════════════════════════════════════════\n\n- SENIOR: Lead with a headline achievement or industry reputation.\n- MID: Lead with a specific, relevant accomplishment.\n- JUNIOR: Lead with genuine enthusiasm + one concrete skill match.\n- FRESHER: Lead with academic passion or a compelling project story.\n\n═══════════════════════════════════════════════════════════════\nCOMPANY SENTIMENT INTEGRATION\n═══════════════════════════════════════════════════════════════\n\nAnalyze what the target company values (ownership, collaboration, innovation, etc.) from JD language and known culture. Frame all achievements to echo these values.\n\n═══════════════════════════════════════════════════════════════\nCOMPETITIVE POSITIONING (CRITICAL)\n═══════════════════════════════════════════════════════════════\n\nCRITICAL: Identify competitive positioning. Don't just list qualifications — find what makes THIS candidate uniquely suited. If candidate has prior experience with the company's platform/product/ecosystem, that's the strongest differentiator. If they have a rare skill combination (e.g., AI + regulated industries), that's domain edge. Be specific — generic statements like \"strong technical background\" are NOT positioning.\n\nPriority order for differentiators:\n1. Direct experience with the company's product/platform/APIs (strongest)\n2. Participation in company events/hackathons/ecosystem (insider signal)\n3. Rare domain combinations (e.g., Healthcare + Finance = regulated industries)\n4. Unique project outcomes or recognitions (hackathon wins, publications)\n5. Timing alignment (transition point, recent relevant completion)\n\n═══════════════════════════════════════════════════════════════\nBUYER PERSONA DETECTION (CRITICAL)\n═══════════════════════════════════════════════════════════════\n\nDetect the BUYER (who makes the hiring decision), not just the role. Look at JD signals:\n\n- enterprise_cto: JD mentions \"enterprise solutions\", \"on-premises\", \"compliance\", \"procurement\", \"discovery sessions with executives\", \"regulated industries\", \"vendor evaluation\". These roles sell to/deploy for enterprise buyers. The actual reader is often the CTO/VP Engineering the candidate will work WITH, not just HR.\n- technical_manager: JD focuses on architecture, scalability, system design, technical depth. Standard engineering roles at established companies.\n- startup_founder: JD emphasizes ownership, scrappiness, wearing multiple hats, moving fast, early-stage, founding team, equity prominent.\n- hr_recruiter: JD is generic/templated, emphasizes culture fit and soft skills more than technical depth, uses corporate HR language.\n\nFor customer-facing roles (e.g., \"Enterprise Solutions Engineer\"), the buyer is often the CTO/VP Engineering the candidate will interface with, NOT the hiring manager. Look for clues about customer-facing vs internal roles.\n\nRULES:\n- Achievement counts MUST match the tier rules above.\n- Each achievement MUST have a quantified result (for freshers, project metrics like \"served 500 users\" count).\n- Company research should be specific, not generic.\n- NEVER fabricate achievements not in the resume.\n- competitivePositioning fields must be SPECIFIC and grounded in resume evidence."
+            }
+          ]
+        }
+      },
+      "id": "535bbf4a-31c2-4f44-8b38-a7c166785390",
+      "name": "Cover Pass1",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        32736,
+        48312
+      ]
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-haiku-4.5",
+        "options": {
+          "maxTokens": 6000,
+          "temperature": 0.3,
+          "timeout": 120000
+        }
+      },
+      "id": "bb976168-481b-4c03-a2ee-4db91c58f5cb",
+      "name": "Cover Pass1 Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        32736,
+        48472
+      ],
+      "credentials": {
+        "openRouterApi": {
+          "id": "xZD1i4ZBmSxVDuIe",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Shared parseJSON (ported from command-center index.ts 319-378). Escapes literal\n// \\n\\r\\t INSIDE JSON string values only — handles LaTeX-heavy LLM output that\n// strict parsers choke on. Prepended to each Parse* node by the patch script.\nfunction parseJSON(content) {\n  if (content && typeof content === 'object') return content;\n  let cleaned = String(content || '').replace(/```json\\s*/gi, '').replace(/```\\s*/g, '').trim();\n  try { return JSON.parse(cleaned); } catch (e) {}\n  const firstBrace = cleaned.indexOf('{');\n  const lastBrace = cleaned.lastIndexOf('}');\n  if (firstBrace !== -1 && lastBrace > firstBrace) {\n    let extracted = cleaned.substring(firstBrace, lastBrace + 1);\n    try { return JSON.parse(extracted); } catch (e) {}\n    let fixed = '';\n    let inString = false;\n    let escape = false;\n    for (let i = 0; i < extracted.length; i++) {\n      const ch = extracted[i];\n      if (escape) { fixed += ch; escape = false; continue; }\n      if (ch === '\\\\' && inString) { fixed += ch; escape = true; continue; }\n      if (ch === '\"') { inString = !inString; fixed += ch; continue; }\n      if (inString) {\n        if (ch === '\\n') { fixed += '\\\\n'; continue; }\n        if (ch === '\\r') { fixed += '\\\\r'; continue; }\n        if (ch === '\\t') { fixed += '\\\\t'; continue; }\n      }\n      fixed += ch;\n    }\n    fixed = fixed.replace(/,\\s*}/g, '}').replace(/,\\s*]/g, ']');\n    try { return JSON.parse(fixed); } catch (e) {}\n  }\n  const firstBracket = cleaned.indexOf('[');\n  const lastBracket = cleaned.lastIndexOf(']');\n  if (firstBracket !== -1 && lastBracket > firstBracket) {\n    try { return JSON.parse(cleaned.substring(firstBracket, lastBracket + 1)); } catch (e) {}\n  }\n  return {};\n}\n\nconst t=$input.first().json||{};const raw=(t.text!=null)?t.text:((t.output!=null)?t.output:t);return [{json:{cover1:parseJSON(raw)}}];"
+      },
+      "id": "75d3f2ad-bbf4-497a-92a1-19804b5067f1",
+      "name": "Parse Cover Pass1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        32966,
+        48312
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify({ selection: $('Parse Cover Pass1').first().json.cover1, jd: $('Prepare Apply Context').first().json.job_description, company: $('Prepare Apply Context').first().json.company }) }}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are CoverForge Pass 2 — the cover letter writer. You receive Pass-1 selection decisions (selected STAR achievements, competitive positioning, company research/mission, buyer persona, tier) and write the final cover letter. Output structured JSON ONLY.\n\nINPUT: { \"selection\": <Pass-1 decisions object>, \"jd\": \"<job description>\", \"company\": \"<company name>\" }\n\nOUTPUT SCHEMA — return EXACTLY this, strict minified JSON, no markdown fences:\n{\n  \"title\": \"<catchy 6-12 word headline tying the candidate to this role>\",\n  \"salutation\": \"Dear <Company> Hiring Team,\",\n  \"hook\": \"<2-3 sentence opening. Lead with the candidate's unique_differentiator from competitivePositioning, then connect it to something specific about the company (its mission, product, or recent work from companyResearch). Flowing prose.>\",\n  \"bullets\": [ { \"keyword\": \"<3-5 word bold lead-in>\", \"text\": \"<1-2 sentence STAR achievement with a quantified metric, drawn ONLY from the selected achievements; weave a JD keyword naturally>\" } ],\n  \"cta\": \"<2-3 sentence close: one specific contribution you would make in the first 90 days + a confident sign-off>\",\n  \"word_count\": <integer: total words across hook + bullets + cta>\n}\n\nRULES:\n- Bullet count by tier: senior/mid = 3 bullets, junior = 2, fresher = 1-2.\n- Word count by tier: senior 320-370, mid 280-330, junior 240-290, fresher 200-250. Stay within range.\n- Use ONLY achievements, metrics, and facts present in the Pass-1 selection — NEVER invent or inflate.\n- Each bullet's \"text\" follows STAR: situation/action then a quantified result.\n- The hook MUST reference something concrete about the company (mission / product / recent work) — not generic praise.\n- Frame achievements to resonate with what the company values (companyResearch.companySentiment), but NEVER name-drop values or write phrases like \"aligned with your values\" or \"demonstrating ownership\".\n- No flattery. BANNED phrases: \"passionate about\", \"excited to apply\", \"dynamic environment\", \"fast-paced\", \"team player\", \"hit the ground running\".\n- Plain professional prose inside field values. No LaTeX, no markdown.\n"
+            }
+          ]
+        }
+      },
+      "id": "5a6909a5-a6c2-4405-99be-4eb336068cd4",
+      "name": "Cover Pass2",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        33196,
+        48312
+      ]
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-haiku-4.5",
+        "options": {
+          "maxTokens": 4000,
+          "temperature": 0.3,
+          "timeout": 120000
+        }
+      },
+      "id": "fdd116f5-0c5b-4fcc-af3d-f91644f5a586",
+      "name": "Cover Pass2 Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        33196,
+        48472
+      ],
+      "credentials": {
+        "openRouterApi": {
+          "id": "xZD1i4ZBmSxVDuIe",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Shared parseJSON (ported from command-center index.ts 319-378). Escapes literal\n// \\n\\r\\t INSIDE JSON string values only — handles LaTeX-heavy LLM output that\n// strict parsers choke on. Prepended to each Parse* node by the patch script.\nfunction parseJSON(content) {\n  if (content && typeof content === 'object') return content;\n  let cleaned = String(content || '').replace(/```json\\s*/gi, '').replace(/```\\s*/g, '').trim();\n  try { return JSON.parse(cleaned); } catch (e) {}\n  const firstBrace = cleaned.indexOf('{');\n  const lastBrace = cleaned.lastIndexOf('}');\n  if (firstBrace !== -1 && lastBrace > firstBrace) {\n    let extracted = cleaned.substring(firstBrace, lastBrace + 1);\n    try { return JSON.parse(extracted); } catch (e) {}\n    let fixed = '';\n    let inString = false;\n    let escape = false;\n    for (let i = 0; i < extracted.length; i++) {\n      const ch = extracted[i];\n      if (escape) { fixed += ch; escape = false; continue; }\n      if (ch === '\\\\' && inString) { fixed += ch; escape = true; continue; }\n      if (ch === '\"') { inString = !inString; fixed += ch; continue; }\n      if (inString) {\n        if (ch === '\\n') { fixed += '\\\\n'; continue; }\n        if (ch === '\\r') { fixed += '\\\\r'; continue; }\n        if (ch === '\\t') { fixed += '\\\\t'; continue; }\n      }\n      fixed += ch;\n    }\n    fixed = fixed.replace(/,\\s*}/g, '}').replace(/,\\s*]/g, ']');\n    try { return JSON.parse(fixed); } catch (e) {}\n  }\n  const firstBracket = cleaned.indexOf('[');\n  const lastBracket = cleaned.lastIndexOf(']');\n  if (firstBracket !== -1 && lastBracket > firstBracket) {\n    try { return JSON.parse(cleaned.substring(firstBracket, lastBracket + 1)); } catch (e) {}\n  }\n  return {};\n}\n\nconst t=$input.first().json||{};const raw=(t.text!=null)?t.text:((t.output!=null)?t.output:t);return [{json:parseJSON(raw)}];"
+      },
+      "id": "667fbc75-9df1-4766-991b-a5e154d8372a",
+      "name": "Parse Cover Pass2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        33426,
+        48312
+      ]
     }
   ],
   "connections": {
@@ -5328,17 +5835,6 @@
         [
           {
             "node": "Merge PDFs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "CoverForge": {
-      "main": [
-        [
-          {
-            "node": "Save Apply Context",
             "type": "main",
             "index": 0
           }
@@ -5871,28 +6367,6 @@
         ]
       ]
     },
-    "OpenRouter Chat Model7": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "CoverForge",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Cover Output Parser": {
-      "ai_outputParser": [
-        [
-          {
-            "node": "CoverForge",
-            "type": "ai_outputParser",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Revise Output Parser": {
       "ai_outputParser": [
         [
@@ -6155,12 +6629,7 @@
         ],
         [
           {
-            "node": "Build Pass1 Context",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "CoverForge",
+            "node": "Read Intel Cache (Apply)",
             "type": "main",
             "index": 0
           }
@@ -6171,12 +6640,7 @@
       "main": [
         [
           {
-            "node": "Build Pass1 Context",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "CoverForge",
+            "node": "Read Intel Cache (Apply)",
             "type": "main",
             "index": 0
           }
@@ -7484,7 +7948,7 @@
       "main": [
         [
           {
-            "node": "Compile Resume PDF",
+            "node": "Extract ATS Signals",
             "type": "main",
             "index": 0
           }
@@ -7492,6 +7956,334 @@
         [
           {
             "node": "Send Apply Build Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CompanyIntel Apply Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "CompanyIntel Apply",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Intel Cache (Apply)": {
+      "main": [
+        [
+          {
+            "node": "IF: Dossier Fresh?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Dossier Fresh?": {
+      "main": [
+        [
+          {
+            "node": "Pass Dossier",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Apply Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Apply Research": {
+      "main": [
+        [
+          {
+            "node": "Apply Research Fetch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply Research Fetch": {
+      "main": [
+        [
+          {
+            "node": "Normalize Apply Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Apply Research": {
+      "main": [
+        [
+          {
+            "node": "CompanyIntel Apply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CompanyIntel Apply": {
+      "main": [
+        [
+          {
+            "node": "Parse Apply Intel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Apply Intel": {
+      "main": [
+        [
+          {
+            "node": "Save Intel Cache (Apply)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Intel Cache (Apply)": {
+      "main": [
+        [
+          {
+            "node": "Pass Dossier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pass Dossier": {
+      "main": [
+        [
+          {
+            "node": "Build Pass1 Context",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Cover Pass1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract ATS Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extract ATS Signals",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pass2 Regen Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Pass2 Regen",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract ATS Signals": {
+      "main": [
+        [
+          {
+            "node": "Validate ATS Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate ATS Signals": {
+      "main": [
+        [
+          {
+            "node": "Calculate ATS Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate ATS Score": {
+      "main": [
+        [
+          {
+            "node": "IF: ATS Low?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send ATS Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: ATS Low?": {
+      "main": [
+        [
+          {
+            "node": "Build Pass2 Regen Input",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pick Resume LaTeX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Pass2 Regen Input": {
+      "main": [
+        [
+          {
+            "node": "Pass2 Regen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pass2 Regen": {
+      "main": [
+        [
+          {
+            "node": "Parse Pass2 Regen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Pass2 Regen": {
+      "main": [
+        [
+          {
+            "node": "Assemble Regen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assemble Regen": {
+      "main": [
+        [
+          {
+            "node": "Pick Resume LaTeX",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Apply Build Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Resume LaTeX": {
+      "main": [
+        [
+          {
+            "node": "Compile Resume PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cover Pass1 Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Cover Pass1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cover Pass2 Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Cover Pass2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cover Pass1": {
+      "main": [
+        [
+          {
+            "node": "Parse Cover Pass1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Cover Pass1": {
+      "main": [
+        [
+          {
+            "node": "Cover Pass2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cover Pass2": {
+      "main": [
+        [
+          {
+            "node": "Parse Cover Pass2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Cover Pass2": {
+      "main": [
+        [
+          {
+            "node": "Save Apply Context",
             "type": "main",
             "index": 0
           }
