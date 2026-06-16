@@ -12,12 +12,12 @@ Demoed live at **n8n NYC Meetup, April 2026**.
 
 ```mermaid
 flowchart TD
-    TG["Telegram Message"] --> ROUTER["Intent Router<br/><i>Llama 3.3 70B :free</i>"]
+    TG["Telegram Message"] --> ROUTER["Intent Router<br/><i>LLM classifier</i>"]
     CRON["Schedule Trigger<br/><i>8am + 11:30am ET</i>"] --> FIND
 
     ROUTER --> |help| HELP["Help Text"]
-    ROUTER --> |find_jobs| FIND["Job Discovery<br/><i>Greenhouse API + JobScorer</i>"]
-    ROUTER --> |apply| APPLY["Resume + Cover PDF<br/><i>Claude Sonnet 4.6 + LaTeX</i>"]
+    ROUTER --> |find_jobs| FIND["Job Discovery<br/><i>structured + web search, /100 scoring</i>"]
+    ROUTER --> |apply| APPLY["Resume + Cover PDF<br/><i>2-phase select+generate, ATS loop, LaTeX</i>"]
     ROUTER --> |revise| REVISE["Refine Last Output<br/><i>Chat Memory + Sonnet</i>"]
     ROUTER --> |score| SCORE["ForgeScore<br/><i>Resume vs JD</i>"]
     ROUTER --> |intel| INTEL["Company Intel<br/><i>Search Fan-out + RRF</i>"]
@@ -45,13 +45,15 @@ flowchart TD
 
 | Intent | What it does | Example message |
 |--------|-------------|-----------------|
-| **find_jobs** | Searches Greenhouse ATS across 50 companies, scores fit, returns top 5 | "find AI jobs in NYC" |
-| **apply** | Generates tailored resume + cover letter PDFs via LaTeX | "3" (applies to job #3 from last search) |
+| **find_jobs** | Searches structured job APIs (RemoteOK, Adzuna) + web, dedupes, scores fit **/100** with sub-scores, returns top matches | "find AI jobs in NYC" |
+| **apply** | 2-phase engine: selects content against the JD, frames bullets to **researched company values + mission**, scores **ATS** and auto-improves if weak — then resume + cover PDFs | "3" (applies to job #3 from last search) |
 | **revise** | Iterates on the last resume/cover with chat memory | "make it shorter" |
-| **score** | Scores your resume against a job description (0-10) | "score my resume for this role" |
-| **intel** | Multi-source company health report (layoffs, funding, H1B, culture) | "intel about Databricks" |
-| **outreach** | Finds recruiters/hiring managers + generates outreach variants | "who should I contact at Anthropic" |
+| **score** | Scores your resume against a job description (**0-100**, explainable) | "score my resume for this role" |
+| **intel** | Multi-source company health report (layoffs, funding, H1B, culture, **mission/vision**), cached | "intel about Databricks" |
+| **outreach** | Finds real recruiters/hiring managers + writes outreach citing a **real public hook**; optional verified contacts (Apollo/Hunter, BYOK) | "who should I contact at Anthropic" |
+| **draft** | Writes the outreach variants for a chosen contact | "draft 1" |
 | **salary** | Salary ranges + negotiation advice | "salary for ML Engineer at Stripe" |
+| **costs** | API/LLM spend summary (last 30 days, from `tool_cost_log`) | "costs" |
 | **track** | Logs and lists your applications | "track" |
 | **status** | Pipeline status overview | "status" |
 | **help** | Command list | "help" |

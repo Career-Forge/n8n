@@ -137,7 +137,7 @@
         "text": "={{ $json.message_text }}",
         "hasOutputParser": true,
         "options": {
-          "systemMessage": "You are CareerForge's intent classification agent. You receive a Telegram message from a job seeker and classify it into one of 16 intents, extracting any relevant entities. You have access to the last 5 conversation turns via chat memory to resolve ambiguous references.\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\nOutput Schema:\n```json\n{\n  \"intent\": \"help | find_jobs | apply | revise | score | intel | outreach | salary | track | status | setup_resume | view_prefs | update_prefs | forget_pref | verbose_toggle | check_resume\",\n  \"entities\": {\n    \"company\": \"string or null\",\n    \"role\": \"string or null\",\n    \"location\": \"string or null\",\n    \"job_number\": \"integer or null\",\n    \"changes\": \"string or null\"\n  },\n  \"confidence\": \"high | medium | low\",\n  \"reasoning\": \"1 sentence on why this intent\"\n}\n```\n\nIntent Classification:\n1. help — Greetings, \"what can you do\", \"help\", anything unclear or off-topic. Default when nothing else matches.\n2. find_jobs — Search for jobs. Triggers: \"find jobs\", \"job search\", \"latest jobs\", \"job digest\", \"what's new\", job titles + locations.\n3. apply — Generate resume + cover letter for a specific job. Triggers: a bare number (\"3\"), \"apply to 3\", \"generate resume for job 2\".\n4. revise — Modify the last generated resume or cover letter. Triggers: \"shorter\", \"longer\", \"more X\", \"less X\", \"change Y\", \"rewrite\", \"tweak\".\n5. score — Score resume fit against a job description. Triggers: \"score\", \"how do I match\", \"fit check\".\n6. intel — Company research or health reports. Triggers: \"tell me about [company]\", \"is [company] safe\", \"red flags\", layoffs, funding, culture.\n7. outreach — Find contacts or generate cold outreach. Triggers: \"who should I contact\", \"find recruiters\", \"cold email\".\n8. salary — Compensation data or negotiation advice. Triggers: \"salary\", \"compensation\", \"how much does [company] pay\".\n9. track — Log or update application status. Triggers: \"track\", \"save this application\", \"mark as applied\".\n10. status — View tracked applications. Triggers: \"show my applications\", \"application status\", \"pipeline\".\n11. setup_resume — User sends a PDF/DOCX/TXT resume file, says 'setup my resume', 'upload my resume', 'here\\'s my resume', 'set up', or message contains a document attachment.\n\nEntity Extraction:\n- company: Normalize casing. null if not mentioned.\n- role: Extract job title. null if not mentioned.\n- location: Extract location. null if not mentioned.\n- job_number: Bare number = job_number. null if not mentioned.\n- changes: For revise only. null for all other intents.\n\nDisambiguation:\n- Only a number (\"3\") → apply with job_number: 3\n- Refinement language → revise (even if company mentioned)\n- \"Who should I contact\" → outreach, not intel\n- Company safety/layoff questions → intel, not outreach\n- Ambiguous → most specific intent, confidence: low\n- Truly unclear → help, confidence: low\n- Typos: be generous (\"fnd jobs\" → find_jobs)\n- Mixed messages: pick first actionable intent\n- Follow-ups: use chat memory context\n\nFor the \"revise\" intent, also extract these additional fields:\n\n\"revise_section\": null | \"summary\" | \"experience\" | \"skills\" | \"keywords\"\n  \"fix my summary\" / \"rewrite the summary\" / \"update the objective\" → \"summary\"\n  \"punch up the bullets\" / \"fix the experience section\" / \"better bullets\" → \"experience\"\n  \"update skills\" / \"fix the skills section\" / \"add to skills\" → \"skills\"\n  \"add missing keywords\" / \"inject keywords\" / \"add the gaps\" / \"add keywords\" → \"keywords\"\n  not mentioned → null (full rebuild, existing behavior)\n\n\"revise_tone\": null | \"senior\" | \"junior\" | \"neutral\"\n  \"make it more senior\" / \"more leadership\" / \"tone it up\" → \"senior\"\n  \"tone it down\" / \"more IC\" / \"less senior\" / \"more junior\" → \"junior\"\n  \"more neutral\" → \"neutral\"\n  not mentioned → null\n\nSpecial shortcut: if the user says \"add keywords\" or \"add the missing keywords\" or \"inject keywords\":\n→ intent: \"revise\", revise_section: \"keywords\", instruction: \"inject all missing keywords\", revise_tone: null\n\nInclude revise_section and revise_tone alongside a top-level \"instruction\" field (the user's natural language change request) in the revise intent JSON output.\n\nAdditional intents:\n12. view_prefs — User wants to see their saved preferences. Triggers: \"/prefs\", \"show my preferences\", \"what do you remember\"\n13. update_prefs — User wants to save a preference. Triggers: \"remember that\", \"from now on\", \"always\", \"set my location\", \"I need cap-exempt\"\n14. forget_pref — User wants to remove a preference. Triggers: \"/prefs forget\", \"remove my\", \"clear preference\"\n15. verbose_toggle — User wants to toggle verbose mode. Triggers: \"/verbose on\", \"/verbose off\", \"show me what you search for\" \n\n16. check_resume — User asks whether a resume is saved or what resume/data CareerForge has. Triggers: \"do you have my resume\", \"is my resume saved\", \"what resume do you have\", \"can you access my resume\", \"show resume status\". Do not route these to help.\n"
+          "systemMessage": "You are CareerForge's intent classification agent. You receive a Telegram message from a job seeker and classify it into one of 16 intents, extracting any relevant entities. You have access to the last 5 conversation turns via chat memory to resolve ambiguous references.\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\nOutput Schema:\n```json\n{\n  \"intent\": \"help | find_jobs | apply | revise | score | intel | outreach | salary | track | status | setup_resume | view_prefs | update_prefs | forget_pref | verbose_toggle | check_resume | costs\",\n  \"entities\": {\n    \"company\": \"string or null\",\n    \"role\": \"string or null\",\n    \"location\": \"string or null\",\n    \"job_number\": \"integer or null\",\n    \"changes\": \"string or null\"\n  },\n  \"confidence\": \"high | medium | low\",\n  \"reasoning\": \"1 sentence on why this intent\"\n}\n```\n\nIntent Classification:\n1. help — Greetings, \"what can you do\", \"help\", anything unclear or off-topic. Default when nothing else matches.\n2. find_jobs — Search for jobs. Triggers: \"find jobs\", \"job search\", \"latest jobs\", \"job digest\", \"what's new\", job titles + locations.\n3. apply — Generate resume + cover letter for a specific job. Triggers: a bare number (\"3\"), \"apply to 3\", \"generate resume for job 2\".\n4. revise — Modify the last generated resume or cover letter. Triggers: \"shorter\", \"longer\", \"more X\", \"less X\", \"change Y\", \"rewrite\", \"tweak\".\n5. score — Score resume fit against a job description. Triggers: \"score\", \"how do I match\", \"fit check\".\n6. intel — Company research or health reports. Triggers: \"tell me about [company]\", \"is [company] safe\", \"red flags\", layoffs, funding, culture.\n7. outreach — Find contacts or generate cold outreach. Triggers: \"who should I contact\", \"find recruiters\", \"cold email\".\n8. salary — Compensation data or negotiation advice. Triggers: \"salary\", \"compensation\", \"how much does [company] pay\".\n9. track — Log or update application status. Triggers: \"track\", \"save this application\", \"mark as applied\".\n10. status — View tracked applications. Triggers: \"show my applications\", \"application status\", \"pipeline\".\n11. setup_resume — User sends a PDF/DOCX/TXT resume file, says 'setup my resume', 'upload my resume', 'here\\'s my resume', 'set up', or message contains a document attachment.\n\nEntity Extraction:\n- company: Normalize casing. null if not mentioned.\n- role: Extract job title. null if not mentioned.\n- location: Extract location. null if not mentioned.\n- job_number: Bare number = job_number. null if not mentioned.\n- changes: For revise only. null for all other intents.\n\nDisambiguation:\n- Only a number (\"3\") → apply with job_number: 3\n- Refinement language → revise (even if company mentioned)\n- \"Who should I contact\" → outreach, not intel\n- Company safety/layoff questions → intel, not outreach\n- Ambiguous → most specific intent, confidence: low\n- Truly unclear → help, confidence: low\n- Typos: be generous (\"fnd jobs\" → find_jobs)\n- Mixed messages: pick first actionable intent\n- Follow-ups: use chat memory context\n\nFor the \"revise\" intent, also extract these additional fields:\n\n\"revise_section\": null | \"summary\" | \"experience\" | \"skills\" | \"keywords\"\n  \"fix my summary\" / \"rewrite the summary\" / \"update the objective\" → \"summary\"\n  \"punch up the bullets\" / \"fix the experience section\" / \"better bullets\" → \"experience\"\n  \"update skills\" / \"fix the skills section\" / \"add to skills\" → \"skills\"\n  \"add missing keywords\" / \"inject keywords\" / \"add the gaps\" / \"add keywords\" → \"keywords\"\n  not mentioned → null (full rebuild, existing behavior)\n\n\"revise_tone\": null | \"senior\" | \"junior\" | \"neutral\"\n  \"make it more senior\" / \"more leadership\" / \"tone it up\" → \"senior\"\n  \"tone it down\" / \"more IC\" / \"less senior\" / \"more junior\" → \"junior\"\n  \"more neutral\" → \"neutral\"\n  not mentioned → null\n\nSpecial shortcut: if the user says \"add keywords\" or \"add the missing keywords\" or \"inject keywords\":\n→ intent: \"revise\", revise_section: \"keywords\", instruction: \"inject all missing keywords\", revise_tone: null\n\nInclude revise_section and revise_tone alongside a top-level \"instruction\" field (the user's natural language change request) in the revise intent JSON output.\n\nAdditional intents:\n12. view_prefs — User wants to see their saved preferences. Triggers: \"/prefs\", \"show my preferences\", \"what do you remember\"\n13. update_prefs — User wants to save a preference. Triggers: \"remember that\", \"from now on\", \"always\", \"set my location\", \"I need cap-exempt\"\n14. forget_pref — User wants to remove a preference. Triggers: \"/prefs forget\", \"remove my\", \"clear preference\"\n15. verbose_toggle — User wants to toggle verbose mode. Triggers: \"/verbose on\", \"/verbose off\", \"show me what you search for\" \n\n16. check_resume — User asks whether a resume is saved or what resume/data CareerForge has. Triggers: \"do you have my resume\", \"is my resume saved\", \"what resume do you have\", \"can you access my resume\", \"show resume status\". Do not route these to help.\n\n17. costs — Show how much has been spent on paid API providers (Apollo, etc.). Triggers: \"costs\", \"spend\", \"usage\", \"how much have I spent\", \"my bill\"."
         }
       },
       "id": "8bda7242-4082-4acb-b8ce-a766d2055df0",
@@ -166,8 +166,8 @@
     {
       "parameters": {
         "mode": "expression",
-        "numberOutputs": 17,
-        "output": "={{ ['help','find_jobs','apply','revise','score','intel','outreach','salary','track','status','setup_resume','view_prefs','update_prefs','forget_pref','verbose_toggle','check_resume'].indexOf($json.output.intent) === -1 ? 16 : ['help','find_jobs','apply','revise','score','intel','outreach','salary','track','status','setup_resume','view_prefs','update_prefs','forget_pref','verbose_toggle','check_resume'].indexOf($json.output.intent) }}"
+        "numberOutputs": 18,
+        "output": "={{ ['help','find_jobs','apply','revise','score','intel','outreach','salary','track','status','setup_resume','view_prefs','update_prefs','forget_pref','verbose_toggle','check_resume','costs'].indexOf($json.output.intent) === -1 ? 17 : ['help','find_jobs','apply','revise','score','intel','outreach','salary','track','status','setup_resume','view_prefs','update_prefs','forget_pref','verbose_toggle','check_resume','costs'].indexOf($json.output.intent) }}"
       },
       "id": "c0b9933e-b1f4-4686-8569-256bb95e0e00",
       "name": "Route Intent",
@@ -204,7 +204,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Aggregate Jobs v8 — tier-aware ordering\n// Changes vs v7:\n//   - Sort key is (source_tier ASC, updated_at DESC) instead of pure recency\n//   - Tier 4 entries (clearly not real job pages) are dropped\n//   - Result count in `tier_counts` for downstream display\n\nconst allJobs = [];\nconst seen = new Set();\nconst sourceCounts = {};\n\nfor (const item of $input.all()) {\n  const jobs = item.json.jobs || [];\n  const source = item.json.source || 'unknown';\n  sourceCounts[source] = (sourceCounts[source] || 0) + jobs.length;\n  for (const job of jobs) {\n    if (!job || !job.url) continue;\n    const dedupKey = job.url.replace(/[?#].*$/, '').replace(/\\/+$/, '').toLowerCase();\n    if (seen.has(dedupKey)) continue;\n    seen.add(dedupKey);\n    allJobs.push(job);\n  }\n}\n\nconst expandCtx = $('Parse Expand Query').first().json;\nconst roleFamilies    = expandCtx.role_families    || [];\nconst excludedRoles   = expandCtx.excluded_roles   || [];\nconst locationCanon   = (expandCtx.location_canonical || '').trim().toLowerCase();\nconst remotePref      = expandCtx.remote_preference  || 'open';\nconst freshness       = expandCtx.freshness          || 'qdr:w';\n\nconst freshnessMs = { 'qdr:h': 3600000, 'qdr:d': 86400000, 'qdr:w': 604800000, 'qdr:m': 2592000000, 'qdr:y': 31536000000 }[freshness] || 604800000;\nconst cutoff = Date.now() - freshnessMs;\n\nlet filtered = allJobs;\n\n// Drop Tier 3 aggregators and Tier 4 unknown pages from the main ranked results.\n// Aggregators are usually listing pages and often score falsely high without a full JD.\nfiltered = filtered.filter(j => (j.source_tier || 4) < 3);\n\n// Role family filter\nif (roleFamilies.length > 0) {\n  filtered = filtered.filter(j => {\n    const haystack = (j.title + ' ' + (j.department || '')).toLowerCase();\n    if (excludedRoles.some(excl => {\n      const terms = excl.toLowerCase().split(/\\s+/);\n      return terms.every(t => new RegExp('\\\\b' + t + '\\\\b').test(haystack));\n    })) return false;\n    return roleFamilies.some(variant => {\n      const terms = variant.toLowerCase().split(/\\s+/).filter(t => t.length > 1);\n      return terms.every(term => term.length <= 3\n        ? new RegExp('\\\\b' + term + '\\\\b').test(haystack)\n        : haystack.includes(term));\n    });\n  });\n}\n\n// Location filter (hard, only when set and not remote_only)\nif (remotePref !== 'remote_only' && locationCanon && !['any','anywhere','worldwide'].includes(locationCanon)) {\n  const locTerms = locationCanon.split(/[\\s,]+/).filter(t => t.length > 1);\n  filtered = filtered.filter(j => {\n    const src = (j.source || '').toLowerCase();\n    if (src.includes('firecrawl') || src.includes('serper') || src.includes('youcom')) return true;\n    const hay = (j.location || '').toLowerCase();\n    if (!hay || hay === 'unknown') return true;\n    return locTerms.some(t => hay.includes(t));\n  });\n}\n\n// Recency filter (soft)\nfiltered = filtered.filter(j => {\n  if (!j.updated_at) return true;\n  const t = new Date(j.updated_at).getTime();\n  return isNaN(t) || t >= cutoff;\n});\n\n// Sort: tier first (Tier 1 ATS at top), then recency within tier\nfiltered.sort((a, b) => {\n  const tierDiff = (a.source_tier || 99) - (b.source_tier || 99);\n  if (tierDiff !== 0) return tierDiff;\n  const ad = new Date(a.updated_at || 0).getTime() || 0;\n  const bd = new Date(b.updated_at || 0).getTime() || 0;\n  return bd - ad;\n});\n\n// Tier composition for downstream display\nconst tierCounts = { 1: 0, 2: 0, '2.5': 0, 3: 0 };\nfor (const j of filtered) {\n  const t = j.source_tier;\n  if (t === 1) tierCounts[1]++;\n  else if (t === 2) tierCounts[2]++;\n  else if (t === 2.5) tierCounts['2.5']++;\n  else if (t === 3) tierCounts[3]++;\n}\n\nconst top = filtered.slice(0, 50);\nreturn [{ json: {\n  jobs: top, count: top.length, total_raw: allJobs.length,\n  sources: sourceCounts, tier_counts: tierCounts,\n  filter_applied: { role_families: roleFamilies, location: locationCanon || null, remote_preference: remotePref }\n} }];\n"
+        "jsCode": "// Aggregate Jobs v9 — composite-key dedup (S2d) + tier-aware ordering\n// Changes vs v8:\n//   - Dedup by canonical apply-URL OR lowercased company+title, so the SAME job\n//     surfaced by different sources (RemoteOK url vs Adzuna url vs web) collapses to one.\n//   - On a collision, KEEP the lower source_tier (structured/ATS preferred over web),\n//     and backfill salary + location onto the kept job from the dropped duplicate.\n//   - (v8 carried over) tier-aware sort, Tier 3+ dropped, tier_counts for display.\n\nconst sourceCounts = {};\nconst byKey = new Map(); // dedup key -> kept job (a job may be reachable by several keys)\n\nfunction dedupKeys(job) {\n  const ks = [];\n  if (job.url) ks.push('u:' + job.url.replace(/[?#].*$/, '').replace(/\\/+$/, '').toLowerCase());\n  const ct = ((job.company || '') + '|' + (job.title || '')).toLowerCase().replace(/\\s+/g, ' ').trim();\n  if (ct.replace(/\\|/g, '').length > 4) ks.push('ct:' + ct);\n  return ks;\n}\n\nfor (const item of $input.all()) {\n  const jobs = item.json.jobs || [];\n  const source = item.json.source || 'unknown';\n  sourceCounts[source] = (sourceCounts[source] || 0) + jobs.length;\n  for (const job of jobs) {\n    if (!job || !job.url) continue;\n    const ks = dedupKeys(job);\n    let existing = null;\n    for (const k of ks) { if (byKey.has(k)) { existing = byKey.get(k); break; } }\n    if (!existing) { for (const k of ks) byKey.set(k, job); continue; }\n    // collision: keep lower tier; backfill salary/location from the dropped dup\n    const curTier = existing.source_tier || 99;\n    const newTier = job.source_tier || 99;\n    const keep = newTier < curTier ? job : existing;\n    const drop = newTier < curTier ? existing : job;\n    if (!keep.salary_min && drop.salary_min) { keep.salary_min = drop.salary_min; keep.salary_max = drop.salary_max; keep.salary_currency = drop.salary_currency; }\n    if ((!keep.location || keep.location === 'unknown') && drop.location && drop.location !== 'unknown') keep.location = drop.location;\n    for (const k of dedupKeys(existing)) byKey.set(k, keep);\n    for (const k of ks) byKey.set(k, keep);\n  }\n}\n\nconst allJobs = Array.from(new Set(byKey.values()));\n\nconst expandCtx = $('Parse Expand Query').first().json;\nconst roleFamilies    = expandCtx.role_families    || [];\nconst excludedRoles   = expandCtx.excluded_roles   || [];\nconst locationCanon   = (expandCtx.location_canonical || '').trim().toLowerCase();\nconst remotePref      = expandCtx.remote_preference  || 'open';\nconst freshness       = expandCtx.freshness          || 'qdr:w';\n\nconst freshnessMs = { 'qdr:h': 3600000, 'qdr:d': 86400000, 'qdr:w': 604800000, 'qdr:m': 2592000000, 'qdr:y': 31536000000 }[freshness] || 604800000;\nconst cutoff = Date.now() - freshnessMs;\n\nlet filtered = allJobs;\n\n// Drop Tier 3 aggregators and Tier 4 unknown pages from the main ranked results.\nfiltered = filtered.filter(j => (j.source_tier || 4) < 3);\n\n// Role family filter\nif (roleFamilies.length > 0) {\n  filtered = filtered.filter(j => {\n    const haystack = (j.title + ' ' + (j.department || '')).toLowerCase();\n    if (excludedRoles.some(excl => {\n      const terms = excl.toLowerCase().split(/\\s+/);\n      return terms.every(t => new RegExp('\\\\b' + t + '\\\\b').test(haystack));\n    })) return false;\n    return roleFamilies.some(variant => {\n      const terms = variant.toLowerCase().split(/\\s+/).filter(t => t.length > 1);\n      return terms.every(term => term.length <= 3\n        ? new RegExp('\\\\b' + term + '\\\\b').test(haystack)\n        : haystack.includes(term));\n    });\n  });\n}\n\n// Location filter (hard, only when set and not remote_only)\nif (remotePref !== 'remote_only' && locationCanon && !['any','anywhere','worldwide'].includes(locationCanon)) {\n  const locTerms = locationCanon.split(/[\\s,]+/).filter(t => t.length > 1);\n  filtered = filtered.filter(j => {\n    const src = (j.source || '').toLowerCase();\n    if (src.includes('firecrawl') || src.includes('serper') || src.includes('youcom')) return true;\n    const hay = (j.location || '').toLowerCase();\n    if (!hay || hay === 'unknown') return true;\n    return locTerms.some(t => hay.includes(t));\n  });\n}\n\n// Recency filter (soft)\nfiltered = filtered.filter(j => {\n  if (!j.updated_at) return true;\n  const t = new Date(j.updated_at).getTime();\n  return isNaN(t) || t >= cutoff;\n});\n\n// Sort: tier first (Tier 1 ATS at top), then recency within tier\nfiltered.sort((a, b) => {\n  const tierDiff = (a.source_tier || 99) - (b.source_tier || 99);\n  if (tierDiff !== 0) return tierDiff;\n  const ad = new Date(a.updated_at || 0).getTime() || 0;\n  const bd = new Date(b.updated_at || 0).getTime() || 0;\n  return bd - ad;\n});\n\n// Tier composition for downstream display\nconst tierCounts = { 1: 0, 2: 0, '2.5': 0, 3: 0 };\nfor (const j of filtered) {\n  const t = j.source_tier;\n  if (t === 1) tierCounts[1]++;\n  else if (t === 2) tierCounts[2]++;\n  else if (t === 2.5) tierCounts['2.5']++;\n  else if (t === 3) tierCounts[3]++;\n}\n\nconst top = filtered.slice(0, 50);\nreturn [{ json: {\n  jobs: top, count: top.length, total_raw: allJobs.length,\n  sources: sourceCounts, tier_counts: tierCounts,\n  filter_applied: { role_families: roleFamilies, location: locationCanon || null, remote_preference: remotePref }\n} }];\n"
       },
       "id": "35b2221a-1ccc-4a49-a2b0-c3497e908847",
       "name": "Aggregate Jobs",
@@ -5681,6 +5681,61 @@
         30470,
         49148
       ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT provider, COALESCE(SUM(units),0) AS units, COALESCE(SUM(est_cost_usd),0) AS cost, COUNT(*) AS calls, COALESCE(SUM(est_cost_usd) FILTER (WHERE ts::date = now()::date),0) AS cost_today FROM tool_cost_log WHERE ts > now() - interval '30 days' GROUP BY provider ORDER BY cost DESC",
+        "options": {}
+      },
+      "id": "6a952d7f-5803-471c-b82c-7c2bd4192ce3",
+      "name": "Load Costs",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        27188,
+        50332
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "5pQq6UUmmGU7e04S",
+          "name": "CareerForge Postgres"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format Costs — S9b. Turns the Load Costs rows (per-provider spend, last 30 days)\n// into a Telegram message. Graceful when nothing is logged yet.\nconst chatId = $('Extract Input').first().json.chat_id;\nconst rows = $input.all().map((i) => i.json).filter((r) => r && r.provider);\n\nif (!rows.length) {\n  return [{ json: { chat_id: chatId, message: '💸 No tracked spend yet. Paid-provider usage (e.g. Apollo) is logged to tool_cost_log when those lanes run. LLM calls go through your OpenRouter account.' } }];\n}\n\nlet total = 0, today = 0;\nconst lines = rows.map((r) => {\n  const c = Number(r.cost || 0); total += c; today += Number(r.cost_today || 0);\n  const u = Number(r.units || 0);\n  return '• ' + r.provider + ': $' + c.toFixed(2) + ' — ' + r.calls + ' calls' + (u ? (', ' + u + ' units') : '');\n});\n\nconst msg = '💸 *Spend — last 30 days*\\n' + lines.join('\\n')\n  + '\\n\\n*Total:* $' + total.toFixed(2) + '   *Today:* $' + today.toFixed(2)\n  + '\\n\\n_Tracked from tool_cost_log (paid providers). LLM calls are billed on your OpenRouter account._';\n\nreturn [{ json: { chat_id: chatId, message: msg } }];\n"
+      },
+      "id": "af2d23d7-111a-4a3a-bb5e-87e355427e4c",
+      "name": "Format Costs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        27408,
+        50332
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "ae68133b-dd54-4dd0-af0a-8f7b87034cd7",
+      "name": "Send Costs",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        27628,
+        50332
+      ],
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -5827,6 +5882,13 @@
         [
           {
             "node": "Read Resume Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Costs",
             "type": "main",
             "index": 0
           }
@@ -8642,6 +8704,28 @@
         [
           {
             "node": "Build Hook Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Costs": {
+      "main": [
+        [
+          {
+            "node": "Format Costs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Costs": {
+      "main": [
+        [
+          {
+            "node": "Send Costs",
             "type": "main",
             "index": 0
           }
