@@ -2,7 +2,11 @@
 // with the draft context so OutreachWriter gets {contact, candidate_*, company,
 // relevant_achievement, candidate_role, contact_location, hook_sources}. Graceful
 // on empty/failed search (hook_sources: []).
-const ctx = $('Load Draft Contact').first().json || {};
+function draftCtx() {
+  try { const f = $('Finalize Enriched Contact').first().json; if (f && f.contact) return f; } catch (e) {}
+  return $('Load Draft Contact').first().json || {};
+}
+const ctx = draftCtx();
 let sp = {};
 try { sp = $input.first().json || {}; } catch (e) { sp = {}; }
 const organic = Array.isArray(sp.organic) ? sp.organic : [];

@@ -5432,7 +5432,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Build Hook Query — S7. Compact, ToS-safe outreach-hook search query for the\n// selected contact. PUBLIC sources only — GitHub, conference talks, engineering\n// blogs, papers, podcasts. NO LinkedIn login-scraping, no bulk social targeting.\nconst ctx = $('Load Draft Contact').first().json || {};\nconst c = ctx.contact || {};\nconst name = (c.name || '').trim();\nconst company = ctx.company || '';\nconst hook_query = name\n  ? '\"' + name + '\" ' + company + ' (site:github.com OR \"conference talk\" OR \"engineering blog\" OR site:arxiv.org OR podcast OR keynote)'\n  : company + ' engineering blog OR github OR conference talk';\nreturn [{ json: Object.assign({}, ctx, { hook_query }) }];\n"
+        "jsCode": "// Build Hook Query — S7 (S8: reads the enriched contact when present). Compact,\n// ToS-safe outreach-hook search query for the selected contact. PUBLIC sources only\n// — GitHub, conference talks, engineering blogs, papers, podcasts. NO LinkedIn\n// login-scraping, no bulk social targeting.\nfunction draftCtx() {\n  try { const f = $('Finalize Enriched Contact').first().json; if (f && f.contact) return f; } catch (e) {}\n  return $('Load Draft Contact').first().json || {};\n}\nconst ctx = draftCtx();\nconst c = ctx.contact || {};\nconst name = (c.name || '').trim();\nconst company = ctx.company || '';\nconst hook_query = name\n  ? '\"' + name + '\" ' + company + ' (site:github.com OR \"conference talk\" OR \"engineering blog\" OR site:arxiv.org OR podcast OR keynote)'\n  : company + ' engineering blog OR github OR conference talk';\nreturn [{ json: Object.assign({}, ctx, { hook_query }) }];\n"
       },
       "id": "c66ba401-abde-4da2-b2cf-88ddf2caeb4f",
       "name": "Build Hook Query",
@@ -5485,7 +5485,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Normalize Hooks — S7. Flatten the Serper hook search into hook_sources and merge\n// with the draft context so OutreachWriter gets {contact, candidate_*, company,\n// relevant_achievement, candidate_role, contact_location, hook_sources}. Graceful\n// on empty/failed search (hook_sources: []).\nconst ctx = $('Load Draft Contact').first().json || {};\nlet sp = {};\ntry { sp = $input.first().json || {}; } catch (e) { sp = {}; }\nconst organic = Array.isArray(sp.organic) ? sp.organic : [];\nconst hook_sources = organic.slice(0, 6).map((r) => ({\n  title: r.title || '', url: r.link || '', snippet: r.snippet || '',\n})).filter((h) => h.title || h.snippet);\n\nreturn [{ json: Object.assign({}, ctx, {\n  candidate_role: ctx.role || ctx.candidate_role || '',\n  contact_location: (ctx.contact || {}).location || null,\n  hook_sources,\n}) }];\n"
+        "jsCode": "// Normalize Hooks — S7. Flatten the Serper hook search into hook_sources and merge\n// with the draft context so OutreachWriter gets {contact, candidate_*, company,\n// relevant_achievement, candidate_role, contact_location, hook_sources}. Graceful\n// on empty/failed search (hook_sources: []).\nfunction draftCtx() {\n  try { const f = $('Finalize Enriched Contact').first().json; if (f && f.contact) return f; } catch (e) {}\n  return $('Load Draft Contact').first().json || {};\n}\nconst ctx = draftCtx();\nlet sp = {};\ntry { sp = $input.first().json || {}; } catch (e) { sp = {}; }\nconst organic = Array.isArray(sp.organic) ? sp.organic : [];\nconst hook_sources = organic.slice(0, 6).map((r) => ({\n  title: r.title || '', url: r.link || '', snippet: r.snippet || '',\n})).filter((h) => h.title || h.snippet);\n\nreturn [{ json: Object.assign({}, ctx, {\n  candidate_role: ctx.role || ctx.candidate_role || '',\n  contact_location: (ctx.contact || {}).location || null,\n  hook_sources,\n}) }];\n"
       },
       "id": "63ff4b53-fd44-400f-a6d9-94c37b654313",
       "name": "Normalize Hooks",
@@ -5494,6 +5494,219 @@
       "position": [
         30540,
         49328
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COALESCE((SELECT value FROM app_settings WHERE key='apollo_enabled'),'false') AS apollo_enabled, COALESCE((SELECT value FROM app_settings WHERE key='hunter_enabled'),'false') AS hunter_enabled, COALESCE((SELECT value::int FROM app_settings WHERE key='apollo_daily_limit'),25) AS apollo_daily_limit, COALESCE((SELECT SUM(units) FROM tool_cost_log WHERE provider='apollo' AND ts::date = now()::date),0) AS apollo_today",
+        "options": {}
+      },
+      "id": "ca8e1d3b-372d-4d5f-8974-d854e59fa9c8",
+      "name": "Load Enrich Config",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        28930,
+        49148
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "5pQq6UUmmGU7e04S",
+          "name": "CareerForge Postgres"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.apollo_enabled }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "leftValue": "={{ Number($json.apollo_today) }}",
+              "rightValue": "={{ Number($json.apollo_daily_limit) }}",
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1cbc1d82-b06e-4fa7-a61d-40efafc2bdc6",
+      "name": "IF: Apollo Enabled?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        29150,
+        49148
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apollo.io/api/v1/people/match",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ (($('Load Draft Contact').first().json||{}).contact||{}).name || '' }}"
+            },
+            {
+              "name": "organization_name",
+              "value": "={{ ($('Load Draft Contact').first().json||{}).company || '' }}"
+            },
+            {
+              "name": "reveal_personal_emails",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 20000
+        }
+      },
+      "id": "d7d9e3c6-d588-43b6-84c3-2dcaf6019066",
+      "name": "Apollo Match",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        29370,
+        48988
+      ],
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO tool_cost_log (provider, action, units, est_cost_usd, meta) VALUES ('apollo','people_match', $1::numeric, $1::numeric * 0.02, $2::jsonb)",
+        "options": {
+          "queryReplacement": "={{ [ ((($('Apollo Match').first().json||{}).person) ? 1 : 0), JSON.stringify({ contact: ((($('Load Draft Contact').first().json||{}).contact)||{}).name || '', company: ($('Load Draft Contact').first().json||{}).company || '' }) ] }}"
+        }
+      },
+      "id": "32e1a0d0-bd61-40ac-8d94-16ddca6708b2",
+      "name": "Log Apollo Cost",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        29590,
+        48988
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "5pQq6UUmmGU7e04S",
+          "name": "CareerForge Postgres"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build Enriched Contact — S8. Converge after the Apollo gate. Merges the Apollo\n// match (work email + title) into the contact when Apollo ran; otherwise passes the\n// free contact through unchanged. Carries hunter_enabled + has_email forward so the\n// Hunter gate can decide cheaply. n8n throws on $('<unrun node>') — caught.\nconst ctx = $('Load Draft Contact').first().json || {};\nconst base = ctx.contact || {};\n\nlet cfg = {};\ntry { cfg = $('Load Enrich Config').first().json || {}; } catch (e) { cfg = {}; }\n\nlet person = null;\ntry {\n  const a = $('Apollo Match').first().json || {};\n  person = a.person || (Array.isArray(a.matches) && a.matches[0]) || (Array.isArray(a.people) && a.people[0]) || null;\n} catch (e) { person = null; }\n\nconst email = (person && (person.email || person.work_email)) || base.email || null;\nconst title = (person && (person.title || person.headline)) || base.role || base.title || '';\nconst contact = Object.assign({}, base, {\n  email: email || null,\n  title: title,\n  apollo_enriched: !!person,\n});\n\nreturn [{ json: Object.assign({}, ctx, {\n  contact,\n  has_email: !!email,\n  hunter_enabled: cfg.hunter_enabled || 'false',\n}) }];\n"
+      },
+      "id": "a4a24ee0-1ebb-4ff7-b4e7-1531e3998c68",
+      "name": "Build Enriched Contact",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        29810,
+        49148
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.hunter_enabled }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "leftValue": "={{ $json.has_email ? 'yes' : 'no' }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5a31e10c-a9ef-4496-b6fd-2f1ce34d056b",
+      "name": "IF: Hunter Enabled?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        30030,
+        49148
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "emailVerifier",
+        "email": "={{ ($('Build Enriched Contact').first().json.contact||{}).email || '' }}"
+      },
+      "id": "09dbbe05-f4b7-44ce-95fa-8fe296dd117e",
+      "name": "Hunter Verify",
+      "type": "n8n-nodes-base.hunter",
+      "typeVersion": 1,
+      "position": [
+        30250,
+        48988
+      ],
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Finalize Enriched Contact — S8. Converge after the Hunter gate. Attaches the\n// Hunter deliverability result (if Hunter ran) to the enriched contact, then hands\n// the Load-Draft-Contact-shaped object (+ enrichment) to the hook lane. Graceful:\n// if Hunter didn't run, email_verified stays null (\"unverified\"). $('<unrun>') caught.\nconst ctx = $('Build Enriched Contact').first().json || {};\nconst contact = ctx.contact || {};\n\nlet status = null, verified = null;\ntry {\n  const h = $('Hunter Verify').first().json || {};\n  status = h.status || h.result || (h.data && h.data.status) || null;\n  if (status) verified = ['valid', 'deliverable', 'accept_all', 'webmail'].indexOf(String(status).toLowerCase()) !== -1;\n} catch (e) { status = null; verified = null; }\n\nconst enrichedContact = Object.assign({}, contact, { email_status: status, email_verified: verified });\n\nreturn [{ json: Object.assign({}, ctx, {\n  contact: enrichedContact,\n  email_verified: verified,\n  enriched: !!(contact.apollo_enriched || status),\n}) }];\n"
+      },
+      "id": "db678e8e-fff5-43b9-8ad5-0e705ac6f156",
+      "name": "Finalize Enriched Contact",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        30470,
+        49148
       ]
     }
   ],
@@ -6287,7 +6500,7 @@
       "main": [
         [
           {
-            "node": "Build Hook Query",
+            "node": "Load Enrich Config",
             "type": "main",
             "index": 0
           }
@@ -8383,6 +8596,108 @@
         [
           {
             "node": "OutreachWriter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Enrich Config": {
+      "main": [
+        [
+          {
+            "node": "IF: Apollo Enabled?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Apollo Enabled?": {
+      "main": [
+        [
+          {
+            "node": "Apollo Match",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Enriched Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apollo Match": {
+      "main": [
+        [
+          {
+            "node": "Log Apollo Cost",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Apollo Cost": {
+      "main": [
+        [
+          {
+            "node": "Build Enriched Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Enriched Contact": {
+      "main": [
+        [
+          {
+            "node": "IF: Hunter Enabled?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Hunter Enabled?": {
+      "main": [
+        [
+          {
+            "node": "Hunter Verify",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Finalize Enriched Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hunter Verify": {
+      "main": [
+        [
+          {
+            "node": "Finalize Enriched Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Enriched Contact": {
+      "main": [
+        [
+          {
+            "node": "Build Hook Query",
             "type": "main",
             "index": 0
           }
