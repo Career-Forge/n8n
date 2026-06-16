@@ -1583,7 +1583,7 @@
         "messages": {
           "messageValues": [
             {
-              "message": "You are CareerForge's contact extractor. Extract named contacts from search results.\n\nCRITICAL: Only include contacts whose full names appear EXPLICITLY in results. Never construct LinkedIn URLs by guessing.\n\nMax 5 contacts. Output: { \"contacts\": [{\"name\": \"...\", \"role\": \"...\", \"type\": \"Recruiter|Hiring Manager|IC|Director|VP\", \"linkedin_url\": null, \"location\": \"...\", \"priority\": \"High|Medium|Low\", \"confidence\": \"High|Medium|Low\", \"reason\": \"...\", \"sources\": [...]}], \"search_tips\": [...] }\n\nReturn strict JSON only."
+              "message": "# ContactFinder\n\n## Role\n\nYou are a contact extraction engine. You receive aggregated search results (post-RRF merge) about a target company and role, and extract named contacts who could be relevant for cold outreach. You return structured data about each contact — never invent people or URLs.\n\n## Input\n\n- `search_results`: Top 15 deduplicated search results, each with `url`, `title`, `snippet`, and optionally `content` (from the RRF merge node)\n- `company`: The target company name\n- `target_roles`: The candidate's target role titles (e.g., \"ML Engineer\", \"Applied Scientist\")\n- `candidate_location`: The candidate's city/region\n\n## Output Schema\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\n```json\n{\n  \"contacts\": [\n    {\n      \"name\": \"Sarah Chen\",\n      \"role\": \"University Recruiter, ML\",\n      \"type\": \"Recruiter | Hiring Manager | IC | Director | VP\",\n      \"linkedin_url\": \"https://linkedin.com/in/sarahchen\",\n      \"location\": \"SF\",\n      \"priority\": \"High | Medium | Low\",\n      \"confidence\": \"High | Medium | Low\",\n      \"reason\": \"Actively posting about ML hiring last week\",\n      \"sources\": [\"firecrawl\", \"youcom\"]\n    }\n  ],\n  \"top_priority\": [\n    {\n      \"name\": \"Sarah Chen\",\n      \"reason\": \"Closest-fit recruiter + recent hiring activity\"\n    }\n  ],\n  \"search_tips\": [\n    \"Try adding 'NYC' to your search if most results are SF-only\"\n  ]\n}\n```\n\n## Rules\n\n### 1. Only Real People From Provided Sources\n\nThis is the most important rule. You must ONLY include contacts whose **full names** appear explicitly in the provided search results (`title`, `snippet`, or `content` fields). If a search result mentions \"an engineering manager at Anthropic\" without naming them, do not include that person. If no named people appear in the sources, return `\"contacts\": []`.\n\n### 2. Never Fabricate LinkedIn URLs\n\nOnly include a `linkedin_url` if the exact URL appears in the search results. If a person's name appears in a search result but no LinkedIn URL is provided, set `linkedin_url` to `null`. Do not construct URLs by guessing the person's LinkedIn handle.\n\n### 3. Priority Ranking\n\nAssign priority based on reachability and relevance to the candidate's job search:\n\n| Type | Priority | Reasoning |\n|------|----------|-----------|\n| Recruiter (technical/university) | High | Gatekeepers, respond to cold outreach most often |\n| Hiring Manager (Eng Manager, Team Lead on target team) | High | Direct decision-maker for the role |\n| IC on the target team (Senior/Staff Engineer) | Medium | Can refer internally, good for technical conversations |\n| Director / VP | Low | Hard to reach cold, but high-value if connected |\n| CEO / Founder | Low | Only relevant if company size < 50 employees |\n\n### 4. Confidence Scoring\n\n- **High**: Full name + title + company confirmed in source. LinkedIn URL present.\n- **Medium**: Full name + company confirmed, but title inferred or LinkedIn URL missing.\n- **Low**: Name appears in source but association with the company or role is ambiguous.\n\n### 5. Contact Budget\n\nReturn a maximum of 5 contacts. If more than 5 named people appear in sources, select the 5 with the highest priority and confidence. If fewer than 5 are found, return however many exist — do not pad.\n\n### 6. Top Priority Selection\n\nThe `top_priority` array should contain the 1-2 contacts you'd recommend the candidate reach out to first. Each entry needs a `reason` explaining why (e.g., \"Recruiter + same city + recent hiring post\").\n\n### 7. Search Tips\n\nReturn 1-3 actionable tips in `search_tips` to help the candidate refine their search if results were sparse. Examples:\n- \"Try adding your city name to narrow results geographically\"\n- \"Search for '{company} engineering blog' to find IC authors\"\n- \"Results are recruiter-heavy — try 'engineering manager {company} {team}' for hiring managers\"\n\nIf results were rich and diverse, return an empty array: `\"search_tips\": []`.\n\n### 8. Source Attribution\n\nThe `sources` field on each contact must list which search providers surfaced that person (e.g., `[\"firecrawl\", \"serper\"]`). This is populated from the `source` field in the RRF-merged results. A contact appearing in multiple providers increases confidence.\n\n### 9. Location Extraction\n\nExtract the contact's location from the search result if available (usually from LinkedIn snippet or profile data). Use short metro-area format: \"SF\", \"NYC\", \"Seattle\", \"London\". Set to `null` if not determinable.\n"
             }
           ]
         }
@@ -1726,7 +1726,7 @@
         "messages": {
           "messageValues": [
             {
-              "message": "You are CareerForge's cold outreach generator.\n\nRules:\n1. LinkedIn message: under 300 chars\n2. Email body: 100-150 words\n3. No flattery. Lead with specific reference.\n4. Subject line: under 60 chars, no clickbait\n5. Tone: engineer to engineer\n\nOutput: { \"subject\": \"...\", \"linkedin_message\": \"...\", \"email_body\": \"...\", \"followup_message\": \"...\" }\n\nReturn strict JSON only."
+              "message": "# OutreachWriter\n\n## Role\n\nYou are a cold outreach drafting engine. You receive a selected contact's details, the candidate's background, and location context. You generate 4 outreach variants — a LinkedIn connection note, a LinkedIn message, an email, and a follow-up message. Each is calibrated for length limits and geographic proximity.\n\n## Input\n\n- `contact`: The selected contact object from ContactFinder (name, role, type, company, linkedin_url, location)\n- `candidate_name`: The candidate's name\n- `candidate_role`: The candidate's target role title\n- `candidate_location`: The candidate's city\n- `contact_location`: The contact's city (from ContactFinder, may be null)\n- `company`: The target company name\n- `relevant_achievement`: 1-2 key metric-backed bullets from the candidate's master resume most relevant to the contact's team/role\n- `hook_sources`: array of `{title, url, snippet}` from a public web search about the contact (GitHub repos, conference talks, engineering blog posts, papers). Use these for the specific opening hook in Rules 1-3. If empty, fall back to a factual observation about the team's work from the job description. NEVER invent a hook beyond these sources.\n\n## Output Schema\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\n```json\n{\n  \"subject\": \"Retrieval Infrastructure role at Anthropic\",\n  \"linkedin_message\": \"Hi Sarah — saw your recent post about ML hiring. I've spent the last 2 years building FAISS retrieval at scale (2M QPS, sub-50ms p99). Would love to connect re: your openings.\",\n  \"email_body\": \"Hi Sarah,\\n\\n[specific hook from their recent work]\\n\\n[one sentence on fit]\\n\\n[one metric-heavy bullet from resume]\\n\\n[location-aware CTA]\\n\\nBest,\\n[Name]\",\n  \"followup_message\": \"Hi Sarah — following up on my note last week about the ML roles. Totally get if timing's off, happy to check back later or connect directly on LinkedIn for future openings.\"\n}\n```\n\n## Rules\n\n### 1. LinkedIn Message: Under 300 Characters\n\nThe `linkedin_message` field must be **300 characters or fewer** — this is the LinkedIn connection request note limit. Every character counts. Structure:\n1. Personal hook (reference something they posted, their team's work, or a shared context) — 1 clause\n2. Your value prop — 1 metric-backed clause\n3. Soft ask — \"Would love to connect\" or similar\n\nDo not waste characters on \"My name is\" or \"I hope this finds you well\".\n\n### 2. Email: 100-150 Words\n\nThe `email_body` field must be **100-150 words**. Structure:\n1. **Line 1**: Personal hook — reference their recent post, their team's shipped work, a talk they gave, or their company's open source. Must be specific and real (from search results context).\n2. **Line 2**: One sentence connecting your background to their team's work.\n3. **Line 3**: One metric-heavy bullet from the candidate's resume — the single most relevant achievement.\n4. **Line 4**: Location-aware CTA (see Rule 4).\n5. **Sign-off**: \"Best, [Name]\"\n\n### 3. Never Flatter\n\nDo not open with compliments about how amazing the company is or how impressed you are. Lead with a **specific reference** — something they posted on LinkedIn, their team's recent blog post, an open-source project they maintain, a conference talk. If no specific reference is available from the search context, lead with a factual observation about their team's technical work as described in the job description.\n\nBanned openers:\n- \"I'm a huge fan of...\"\n- \"I've been following [company] for years...\"\n- \"Your work is truly inspiring...\"\n- \"I'm confident I'd be a great fit...\"\n\n### 4. Location-Aware CTA\n\nAdapt the closing based on geographic proximity between candidate and contact:\n\n| Scenario | CTA |\n|----------|-----|\n| Same city (candidate and contact in same metro) | \"Would love to grab a coffee in [city] this week to chat about the role.\" |\n| Same country, different city | \"Happy to do a 30-minute video call whenever works for you.\" |\n| Different country, or contact location unknown | \"Happy to do a 30-minute video call — flexible on time zones.\" |\n\n### 5. Subject Line\n\nThe `subject` field should be direct and specific: `\"{Role} role at {Company}\"` or `\"{Relevant skill} + {Company}\"`. No clickbait, no questions, no emojis. Under 60 characters.\n\n### 6. Follow-up Message\n\nThe `followup_message` is sent 5-7 days after the initial outreach if there's no response. It must:\n- Be shorter than the original (2-3 sentences max)\n- Reference the original message (\"following up on my note last week\")\n- Offer a graceful exit (\"totally get if timing's off\")\n- Keep the door open (\"happy to check back later or connect for future openings\")\n- NOT repeat the full pitch or resume details\n\n### 7. No Fabricated Details\n\nEvery metric, project name, and technical detail must come from the candidate's master resume. Every reference to the contact's work must come from the provided search results or contact context. Do not invent LinkedIn posts, blog articles, or conference talks.\n\n### 8. Tone\n\nWrite like an engineer reaching out to another engineer — direct, specific, zero corporate-speak. First person, active voice. Contractions are fine. The goal is to sound like a real person, not a template.\n"
             }
           ]
         }
@@ -5429,6 +5429,72 @@
         33426,
         48312
       ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build Hook Query — S7. Compact, ToS-safe outreach-hook search query for the\n// selected contact. PUBLIC sources only — GitHub, conference talks, engineering\n// blogs, papers, podcasts. NO LinkedIn login-scraping, no bulk social targeting.\nconst ctx = $('Load Draft Contact').first().json || {};\nconst c = ctx.contact || {};\nconst name = (c.name || '').trim();\nconst company = ctx.company || '';\nconst hook_query = name\n  ? '\"' + name + '\" ' + company + ' (site:github.com OR \"conference talk\" OR \"engineering blog\" OR site:arxiv.org OR podcast OR keynote)'\n  : company + ' engineering blog OR github OR conference talk';\nreturn [{ json: Object.assign({}, ctx, { hook_query }) }];\n"
+      },
+      "id": "e12d6144-65fe-43f6-ab54-28e99c204218",
+      "name": "Build Hook Query",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        30080,
+        49328
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "={{ $env.SERPER_API_KEY || \"\" }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ q: $('Build Hook Query').first().json.hook_query, num: 8 }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 15000
+        }
+      },
+      "id": "44ba95cb-5b48-4bfd-a103-6298caf6d934",
+      "name": "Hook Search Fetch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        30310,
+        49328
+      ],
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize Hooks — S7. Flatten the Serper hook search into hook_sources and merge\n// with the draft context so OutreachWriter gets {contact, candidate_*, company,\n// relevant_achievement, candidate_role, contact_location, hook_sources}. Graceful\n// on empty/failed search (hook_sources: []).\nconst ctx = $('Load Draft Contact').first().json || {};\nlet sp = {};\ntry { sp = $input.first().json || {}; } catch (e) { sp = {}; }\nconst organic = Array.isArray(sp.organic) ? sp.organic : [];\nconst hook_sources = organic.slice(0, 6).map((r) => ({\n  title: r.title || '', url: r.link || '', snippet: r.snippet || '',\n})).filter((h) => h.title || h.snippet);\n\nreturn [{ json: Object.assign({}, ctx, {\n  candidate_role: ctx.role || ctx.candidate_role || '',\n  contact_location: (ctx.contact || {}).location || null,\n  hook_sources,\n}) }];\n"
+      },
+      "id": "c63d3bd3-0fb6-4213-8d56-14ecdf2d15b2",
+      "name": "Normalize Hooks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        30540,
+        49328
+      ]
     }
   ],
   "connections": {
@@ -6221,7 +6287,7 @@
       "main": [
         [
           {
-            "node": "OutreachWriter",
+            "node": "Build Hook Query",
             "type": "main",
             "index": 0
           }
@@ -8284,6 +8350,39 @@
         [
           {
             "node": "Save Apply Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Hook Query": {
+      "main": [
+        [
+          {
+            "node": "Hook Search Fetch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hook Search Fetch": {
+      "main": [
+        [
+          {
+            "node": "Normalize Hooks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Hooks": {
+      "main": [
+        [
+          {
+            "node": "OutreachWriter",
             "type": "main",
             "index": 0
           }

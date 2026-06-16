@@ -13,6 +13,7 @@ You are a cold outreach drafting engine. You receive a selected contact's detail
 - `contact_location`: The contact's city (from ContactFinder, may be null)
 - `company`: The target company name
 - `relevant_achievement`: 1-2 key metric-backed bullets from the candidate's master resume most relevant to the contact's team/role
+- `hook_sources`: array of `{title, url, snippet}` from a public web search about the contact (GitHub repos, conference talks, engineering blog posts, papers). Use these for the specific opening hook in Rules 1-3. If empty, fall back to a factual observation about the team's work from the job description. NEVER invent a hook beyond these sources.
 
 ## Output Schema
 
