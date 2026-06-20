@@ -20,6 +20,11 @@ data/companies.json
 # Local review notes
 Review.md
 
+# Matcher dev test fixtures (contain sample resume text / PII) + model cache
+services/matcher/_test_*.json
+services/matcher/data/
+services/matcher/.hf/
+
 # n8n runtime databases (Docker volume data)
 *.sqlite
 *.sqlite-journal

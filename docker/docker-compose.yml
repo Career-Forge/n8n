@@ -117,6 +117,52 @@ services:
       retries: 3
       start_period: 30s
 
+  # ── Matcher — cross-encoder rerank + skill graph (model-based match) ──
+  #  Reranks top-N (resume, JD) pairs with bge-reranker-v2-m3 and computes an
+  #  explainable skill overlap (direct + multi-hop adjacent via a bge-m3 embedding
+  #  graph). CPU by default; set MATCHER_DEVICE=cuda + a CUDA base image for GPU.
+  matcher:
+    build:
+      context: ../services/matcher
+    container_name: careerforge_matcher
+    hostname: matcher-service
+    restart: unless-stopped
+    ports:
+      - "5680:5680"
+    environment:
+      - OLLAMA_URL=${OLLAMA_URL:-http://ollama-service:11434}
+      - EMBED_MODEL=${EMBED_MODEL:-bge-m3}
+      - MATCHER_DEVICE=${MATCHER_DEVICE:-cpu}
+      - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
+      - VALIDATE_TOP_N=${VALIDATE_TOP_N:-12}
+      # ── Discovery ingestion (Phase 1): PG cache write access ──
+      - PGHOST=postgres-service
+      - PGPORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-careerforge}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-cf_local_dev}
+      - POSTGRES_DB=${POSTGRES_DB:-careerforge}
+      - INGEST_MAX_PER_PROVIDER=${INGEST_MAX_PER_PROVIDER:-250}
+      - INGEST_EMBED_WORKERS=${INGEST_EMBED_WORKERS:-4}
+      # ── Keyed providers (BYOK; absent = silently skipped, never errors) ──
+      - FANTASTIC_API_KEY=${FANTASTIC_API_KEY}
+      - JSEARCH_API_KEY=${JSEARCH_API_KEY}
+      - APIFY_TOKEN=${APIFY_TOKEN}
+      - ADZUNA_APP_ID=${ADZUNA_APP_ID}
+      - ADZUNA_APP_KEY=${ADZUNA_APP_KEY}
+    volumes:
+      - matcher_data:/app/data
+    depends_on:
+      ollama:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5680/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
   # ── Postgres + pgvector — job cache & embeddings ───────────
   #  App data only (registry, jobs, résumé embeddings). n8n's own
   #  DB stays SQLite — this is reached via an n8n Postgres credential
@@ -181,3 +227,4 @@ volumes:
   n8n_data:
   pg_data:
   ollama_data:
+  matcher_data:

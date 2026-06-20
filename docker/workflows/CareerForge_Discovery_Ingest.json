@@ -1,0 +1,70 @@
+{
+  "id": "DISCOVERYINGST01",
+  "name": "CareerForge — Discovery Ingest",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 3
+            }
+          ]
+        }
+      },
+      "id": "a1f0c2e4-1b2c-4d3e-8f90-aa0011223301",
+      "name": "Every 3h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://matcher-service:5680/ingest",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ background: true }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "a1f0c2e4-1b2c-4d3e-8f90-aa0011223302",
+      "name": "POST /ingest (all free lanes)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 0],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Discovery Ingest\nEvery 3h, fire the Python discovery service to ingest all enabled free lanes (RemoteOK, Workday CXS big-co, amazon.jobs, + registry ATS: greenhouse/lever/ashby/workable/recruitee). `background:true` returns immediately; the service embeds-on-ingest + dedups + resolves trust. Keyed lanes (Fantastic/JSearch/Adzuna) auto-activate when their key env is set. Replaces the old ATS Poller (which wrote rows with no embeddings).",
+        "height": 220,
+        "width": 420
+      },
+      "id": "a1f0c2e4-1b2c-4d3e-8f90-aa0011223303",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 140]
+    }
+  ],
+  "connections": {
+    "Every 3h": {
+      "main": [
+        [
+          {
+            "node": "POST /ingest (all free lanes)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

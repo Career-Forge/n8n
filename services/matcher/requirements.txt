@@ -1,0 +1,8 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+sentence-transformers>=3.0,<4
+httpx>=0.27
+numpy>=1.26
+# NOTE: psycopg (PG ingestion) is installed in the Dockerfile in a layer AFTER
+# the cross-encoder bake, so adding ingestion deps doesn't bust the ~2GB model
+# cache. Keep heavy/early deps here; keep ingestion-only deps in the Dockerfile.

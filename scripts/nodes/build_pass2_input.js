@@ -18,7 +18,7 @@ const antiHalluc = '\n\nCRITICAL ANTI-HALLUCINATION RULES:\n'
   + '- Use ONLY the verbatim excerpts from Pass 1 decisions as source material — do NOT invent metrics, technologies, or achievements';
 
 const pass2Input = JSON.stringify({ decisions: pass1, jdRequirements: step0.clusters || [] });
-const pass2_user = 'Generate LaTeX content based on selection decisions. The decisions contain VERBATIM resume excerpts — use them as the SOLE source for STAR bullets.'
+const pass2_user = 'Rewrite the selected bullets into tailored STAR achievements. Output PLAIN-TEXT JSON only (no LaTeX, no backslashes, no math) keyed by each entity id, per the system instructions. The decisions below contain VERBATIM resume excerpts and the ids to key your output by — use the excerpts as the SOLE source.'
   + antiHalluc + '\n\n' + pass2Input;
 
 return [{ json: { pass2_user, pass1 } }];

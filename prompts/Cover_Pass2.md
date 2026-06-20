@@ -20,4 +20,5 @@ RULES:
 - The hook MUST reference something concrete about the company (mission / product / recent work) — not generic praise.
 - Frame achievements to resonate with what the company values (companyResearch.companySentiment), but NEVER name-drop values or write phrases like "aligned with your values" or "demonstrating ownership".
 - No flattery. BANNED phrases: "passionate about", "excited to apply", "dynamic environment", "fast-paced", "team player", "hit the ground running".
+- DASHES: never use an en-dash or em-dash (– or —) to join words or clauses. To join two ideas, either rephrase, use a colon, or write " -- " with a space on each side (e.g. "Research Rigor Meets Production Scale: Applied AI for India", NOT "Scale–Applied"). Hyphenate compound words normally (e.g. "production-grade").
 - Plain professional prose inside field values. No LaTeX, no markdown.

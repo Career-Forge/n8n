@@ -152,3 +152,67 @@ CREATE TABLE IF NOT EXISTS app_settings (
   value      TEXT,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ═══════════════════════════════════════════════════════════════
+--  Discovery overhaul (June 2026) — JobRecord contract + dedup/trust
+--  Grows `jobs` from the registry-poller model (UNIQUE board:external_id,
+--  every row tied to a companies row) into a multi-source cache: pluggable
+--  providers (direct ATS, Workday CXS, aggregators, web) all upsert here,
+--  deduped by a canonical key — highest-trust copy wins. Embeddings are
+--  computed on ingest (kills the NULL-embedding pool starvation).
+--  Idempotent: ADD COLUMN IF NOT EXISTS + guarded (WHERE … IS NULL) backfills.
+-- ═══════════════════════════════════════════════════════════════
+
+-- provider identity + denormalized company (off-registry sources have no companies row)
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS source          TEXT;    -- plugin: remoteok|workday|amazon|greenhouse|lever|ashby|fantastic|jsearch|...
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS ats_type        TEXT;    -- greenhouse|lever|ashby|workday|… (NULL for pure aggregators)
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS company_name    TEXT;    -- denormalized; company_id may be NULL for off-registry sources
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS company_domain  TEXT;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS url             TEXT;    -- canonical posting URL (apply_url may differ / redirect)
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS employment_type TEXT;    -- full-time|contract|intern|…
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS seniority       TEXT;    -- intern|junior|mid|senior|staff|…
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS skills          TEXT[];  -- extracted on ingest (matcher vocab)
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS salary_min      NUMERIC;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS salary_max      NUMERIC;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS salary_currency TEXT;
+
+-- dedup + trust: canonical key collapses the same job across sources; on a
+-- collision the highest-trust copy wins (direct ATS/Workday > aggregator > web).
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS dedup_key TEXT;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS trust     SMALLINT NOT NULL DEFAULT 10;  -- 30 direct ATS, 25 workday, 20 aggregator, 10 web
+
+-- off-registry sources carry no company_id (older schema already allows NULL; assert it)
+ALTER TABLE jobs ALTER COLUMN company_id DROP NOT NULL;
+
+-- the new global uniqueness is the dedup key; retire the board-scoped UNIQUE so the
+-- same job from two sources collapses to one canonical row. Keep (board, external_id)
+-- as a plain index — the per-board liveness diff still needs it.
+ALTER TABLE jobs DROP CONSTRAINT IF EXISTS jobs_board_external_id_key;
+CREATE INDEX        IF NOT EXISTS idx_jobs_board_external ON jobs (board, external_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_jobs_dedup          ON jobs (dedup_key) WHERE dedup_key IS NOT NULL;  -- upsert conflict target
+CREATE INDEX        IF NOT EXISTS idx_jobs_source         ON jobs (source);
+
+-- backfill existing rows: today's cache came entirely from the direct-ATS poller.
+UPDATE jobs SET source   = split_part(board, ':', 1) WHERE source   IS NULL AND board IS NOT NULL;
+UPDATE jobs SET ats_type = split_part(board, ':', 1) WHERE ats_type IS NULL AND board IS NOT NULL;
+UPDATE jobs SET trust    = 30 WHERE board IS NOT NULL AND trust = 10;   -- existing = direct ATS
+UPDATE jobs SET url      = apply_url WHERE url IS NULL AND apply_url IS NOT NULL;
+UPDATE jobs j SET company_name = c.name
+  FROM companies c WHERE j.company_id = c.id AND j.company_name IS NULL;
+-- dedup_key backfill (collision-safe, two pass). Mirrors db.canonical_url():
+-- strip scheme/www, query/fragment, trailing slash. Some legacy rows share a
+-- GENERIC apply_url (e.g. a board search page) — those are NOT real dups, so
+-- only URL keys that are unique across the table become 'url:' keys; the rest
+-- fall back to the always-unique 'atsid:board:external_id'.
+WITH canon AS (
+  SELECT id, 'url:' || rtrim(regexp_replace(regexp_replace(lower(apply_url), '^https?://(www\.)?', ''), '[#?].*$', ''), '/') AS k
+  FROM jobs WHERE apply_url IS NOT NULL AND apply_url <> ''
+), uniq AS (
+  SELECT k FROM canon GROUP BY k HAVING count(*) = 1
+)
+UPDATE jobs j SET dedup_key = c.k
+  FROM canon c JOIN uniq u ON u.k = c.k
+  WHERE j.id = c.id AND j.dedup_key IS NULL;
+
+UPDATE jobs SET dedup_key = 'atsid:' || coalesce(board, '') || ':' || external_id
+  WHERE dedup_key IS NULL;
