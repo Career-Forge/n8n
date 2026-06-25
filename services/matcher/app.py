@@ -194,21 +194,37 @@ def _scrape_one(url: str):
     except Exception as e:
         return {"alive": None, "jd": "", "status": None, "note": f"error:{type(e).__name__}"}
 
-def validate_and_enrich(jobs, top_n):
-    """Scrape the top_n jobs in parallel; drop hard-dead; enrich jd_text with the
-    full scraped JD. Returns (kept_jobs, validation_map, dropped)."""
-    targets = jobs[: max(0, top_n)]
+_ATS_LIVE = re.compile(
+    # Only skip Firecrawl for real-time JSON-API sources where closed jobs
+    # disappear quickly. Workday / Workable / Recruitee keep stale jobs for
+    # weeks after filling, so they MUST still be validated.
+    r"boards(-api)?\.greenhouse\.io/|api\.greenhouse\.io/|"
+    r"jobs\.lever\.co/|api\.lever\.co/|"
+    r"jobs\.ashbyhq\.com/|api\.ashbyhq\.com/|"
+    r"amazon\.jobs/",
+    re.IGNORECASE,
+)
+
+def validate_and_enrich(cands):
+    """Scrape EVERY candidate in parallel (the post-rerank top-N), drop hard-dead,
+    enrich jd_text with the full scraped JD. Returns (kept, validation_map, dropped).
+    Candidates are chosen by the caller AFTER reranking, so the validated set is the
+    set actually shown -- no more validate-set != display-set.
+    Jobs from known ATS sources are always live -- skip the Firecrawl round-trip."""
     results = {}
-    if targets and FIRECRAWL_API_KEY:
-        with ThreadPoolExecutor(max_workers=min(12, len(targets))) as ex:
-            futs = {ex.submit(_scrape_one, j.url): j.id for j in targets}
+    to_scrape = [j for j in cands if not _ATS_LIVE.search(j.url or "")]
+    if to_scrape and FIRECRAWL_API_KEY:
+        with ThreadPoolExecutor(max_workers=min(12, len(to_scrape))) as ex:
+            futs = {ex.submit(_scrape_one, j.url): j.id for j in to_scrape}
             for fut in futs:
                 results[futs[fut]] = fut.result()
     kept, vmap, dropped = [], {}, []
-    for j in jobs:
+    for j in cands:
         res = results.get(j.id)
         if res is None:
-            vmap[j.id] = "not_checked"; kept.append(j); continue
+            # no scrape result: trusted real-time ATS = live; anything else = unchecked
+            vmap[j.id] = "live" if _ATS_LIVE.search(j.url or "") else "not_checked"
+            kept.append(j); continue
         if res["alive"] is False:
             dropped.append({"id": j.id, "reason": res["note"]}); continue
         if res["jd"]:
@@ -244,53 +260,101 @@ class ExtractReq(BaseModel):
 def extract_endpoint(req: ExtractReq):
     return {"skills": extract_skills(req.text)}
 
+def _skill_breakdown(jd_text, resume_set):
+    required = extract_skills(jd_text)
+    matched, missing, adjacent = [], [], []
+    for s in required:
+        if s in resume_set:
+            matched.append(s)
+        else:
+            credit, via = adjacency_credit(s, resume_set)
+            if credit >= ADJ_MIN_CREDIT:
+                adjacent.append({"skill": s, "via": via, "credit": round(credit, 3)})
+            else:
+                missing.append(s)
+    adj_credit = sum(a["credit"] for a in adjacent)
+    coverage = min(1.0, (len(matched) + adj_credit) / max(1, len(required)))
+    return required, matched, missing, adjacent, coverage
+
+
+def _result(j, rerank_norm, resume_set, validated):
+    required, matched, missing, adjacent, coverage = _skill_breakdown(j.jd_text, resume_set)
+    match_pct = round(100 * (W_RERANK * rerank_norm + W_SKILL * coverage))
+    return {
+        "id": j.id,
+        "match_pct": match_pct,
+        "rerank_score": round(rerank_norm, 4),
+        "validated": validated,
+        "skill_match": {
+            "required": required, "matched": matched, "missing": missing,
+            "adjacent": adjacent, "coverage": round(coverage, 3),
+        },
+        "components": {"rerank": round(rerank_norm, 4), "skill_coverage": round(coverage, 3)},
+    }
+
+
+_RERANK_RESUME_CHARS = int(os.environ.get("RERANK_RESUME_CHARS", "3000"))
+_RERANK_JD_CHARS    = int(os.environ.get("RERANK_JD_CHARS", "2000"))
+
+def _rerank(resume_text, jobs):
+    """Cross-encoder rerank -> {id: rerank_norm} (sigmoid-normalized).
+    Truncate inputs before feeding the cross-encoder -- it truncates at max_length=512
+    tokens anyway, so sending multi-KB strings just wastes tokenization time on CPU."""
+    if not jobs:
+        return {}
+    r = resume_text[:_RERANK_RESUME_CHARS]
+    pairs = [(r, (j.jd_text or j.title or "")[:_RERANK_JD_CHARS]) for j in jobs]
+    raw = RERANKER.predict(pairs)
+    return {j.id: _sigmoid(float(s)) for j, s in zip(jobs, raw)}
+
+
 @app.post("/match")
 def match(req: MatchRequest):
+    """True 2-pass match (fixes validate-set != display-set):
+      PASS 1 -- rerank ALL jobs on whatever JD we have (snippet or full).
+      SELECT -- the post-rerank top-N by provisional match% are the candidates.
+      PASS 2 -- validate+enrich ONLY those candidates (drop dead, swap in full JD).
+      PASS 3 -- re-rank the survivors on the full JD and re-score.
+    Verified survivors are returned first, so everything displayed at the top was
+    liveness-checked and full-JD-matched. Non-candidates keep provisional scores."""
     ensure_graph()
     resume_skills = req.resume_skills if req.resume_skills else extract_skills(req.resume_text)
     resume_set = set(resume_skills)
-
+    top_n = req.top_n or VALIDATE_TOP_N
     jobs = req.jobs
+    if not jobs:
+        return {"results": [], "resume_skills": resume_skills, "dropped": []}
+
+    # PASS 1 -- provisional rerank + score over everything
+    prov = _rerank(req.resume_text, jobs)
+
+    def prov_pct(j):
+        _, _, _, _, cov = _skill_breakdown(j.jd_text, resume_set)
+        return W_RERANK * prov.get(j.id, 0.0) + W_SKILL * cov
+
+    # SELECT -- the actual top-N we will show become the validation set
+    ordered = sorted(jobs, key=lambda j: -prov_pct(j))
+    candidates = ordered[:top_n]
+    cand_ids = {j.id for j in candidates}
+
+    # PASS 2 -- validate + enrich exactly those candidates
     vmap, dropped = {}, []
     if req.enrich:
-        jobs, vmap, dropped = validate_and_enrich(jobs, req.top_n or VALIDATE_TOP_N)
+        survivors, vmap, dropped = validate_and_enrich(candidates)
+    else:
+        survivors = candidates
 
-    pairs = [(req.resume_text, (j.jd_text or j.title or "")) for j in jobs]
-    scores = RERANKER.predict(pairs) if pairs else []
+    # PASS 3 -- re-rank survivors on the (now full) JD, re-score
+    re_norm = _rerank(req.resume_text, survivors) if req.enrich else prov
+    survivor_out = [_result(j, re_norm.get(j.id, prov.get(j.id, 0.0)), resume_set, vmap.get(j.id, "not_checked"))
+                    for j in survivors]
+    # non-candidates keep their provisional score and stay unverified
+    rest_out = [_result(j, prov.get(j.id, 0.0), resume_set, "not_checked")
+                for j in jobs if j.id not in cand_ids]
 
-    out = []
-    for j, raw in zip(jobs, scores):
-        rerank_norm = _sigmoid(float(raw))
-        required = extract_skills(j.jd_text)
-        matched, missing, adjacent = [], [], []
-        for s in required:
-            if s in resume_set:
-                matched.append(s)
-            else:
-                credit, via = adjacency_credit(s, resume_set)
-                if credit >= ADJ_MIN_CREDIT:
-                    adjacent.append({"skill": s, "via": via, "credit": round(credit, 3)})
-                else:
-                    missing.append(s)
-        adj_credit = sum(a["credit"] for a in adjacent)
-        coverage = min(1.0, (len(matched) + adj_credit) / max(1, len(required)))
-        match_pct = round(100 * (W_RERANK * rerank_norm + W_SKILL * coverage))
-        out.append({
-            "id": j.id,
-            "match_pct": match_pct,
-            "rerank_score": round(rerank_norm, 4),
-            "validated": vmap.get(j.id, "not_checked"),
-            "skill_match": {
-                "required": required,
-                "matched": matched,
-                "missing": missing,
-                "adjacent": adjacent,
-                "coverage": round(coverage, 3),
-            },
-            "components": {"rerank": round(rerank_norm, 4), "skill_coverage": round(coverage, 3)},
-        })
-    out.sort(key=lambda x: -x["match_pct"])
-    return {"results": out, "resume_skills": resume_skills, "dropped": dropped}
+    survivor_out.sort(key=lambda x: -x["match_pct"])
+    rest_out.sort(key=lambda x: -x["match_pct"])
+    return {"results": survivor_out + rest_out, "resume_skills": resume_skills, "dropped": dropped}
 
 
 # ── Discovery: pluggable ingestion (Phase 1) ──────────────────────

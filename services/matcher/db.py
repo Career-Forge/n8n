@@ -192,13 +192,19 @@ import json as _json
 
 
 def select_due_companies(ats_type: str, limit: int = 25) -> List[dict]:
-    """Registry boards of one ATS type due for a poll (mirrors the n8n poller)."""
+    """Registry boards of one ATS type due for a poll. Curated boards poll FIRST
+    (dream > hot > warm > probe > cold) so the ~15k bulk-seeded tail can't starve
+    the hand-picked top companies — they refresh every cycle, the tail fills in
+    gradually behind them."""
     sql = """
         SELECT id AS company_id, name, ats_type, slug, COALESCE(api_base,'') AS api_base,
                (ats_type || ':' || slug) AS board, COALESCE(etag,'') AS etag
         FROM companies
         WHERE is_active AND next_poll_at <= now() AND ats_type = %s
-        ORDER BY next_poll_at ASC LIMIT %s
+        ORDER BY CASE tier WHEN 'dream' THEN 0 WHEN 'hot' THEN 1 WHEN 'warm' THEN 2
+                           WHEN 'probe' THEN 3 ELSE 4 END,
+                 next_poll_at ASC
+        LIMIT %s
     """
     with psycopg.connect(DSN) as conn:
         with conn.cursor() as cur:

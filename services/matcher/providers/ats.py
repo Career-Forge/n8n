@@ -16,21 +16,11 @@ from typing import List, Optional
 import httpx
 
 from . import (Provider, JobRecord, register, TRUST_DIRECT,
-               strip_html, clean_text, parse_epoch_or_iso)
+               strip_html, clean_text, parse_epoch_or_iso,
+               TITLE_RX, CAP_PER_BOARD)
 
 log = logging.getLogger("providers.ats")
 UA = {"User-Agent": "Mozilla/5.0 (careerforge job cache)", "Accept": "application/json"}
-
-# role relevance — the registry has 15k+ companies, so filter to the niche + general
-# eng/data roles (correct \s/\b escapes, unlike the n8n string-literal version).
-TITLE_RX = re.compile(
-    r"(machine\s*learning|\bml\b|\bai\b|artificial\s*intelligence|data\s*(scien|engineer|analy|platform)|"
-    r"analytics\s*engineer|deep\s*learning|\bnlp\b|\bllm\b|gen\s*ai|generative|computer\s*vision|"
-    r"research\s*(scientist|engineer)|applied\s*scientist|software\s*engineer|\bswe\b|\bsde\b|"
-    r"backend|back-end|full[\s-]*stack|platform\s*engineer|infrastructure\s*engineer|devops|mlops|\bsre\b)",
-    re.IGNORECASE,
-)
-CAP_PER_BOARD = int(os.environ.get("ATS_CAP_PER_BOARD", "25"))
 
 
 def _is_remote(*parts) -> bool:

@@ -143,6 +143,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-careerforge}
       - INGEST_MAX_PER_PROVIDER=${INGEST_MAX_PER_PROVIDER:-250}
       - INGEST_EMBED_WORKERS=${INGEST_EMBED_WORKERS:-4}
+      - ATS_DUE_LIMIT=${ATS_DUE_LIMIT:-40}            # boards polled per ATS per ingest run (curated tier polls first)
       # ── Keyed providers (BYOK; absent = silently skipped, never errors) ──
       - FANTASTIC_API_KEY=${FANTASTIC_API_KEY}
       - JSEARCH_API_KEY=${JSEARCH_API_KEY}

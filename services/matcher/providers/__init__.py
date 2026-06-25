@@ -46,6 +46,20 @@ WORKDAY_TENANTS = [
     {"company": "NVIDIA", "tenant": "nvidia", "wd": "wd5", "site": "NVIDIAExternalCareerSite"},
 ]
 
+# Role-relevance filter + per-board cap — shared by the registry ATS providers
+# (ats.py) AND the registry Workday provider (workday.py). The registry has 15k+
+# boards, so we keep only niche + general eng/data roles. Defined here (this
+# module is imported first by _load_plugins) so both submodules import it safely
+# regardless of load order.
+TITLE_RX = re.compile(
+    r"(machine\s*learning|\bml\b|\bai\b|artificial\s*intelligence|data\s*(scien|engineer|analy|platform)|"
+    r"analytics\s*engineer|deep\s*learning|\bnlp\b|\bllm\b|gen\s*ai|generative|computer\s*vision|"
+    r"research\s*(scientist|engineer)|applied\s*scientist|software\s*engineer|\bswe\b|\bsde\b|"
+    r"backend|back-end|full[\s-]*stack|platform\s*engineer|infrastructure\s*engineer|devops|mlops|\bsre\b)",
+    re.IGNORECASE,
+)
+CAP_PER_BOARD = int(os.environ.get("ATS_CAP_PER_BOARD", "25"))
+
 
 @dataclass
 class JobRecord:

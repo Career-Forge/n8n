@@ -55,18 +55,38 @@ function displayLocation(job) {
   return 'Location not specified';
 }
 
-// "Latest + relevant on top": rank by match% with a small freshness boost.
+// "Latest + relevant on top": rank by match% + a small freshness boost, but keep
+// VALIDATED (live/unverified) jobs above not_checked ones so freshness can't lift
+// a possibly-dead job over a verified one (belt-and-suspenders to the matcher's
+// 2-pass, which already validates the post-rerank top-N). Freshness from posted_at.
 function freshBoost(d) { const t = new Date(d || 0).getTime() || 0; if (!t) return 0; const days = (Date.now() - t) / 86400000; if (days < 2) return 6; if (days < 7) return 3; if (days < 30) return 1; return 0; }
-const rankedJobs = scored
+function vrank(v) { return v === 'live' ? 0 : v === 'unverified' ? 1 : 2; }
+// desirability tier (S/A/B/C/D) — strong sort booster, not a hard sort: a great
+// match at an A-tier still beats a weak match at an S-tier; body-shops (D) sink.
+function desirGlyph(t){ return t === 'S' ? '🏆' : t === 'A' ? '⭐' : t === 'D' ? '⚠️' : ''; }
+function desirBonus(t){ return t === 'S' ? 12 : t === 'A' ? 6 : t === 'B' ? 2 : t === 'D' ? -40 : 0; }
+function desirLabel(t){ return t === 'S' ? '🏆 S-tier' : t === 'A' ? '⭐ A-tier' : ''; }
+let rankedJobs = scored
   .map(s => ({ ...(jobMap[s.job_id] || {}), match_pct: s.match_pct, score100: s.score100, fit_score: s.fit_score, one_liner: s.one_liner, matched_skills: s.matched_skills || [], missing_skills: s.missing_skills || [], adjacent_skills: s.adjacent_skills || [], validated: s.validated, bin: s.bin }))
   .filter(j => j && j.url)
   .sort((a, b) => {
-    const ka = (a.match_pct || 0) + freshBoost(a.updated_at);
-    const kb = (b.match_pct || 0) + freshBoost(b.updated_at);
+    const va = vrank(a.validated), vb = vrank(b.validated);
+    if (va !== vb) return va - vb;
+    const fa = a.posted_at || a.updated_at, fb = b.posted_at || b.updated_at;
+    const ka = (a.match_pct || 0) + freshBoost(fa) + desirBonus(a.tier);
+    const kb = (b.match_pct || 0) + freshBoost(fb) + desirBonus(b.tier);
     if (kb !== ka) return kb - ka;
-    return (new Date(b.updated_at || 0).getTime() || 0) - (new Date(a.updated_at || 0).getTime() || 0);
+    return (new Date(fb || 0).getTime() || 0) - (new Date(fa || 0).getTime() || 0);
   })
   .slice(0, 40);
+
+// Only surface jobs we actually liveness-checked: 'live' / 'unverified' (Firecrawl)
+// or trusted real-time ATS (matcher marks those 'live'). Drop the unvalidated
+// 'not_checked' tail so stale listings (esp. Workday) don't reach the user.
+// Fallback: if validation thinned it below 6, keep the full list rather than
+// show an almost-empty page.
+const _validated = rankedJobs.filter(j => j.validated === 'live' || j.validated === 'unverified');
+if (_validated.length >= 6) rankedJobs = _validated;
 
 const badges = [];
 if (intent.location_canonical) badges.push('📍 ' + String(intent.location_canonical).split(',')[0]);
@@ -121,11 +141,13 @@ function skillLine(job) {
 }
 for (const [i, job] of rankedJobs.entries()) {
   const mp = job.match_pct != null ? job.match_pct : (job.score100 || 0);
-  const tg = tierGlyph(job.source_tier);
+  const dtg = desirGlyph(job.tier);
   const _pd = job.updated_at ? new Date(job.updated_at) : null;
   const posted = (_pd && !isNaN(_pd)) ? _pd.toLocaleDateString('en-US', {month:'short',day:'numeric'}) : '';
-  contentNodes.push({ tag: 'h4', children: [(i + 1) + '. ' + matchEmoji(mp) + ' ' + mp + '% ' + (tg ? tg + ' ' : '') + '— ', { tag: 'a', attrs: { href: job.url }, children: [job.title || 'Unknown Role'] }] });
-  const metaParts = [cleanCompany(job), displayLocation(job)];
+  contentNodes.push({ tag: 'h4', children: [(i + 1) + '. ' + matchEmoji(mp) + ' ' + mp + '% ' + (dtg ? dtg + ' ' : '') + '— ', { tag: 'a', attrs: { href: job.url }, children: [job.title || 'Unknown Role'] }] });
+  const metaParts = [cleanCompany(job)];
+  { const _dl = desirLabel(job.tier); if (_dl) metaParts.push(_dl); }
+  metaParts.push(displayLocation(job));
   { const _sal = salaryStr(job); if (_sal) metaParts.push('💰 ' + _sal); }
   if (posted) metaParts.push('🗓 ' + posted);
   { const vb = vBadge(job.validated); if (vb) metaParts.push(vb); }
@@ -149,8 +171,9 @@ for (const [i, job] of top3.entries()) {
   const titleClean = (job.title || 'Unknown').replace(/[\[\]]/g, '');
   const mp = job.match_pct != null ? job.match_pct : (job.score100 || 0);
   const vb = vBadge(job.validated);
+  const _dl = desirLabel(job.tier);
   top3Msg += '*' + (i+1) + '.* ' + matchEmoji(mp) + ' *' + mp + '% match* — [' + titleClean + '](' + job.url + ')\n';
-  top3Msg += '    🏢 ' + cleanCompany(job) + ' · 📍 ' + displayLocation(job) + (vb ? ' · ' + vb : '') + '\n';
+  top3Msg += '    🏢 ' + cleanCompany(job) + (_dl ? ' · ' + _dl : '') + ' · 📍 ' + displayLocation(job) + (vb ? ' · ' + vb : '') + '\n';
   const sk = [];
   if ((job.matched_skills || []).length) sk.push('✅ ' + job.matched_skills.slice(0, 4).join(', '));
   if ((job.missing_skills || []).length) sk.push('❌ ' + job.missing_skills.slice(0, 2).join(', '));

@@ -22,8 +22,14 @@ Review.md
 
 # Matcher dev test fixtures (contain sample resume text / PII) + model cache
 services/matcher/_test_*.json
+services/matcher/_test_*.py
+services/matcher/_discover_*.py
 services/matcher/data/
 services/matcher/.hf/
+
+# Workflow patch backups (s14/s15/etc. safety copies — not committed)
+docker/workflows/*.s1*bak-*
+workflows/*.s1*bak-*
 
 # n8n runtime databases (Docker volume data)
 *.sqlite

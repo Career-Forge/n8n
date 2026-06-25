@@ -216,3 +216,32 @@ UPDATE jobs j SET dedup_key = c.k
 
 UPDATE jobs SET dedup_key = 'atsid:' || coalesce(board, '') || ':' || external_id
   WHERE dedup_key IS NULL;
+
+-- ═══════════════════════════════════════════════════════════════
+--  Sprint A (June 2026) — company DESIRABILITY tier for ranking
+--  "How much do I want to work here", applied WORLDWIDE: MAANGO=S
+--  override + pay×WLB (S best → D body-shop floor). Distinct from
+--  companies.tier (the R3 probe-funnel promotion tier above).
+--  Matched by company NAME — off-registry + web-lane jobs have no
+--  companies FK — so it tiers EVERY job regardless of source. The
+--  ranking multiplies rrf_score by the tier weight, so S surfaces
+--  first among comparable matches (strong multiplier, not a hard sort).
+--  Seed data lives in db/seed_dream_tier.sql (apply after this file).
+-- ═══════════════════════════════════════════════════════════════
+
+-- shared name normalizer — the seed and the ranking join BOTH call this, so
+-- "Google", "Google LLC", "Alphabet Inc." collapse to the same key on both sides.
+CREATE OR REPLACE FUNCTION cf_name_norm(s text) RETURNS text AS $$
+  SELECT regexp_replace(
+           regexp_replace(lower(coalesce(s,'')),
+             '\y(inc|llc|ltd|limited|corp|corporation|plc|company|technologies|holdings|group|pbc|the)\y', '', 'g'),
+           '[^a-z0-9]+', '', 'g')
+$$ LANGUAGE sql IMMUTABLE;
+
+CREATE TABLE IF NOT EXISTS company_tiers (
+  name_norm  TEXT PRIMARY KEY,        -- cf_name_norm(company or alias)
+  tier       CHAR(1) NOT NULL,        -- S | A | B | C | D (D = body-shop downrank)
+  canonical  TEXT NOT NULL,           -- display name
+  notes      TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
