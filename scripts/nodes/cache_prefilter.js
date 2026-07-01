@@ -6,12 +6,14 @@
 const rows = $input.all().map(i => i.json).filter(r => r && r.job_id);
 const NEG = /(u\.?s\.?\s*citizen(ship)?\s*(required|only)|must\s*be\s*a\s*(u\.?s\.?\s*)?citizen|security\s*clearance|active\s*clearance|ts\/sci|secret\s*clearance|no\s*sponsorship|not?\s*(able|willing)\s*to\s*sponsor|unable\s*to\s*sponsor)/i;
 const NEG_TITLE = /\b(intern(ship)?|internship|trainee|apprentice|hackathon\s*intern|co-?op)\b/i;
+// S1: only drop interns/trainees when the query didn't ask for them (intent-driven).
+const includeInterns = (() => { try { return !!$('Parse Expand Query').first().json.include_interns; } catch (e) { return false; } })();
 const seen = new Set();
 const jobs = [];
 for (const r of rows) {
   const jd = String(r.jd_text || '');
   if (NEG.test(jd)) continue;
-  if (NEG_TITLE.test(r.title || '')) continue;
+  if (!includeInterns && NEG_TITLE.test(r.title || '')) continue;
   const url = r.apply_url || r.url || '';
   if (!url) continue;
   const key = url.replace(/[?#].*$/, '').replace(/\/+$/, '').toLowerCase();
@@ -23,8 +25,17 @@ for (const r of rows) {
     title: r.title || '',
     company: r.company || '',
     company_domain: r.company_domain || null,
+    ats_source: r.source || null,                  // Tier 2: real ATS provider (workday/lever/ashby/...) for find-time liveness
+    board: r.board || null,                         //         ats_type:slug (greenhouse/ashby slug)
+    external_id: r.external_id || null,             //         provider-native id
+    apply_url: r.apply_url || url,                  //         canonical apply URL (liveness derives by-id endpoints from it)
     location: r.location || '',
     remote: !!r.remote,
+    country_iso: r.country_iso || null,            // L2: carry resolved geo forward
+    workplace_type: r.workplace_type || null,
+    allowed_countries: Array.isArray(r.allowed_countries) ? r.allowed_countries : null,
+    lat: r.lat ?? null,
+    lng: r.lng ?? null,
     url: url,
     updated_at: r.posted_at || null,
     posted_at: r.posted_at || null,

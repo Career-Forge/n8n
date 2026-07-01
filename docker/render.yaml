@@ -18,9 +18,9 @@ services:
     healthCheckPath: /healthz
     envVars:
       - key: GENERIC_TIMEZONE
-        value: America/New_York
+        value: UTC
       - key: TZ
-        value: America/New_York
+        value: UTC
       - key: DB_TYPE
         value: sqlite
       - key: N8N_BASIC_AUTH_ACTIVE

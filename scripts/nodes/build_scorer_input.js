@@ -130,6 +130,8 @@ const jobBatch = jobs.map(j => ({
   jd_text: j.jd_text || j.description_snippet || '',
   source: j.source, source_tier: j.source_tier, source_priority: j.source_priority ?? null,
   source_tier_label: j.source_tier_label || j.tier_label,
+  ats_source: j.ats_source || (j.source && j.source !== 'cache' ? j.source : null),  // Tier 2 liveness routing
+  board: j.board || null, external_id: j.external_id || null, apply_url: j.apply_url || j.url || '',
   rrf_score: j.rrf_score ?? null, updated_at: j.updated_at || j.posted_at || null,
   required_yoe_min: j.required_yoe_min ?? null, required_yoe_max: j.required_yoe_max ?? null,
   yoe_compat_score: j.yoe_compat_score ?? null,

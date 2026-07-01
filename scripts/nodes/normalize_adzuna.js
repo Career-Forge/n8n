@@ -28,8 +28,14 @@ function parsePostedDate(raw) {
 }
 
 // Normalize Adzuna -> canonical jobs (+ real salary in the country's currency).
+// P0: currency derives from the ACTUAL queried country, with NO silent us/USD
+// default. The Adzuna lane only runs when a country is set (gated upstream), so a
+// missing country here means "unknown" -> null currency, never a forced USD.
 const intent = $('Parse Expand Query').first().json || {};
-const ccy = { in:'INR', us:'USD', gb:'GBP', au:'AUD', ca:'CAD', de:'EUR', fr:'EUR', nl:'EUR', sg:'SGD', za:'ZAR', br:'BRL', mx:'MXN', it:'EUR', es:'EUR', pl:'PLN', at:'EUR', ch:'CHF', nz:'NZD', be:'EUR' }[(intent.country||'us').toLowerCase()] || 'USD';
+// P0.6: unknown OR missing country -> null currency (NO silent USD fallback).
+// us:'USD' stays as a legitimate explicit-US lookup entry, not a default.
+const _cc = (intent.country || '').toLowerCase();
+const ccy = { in:'INR', us:'USD', gb:'GBP', au:'AUD', ca:'CAD', de:'EUR', fr:'EUR', nl:'EUR', sg:'SGD', za:'ZAR', br:'BRL', mx:'MXN', it:'EUR', es:'EUR', pl:'PLN', at:'EUR', ch:'CHF', nz:'NZD', be:'EUR' }[_cc] || null;
 let raw = $input.all().map(i => i.json);
 let results = [];
 for (const r of raw) {

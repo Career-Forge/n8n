@@ -64,4 +64,9 @@ class RemoteOK(Provider):
         return out
 
 
-register(RemoteOK())
+# P1: third-party aggregator -> register ONLY when explicitly opted in. Defensive
+# self-guard so a stray import can never register RemoteOK into the CORE cache ingest.
+if os.environ.get("REMOTEOK_ENABLED", "").strip() == "true":
+    register(RemoteOK())
+else:
+    log.info("remoteok not registered (REMOTEOK_ENABLED != 'true')")

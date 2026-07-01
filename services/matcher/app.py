@@ -37,6 +37,22 @@ ADJ_DECAY = float(os.environ.get("SKILL_ADJ_DECAY", "0.6"))
 ADJ_MIN_CREDIT = float(os.environ.get("SKILL_ADJ_MIN_CREDIT", "0.20"))
 W_RERANK = float(os.environ.get("MATCH_W_RERANK", "0.65"))
 W_SKILL = float(os.environ.get("MATCH_W_SKILL", "0.35"))
+# M: piecewise-linear calibration. The raw rerank+skill blend compresses good matches
+# into the 50-75% band ("<80%, forget 90"); the cross-encoder rerank is a narrow signal
+# (~0.5-0.7) so the useful spread lives in base ~0.30-0.70. Map that band up to 45-93%
+# (strong matches reach the 85-95% the user expects) while keeping weak matches low +
+# discriminative. Above IN_HI maps OUT_HI..1.0; below IN_LO maps 0..OUT_LO. All tunable.
+CAL_IN_LO  = float(os.environ.get("MATCH_CAL_IN_LO", "0.30"))
+CAL_IN_HI  = float(os.environ.get("MATCH_CAL_IN_HI", "0.70"))
+CAL_OUT_LO = float(os.environ.get("MATCH_CAL_OUT_LO", "0.45"))
+CAL_OUT_HI = float(os.environ.get("MATCH_CAL_OUT_HI", "0.93"))
+
+def _calibrate(base):
+    if base <= CAL_IN_LO:
+        return (base / CAL_IN_LO) * CAL_OUT_LO if CAL_IN_LO > 0 else CAL_OUT_LO
+    if base >= CAL_IN_HI:
+        return CAL_OUT_HI + (min(base, 1.0) - CAL_IN_HI) / max(1e-6, 1.0 - CAL_IN_HI) * (1.0 - CAL_OUT_HI)
+    return CAL_OUT_LO + (base - CAL_IN_LO) / (CAL_IN_HI - CAL_IN_LO) * (CAL_OUT_HI - CAL_OUT_LO)
 DATA_DIR = os.environ.get("MATCHER_DATA_DIR", "/app/data")
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -44,6 +60,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY", "")
 FIRECRAWL_SCRAPE_URL = os.environ.get("FIRECRAWL_SCRAPE_URL", "https://api.firecrawl.dev/v2/scrape")
 VALIDATE_TOP_N = int(os.environ.get("VALIDATE_TOP_N", "12"))
+# Tier 3 headless renderer (optional): authoritative final check for jobs the JSON-API
+# liveness can't resolve (scrape-only sources / JSON-403-blocked). Unset -> degrade to Firecrawl.
+RENDERER_URL = os.environ.get("RENDERER_URL", "").rstrip("/")
 JD_MAX_CHARS = int(os.environ.get("JD_MAX_CHARS", "6000"))
 CLOSED_MARKERS = re.compile(
     r"no longer (accepting|available|open)|position (has been |is )?(filled|closed)|"
@@ -57,6 +76,7 @@ app = FastAPI(title="careerforge-matcher")
 
 # vocab + literal skill matchers live in skills.py (shared with the ingestion path)
 from skills import VOCAB, extract_skills
+import liveness  # find-time per-source liveness (Tier 2)
 
 # ── cross-encoder (baked into image) ──
 log.info("loading cross-encoder %s on %s", RERANK_MODEL, DEVICE)
@@ -194,42 +214,80 @@ def _scrape_one(url: str):
     except Exception as e:
         return {"alive": None, "jd": "", "status": None, "note": f"error:{type(e).__name__}"}
 
-_ATS_LIVE = re.compile(
-    # Only skip Firecrawl for real-time JSON-API sources where closed jobs
-    # disappear quickly. Workday / Workable / Recruitee keep stale jobs for
-    # weeks after filling, so they MUST still be validated.
-    r"boards(-api)?\.greenhouse\.io/|api\.greenhouse\.io/|"
-    r"jobs\.lever\.co/|api\.lever\.co/|"
-    r"jobs\.ashbyhq\.com/|api\.ashbyhq\.com/|"
-    r"amazon\.jobs/",
-    re.IGNORECASE,
-)
+def _render_check(url: str):
+    """Tier 3 headless renderer (optional). POST the public URL to the renderer service,
+    which loads the real (JS-rendered) page and decides liveness. Returns
+    {alive, jd, note} or None when disabled/unreachable (caller falls through to Firecrawl)."""
+    if not url or not RENDERER_URL:
+        return None
+    try:
+        r = httpx.post(f"{RENDERER_URL}/check", json={"url": url}, timeout=45)
+        if r.status_code != 200:
+            return None
+        d = r.json() or {}
+        return {"alive": d.get("alive"), "jd": d.get("jd") or "", "note": d.get("note") or "render"}
+    except Exception as e:
+        log.warning("renderer check failed: %s", e)
+        return None
+
 
 def validate_and_enrich(cands):
-    """Scrape EVERY candidate in parallel (the post-rerank top-N), drop hard-dead,
-    enrich jd_text with the full scraped JD. Returns (kept, validation_map, dropped).
-    Candidates are chosen by the caller AFTER reranking, so the validated set is the
-    set actually shown -- no more validate-set != display-set.
-    Jobs from known ATS sources are always live -- skip the Firecrawl round-trip."""
-    results = {}
-    to_scrape = [j for j in cands if not _ATS_LIVE.search(j.url or "")]
-    if to_scrape and FIRECRAWL_API_KEY:
-        with ThreadPoolExecutor(max_workers=min(12, len(to_scrape))) as ex:
-            futs = {ex.submit(_scrape_one, j.url): j.id for j in to_scrape}
+    """Find-time liveness for the post-rerank top-N. Per candidate, cascade:
+      1) liveness.check_alive -> the source's authoritative JSON (Workday CXS detail,
+         lever/greenhouse/recruitee by-id, ashby/workable board-membership, giants' detail).
+         Definitive True (enrich JD) / False (drop) resolved here.
+      2) undetermined (alive None) -> Tier 3 headless renderer (if RENDERER_URL set).
+      3) still undetermined -> Firecrawl scrape (_scrape_one).
+    Everything kept is liveness-checked or explicitly unverified; dead jobs go to `dropped`
+    and never reach the user. (Replaces the old blanket _ATS_LIVE 'assume live' skip --
+    cached ATS copies CAN be stale, so each gets a real check now.)"""
+    # PASS A -- authoritative per-source JSON check, concurrently.
+    live_res = {}
+    if cands:
+        with ThreadPoolExecutor(max_workers=min(12, len(cands))) as ex:
+            futs = {ex.submit(liveness.check_alive, j): j.id for j in cands}
             for fut in futs:
-                results[futs[fut]] = fut.result()
+                try:
+                    live_res[futs[fut]] = fut.result()
+                except Exception:
+                    live_res[futs[fut]] = (None, None, "error")
+
+    # PASS B -- the undetermined fall through to headless (Tier 3) then Firecrawl.
+    undetermined = [j for j in cands if (live_res.get(j.id) or (None,))[0] is None]
+    fallback = {}
+    if undetermined:
+        def _resolve(j):
+            rc = _render_check(j.apply_url or j.url)                 # Tier 3 headless (authoritative if enabled)
+            if rc is not None and rc.get("alive") is not None:
+                return rc
+            if FIRECRAWL_API_KEY:
+                return _scrape_one(j.apply_url or j.url)             # Firecrawl fallback
+            return rc                                                # None -> unchecked
+        with ThreadPoolExecutor(max_workers=min(12, len(undetermined))) as ex:
+            futs = {ex.submit(_resolve, j): j.id for j in undetermined}
+            for fut in futs:
+                try:
+                    fallback[futs[fut]] = fut.result()
+                except Exception:
+                    fallback[futs[fut]] = None
+
     kept, vmap, dropped = [], {}, []
     for j in cands:
-        res = results.get(j.id)
+        alive, jd, note = live_res.get(j.id, (None, None, "no_handler"))
+        if alive is True:
+            if jd:
+                j.jd_text = jd
+            vmap[j.id] = "live"; kept.append(j); continue
+        if alive is False:
+            dropped.append({"id": j.id, "reason": note}); continue
+        res = fallback.get(j.id)                                     # undetermined -> headless/Firecrawl
         if res is None:
-            # no scrape result: trusted real-time ATS = live; anything else = unchecked
-            vmap[j.id] = "live" if _ATS_LIVE.search(j.url or "") else "not_checked"
-            kept.append(j); continue
-        if res["alive"] is False:
-            dropped.append({"id": j.id, "reason": res["note"]}); continue
-        if res["jd"]:
+            vmap[j.id] = "not_checked"; kept.append(j); continue
+        if res.get("alive") is False:
+            dropped.append({"id": j.id, "reason": res.get("note")}); continue
+        if res.get("jd"):
             j.jd_text = res["jd"]
-        vmap[j.id] = "live" if res["alive"] else "unverified"
+        vmap[j.id] = "live" if res.get("alive") else "unverified"
         kept.append(j)
     return kept, vmap, dropped
 
@@ -239,6 +297,10 @@ class Job(BaseModel):
     title: Optional[str] = ""
     jd_text: str = ""
     url: Optional[str] = ""
+    source: Optional[str] = None        # real ATS provider (workday/lever/ashby/...) for find-time liveness routing
+    board: Optional[str] = None         # ats_type:slug (greenhouse/ashby slug, etc.)
+    external_id: Optional[str] = None   # provider-native id
+    apply_url: Optional[str] = None     # canonical apply URL (preferred over url for liveness)
     sub_scores: Optional[Dict[str, float]] = None  # optional exp/loc/comp/visa (0-100) from n8n
 
 class MatchRequest(BaseModel):
@@ -279,17 +341,29 @@ def _skill_breakdown(jd_text, resume_set):
 
 def _result(j, rerank_norm, resume_set, validated):
     required, matched, missing, adjacent, coverage = _skill_breakdown(j.jd_text, resume_set)
-    match_pct = round(100 * (W_RERANK * rerank_norm + W_SKILL * coverage))
+    base = W_RERANK * rerank_norm + W_SKILL * coverage
+    match_pct = round(100 * _calibrate(base))   # M: calibrated (see _calibrate)
+    # M: an explicit, deterministic "why" -- verdict from the calibrated score + the skill
+    # evidence (the hard caps for field/location/experience are already applied upstream).
+    verdict = ("Strong match" if match_pct >= 85 else "Good match" if match_pct >= 72
+               else "Partial match" if match_pct >= 55 else "Stretch")
+    why = verdict
+    if matched:
+        why += " -- have " + ", ".join(matched[:3])
+    if missing:
+        why += "; gap: " + ", ".join(missing[:2])
     return {
         "id": j.id,
         "match_pct": match_pct,
+        "verdict": verdict,
+        "why": why,
         "rerank_score": round(rerank_norm, 4),
         "validated": validated,
         "skill_match": {
             "required": required, "matched": matched, "missing": missing,
             "adjacent": adjacent, "coverage": round(coverage, 3),
         },
-        "components": {"rerank": round(rerank_norm, 4), "skill_coverage": round(coverage, 3)},
+        "components": {"rerank": round(rerank_norm, 4), "skill_coverage": round(coverage, 3), "base": round(base, 3)},
     }
 
 
@@ -426,8 +500,16 @@ def _do_ingest(req: IngestReq) -> dict:
             continue
         _accumulate(p.name, recs)
 
+    # liveness diff: close jobs that dropped out of their board's feed (keeps the
+    # cache fresh -- filled reqs disappear instead of lingering as 'active').
+    try:
+        closed_stale = db.close_stale_jobs()
+    except Exception as e:
+        log.warning("close_stale_jobs failed: %s", e)
+        closed_stale = 0
+
     return {"ran": [p.name for p in selected], "per_source": per_source,
-            "total": total, "cache": db.cache_stats()}
+            "total": total, "closed_stale": closed_stale, "cache": db.cache_stats()}
 
 
 def _run_ingest_tracked(req: IngestReq):

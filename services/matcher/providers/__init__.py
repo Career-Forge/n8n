@@ -55,7 +55,14 @@ TITLE_RX = re.compile(
     r"(machine\s*learning|\bml\b|\bai\b|artificial\s*intelligence|data\s*(scien|engineer|analy|platform)|"
     r"analytics\s*engineer|deep\s*learning|\bnlp\b|\bllm\b|gen\s*ai|generative|computer\s*vision|"
     r"research\s*(scientist|engineer)|applied\s*scientist|software\s*engineer|\bswe\b|\bsde\b|"
-    r"backend|back-end|full[\s-]*stack|platform\s*engineer|infrastructure\s*engineer|devops|mlops|\bsre\b)",
+    r"backend|back-end|full[\s-]*stack|platform\s*engineer|infrastructure\s*engineer|devops|mlops|\bsre\b|"
+    # P3a.2 recall fixes (shape-based, audited FP-clean across live SmartRecruiters titles):
+    # SW Engineer/Eng, SDE long-form, Software Developer, front-end/mobile/iOS/Android eng|dev.
+    # Deliberately NOT added (FP-prone): bare developer/engineer, systems/solutions engineer,
+    # product manager, sales/support engineer.
+    r"\bsw\s*(engineer|eng)\b|software\s*development\s*engineer|software\s*developer|"
+    r"front[\s-]*end\s*(engineer|developer)|mobile\s*(engineer|developer)|\bios\s*(engineer|developer)\b|"
+    r"android\s*(engineer|developer))",
     re.IGNORECASE,
 )
 CAP_PER_BOARD = int(os.environ.get("ATS_CAP_PER_BOARD", "25"))
@@ -83,6 +90,14 @@ class JobRecord:
     salary_currency: Optional[str] = None
     skills: List[str] = field(default_factory=list)
     trust: int = TRUST_WEB
+    # geo axis (resolved at ingest by services/matcher/geo.py; raw `location` above
+    # is untouched). place: lat/lng/country_iso/geonameid. work-mode:
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    country_iso: Optional[str] = None
+    geonameid: Optional[int] = None
+    workplace_type: Optional[str] = None              # onsite | hybrid | remote
+    allowed_countries: Optional[List[str]] = None     # remote eligibility; None = worldwide
 
 
 class Provider:
@@ -203,7 +218,19 @@ def looks_remote(*parts: str) -> Optional[bool]:
 # Import provider modules so they self-register. Keep at the bottom to avoid
 # partial-init cycles; each import is isolated (a broken module logs + skips).
 def _load_plugins():
-    for mod in ("remoteok", "workday", "amazonjobs", "ats"):
+    # NOTE: NO generic job boards / recruiter marketplaces (Instahyre, Wellfound, ...).
+    # Policy: ATS platforms + company career portals ONLY -- you apply on the company's
+    # own ATS, never a board. Discovery lanes (web, RemoteOK) are gated by apply-URL
+    # destination downstream (aggregate_jobs.js isAtsDestination).
+    # P1: RemoteOK is a third-party aggregator -> opt-in only. It must NOT contaminate
+    # the company-direct CORE cache unless REMOTEOK_ENABLED is exactly "true".
+    mods = ["workday", "amazonjobs", "microsoftjobs", "applejobs", "googlejobs", "metajobs",
+            "netflixjobs", "uberjobs", "bytedancejobs", "ats", "personio"]
+    if os.environ.get("REMOTEOK_ENABLED", "").strip() == "true":
+        mods.insert(0, "remoteok")
+    else:
+        log.info("remoteok provider gated OFF (set REMOTEOK_ENABLED=true to enable third-party board ingest)")
+    for mod in mods:
         try:
             __import__(f"providers.{mod}")
         except Exception as e:  # pragma: no cover

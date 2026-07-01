@@ -164,6 +164,8 @@ let top3Msg = '🎯 *Found ' + rankedJobs.length + ' roles*\n';
 if (_degraded) top3Msg += '⚠️ _Matcher unavailable — showing by source quality_\n';
 if (_dropN) top3Msg += '🗑 _Dropped ' + _dropN + ' dead/closed listing' + (_dropN > 1 ? 's' : '') + '_\n';
 if (((intent.ambiguity_flags) || []).indexOf('F1_OPT_REMOTE_LOCATION') !== -1) top3Msg += (intent._f1_note || '🛂 F-1 OPT: remote work must be performed inside the US.') + '\n';
+if (((intent.ambiguity_flags) || []).indexOf('INTERN_CLARIFY') !== -1) top3Msg += (intent._intern_note || "🎓 _Hiding intern/trainee roles -- add 'intern' to your search to include them._") + '\n';
+if (((intent.ambiguity_flags) || []).indexOf('LOCATION_CLARIFY') !== -1) top3Msg += (intent._location_note || '📍 _Interpreted an ambiguous location code -- reply with the full place name if needed._') + '\n';
   if (badges.length) top3Msg += badges.join(' · ') + '\n';
 if (tierBadgeLine) top3Msg += '_' + tierBadgeLine + '_\n';
 top3Msg += '\n';

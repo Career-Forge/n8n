@@ -20,6 +20,9 @@ data/companies.json
 # Local review notes
 Review.md
 
+# Debug aggregate test fixture (large JSON dump, not useful in repo)
+Aggregate_Results.md
+
 # Matcher dev test fixtures (contain sample resume text / PII) + model cache
 services/matcher/_test_*.json
 services/matcher/_test_*.py
@@ -27,9 +30,13 @@ services/matcher/_discover_*.py
 services/matcher/data/
 services/matcher/.hf/
 
-# Workflow patch backups (s14/s15/etc. safety copies — not committed)
+# Workflow patch backups (s14/s15/p0/etc. safety copies — not committed)
 docker/workflows/*.s1*bak-*
 workflows/*.s1*bak-*
+docker/workflows/*.p0bak-*
+workflows/*.p0bak-*
+docker/workflows/*.p2bak-*
+workflows/*.p2bak-*
 
 # n8n runtime databases (Docker volume data)
 *.sqlite
@@ -65,6 +72,10 @@ logs/
 # Build artifacts
 dist/
 build/
+
+# GeoNames raw dumps (the generated db/seed_geonames.sql IS committed; the
+# multi-MB source .txt/.zip are not — regenerate via scripts/gen_geonames_seed.js)
+db/geonames/
 
 # Local patch scripts (we only commit the resulting JSON, not the patchers)
 scripts/patch_workflow*.py

@@ -39,6 +39,10 @@ const payloadJobs = top.map((j) => ({
   title: [j.title, j.company].filter(Boolean).join(' at '),
   jd_text: j.jd_text || j.description_snippet || '',   // full cache JD when available
   url: j.url || '',
+  source: j.ats_source || null,                        // Tier 2: real ATS provider for find-time liveness
+  board: j.board || null,
+  external_id: j.external_id || null,
+  apply_url: j.apply_url || j.url || '',
 }));
 
 return [{ json: { resume_text: resume, jobs: payloadJobs, enrich: true, top_n: 15 } }];

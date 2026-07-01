@@ -35,7 +35,8 @@ const CONFIG_SQL =
 
 const NORMALIZE_CODE = `// Normalize Adzuna -> canonical jobs (+ real salary in the country's currency).
 const intent = $('Parse Expand Query').first().json || {};
-const ccy = { in:'INR', us:'USD', gb:'GBP', au:'AUD', ca:'CAD', de:'EUR', fr:'EUR', nl:'EUR', sg:'SGD', za:'ZAR', br:'BRL', mx:'MXN', it:'EUR', es:'EUR', pl:'PLN', at:'EUR', ch:'CHF', nz:'NZD', be:'EUR' }[(intent.country||'us').toLowerCase()] || 'USD';
+const _cc = (intent.country || '').toLowerCase();   // P0.6: unknown/missing country -> null, no silent USD
+const ccy = { in:'INR', us:'USD', gb:'GBP', au:'AUD', ca:'CAD', de:'EUR', fr:'EUR', nl:'EUR', sg:'SGD', za:'ZAR', br:'BRL', mx:'MXN', it:'EUR', es:'EUR', pl:'PLN', at:'EUR', ch:'CHF', nz:'NZD', be:'EUR' }[_cc] || null;
 let raw = $input.all().map(i => i.json);
 let results = [];
 for (const r of raw) {
@@ -83,7 +84,7 @@ function patch(file) {
   if (!N['Adzuna Fetch']) {
     wf.nodes.push({
       parameters: {
-        url: "=https://api.adzuna.com/v1/api/jobs/{{ ($('Parse Expand Query').first().json.country || 'us').toLowerCase() }}/search/1",
+        url: "=https://api.adzuna.com/v1/api/jobs/{{ String($('Parse Expand Query').first().json.country).toLowerCase() }}/search/1",
         sendQuery: true,
         queryParameters: { parameters: [
           { name: 'app_id', value: "={{ $('Load Structured Config').first().json.adzuna_app_id || '' }}" },

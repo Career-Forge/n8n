@@ -14,8 +14,8 @@ services:
     ports:
       - "5678:5678"
     environment:
-      - GENERIC_TIMEZONE=${TIMEZONE:-America/New_York}
-      - TZ=${TIMEZONE:-America/New_York}
+      - GENERIC_TIMEZONE=${TIMEZONE:-UTC}
+      - TZ=${TIMEZONE:-UTC}
       - WEBHOOK_URL=${WEBHOOK_URL}
       - N8N_HOST=${N8N_HOST}
       - N8N_PROTOCOL=https

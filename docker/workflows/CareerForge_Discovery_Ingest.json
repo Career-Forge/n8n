@@ -1,7 +1,7 @@
 {
   "id": "DISCOVERYINGST01",
   "name": "CareerForge — Discovery Ingest",
-  "active": false,
+  "active": true,
   "nodes": [
     {
       "parameters": {
@@ -9,13 +9,13 @@
           "interval": [
             {
               "field": "hours",
-              "hoursInterval": 3
+              "hoursInterval": 1
             }
           ]
         }
       },
       "id": "a1f0c2e4-1b2c-4d3e-8f90-aa0011223301",
-      "name": "Every 3h",
+      "name": "Every 1h",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.3,
       "position": [0, 0]
@@ -26,13 +26,13 @@
         "url": "http://matcher-service:5680/ingest",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ background: true }) }}",
+        "jsonBody": "={{ JSON.stringify( ($now.hour % 3 === 0) ? { background: true, limit: 120 } : { background: true, limit: 120, providers: [\"greenhouse\",\"lever\",\"ashby\",\"workable\",\"recruitee\",\"workday\"] }) }}",
         "options": {
           "timeout": 30000
         }
       },
       "id": "a1f0c2e4-1b2c-4d3e-8f90-aa0011223302",
-      "name": "POST /ingest (all free lanes)",
+      "name": "POST /ingest (registry hourly; giants every 3h)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [240, 0],
@@ -52,11 +52,11 @@
     }
   ],
   "connections": {
-    "Every 3h": {
+    "Every 1h": {
       "main": [
         [
           {
-            "node": "POST /ingest (all free lanes)",
+            "node": "POST /ingest (registry hourly; giants every 3h)",
             "type": "main",
             "index": 0
           }

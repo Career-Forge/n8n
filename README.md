@@ -45,7 +45,7 @@ flowchart TD
 
 | Intent | What it does | Example message |
 |--------|-------------|-----------------|
-| **find_jobs** | Searches structured job APIs (RemoteOK, Adzuna) + web, dedupes, scores fit **/100** with sub-scores, returns top matches | "find AI jobs in NYC" |
+| **find_jobs** | Searches company ATS/career pages + web (optional RemoteOK/Adzuna lanes, default OFF), dedupes, scores fit **/100** with sub-scores, returns top matches | "find AI jobs in NYC" |
 | **apply** | 2-phase engine: selects content against the JD, frames bullets to **researched company values + mission**, scores **ATS** and auto-improves if weak — then resume + cover PDFs | "3" (applies to job #3 from last search) |
 | **revise** | Iterates on the last resume/cover with chat memory | "make it shorter" |
 | **score** | Scores your resume against a job description (**0-100**, explainable) | "score my resume for this role" |

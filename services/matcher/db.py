@@ -22,6 +22,7 @@ import psycopg
 
 from embed import embed_text
 from skills import extract_skills
+import geo
 
 log = logging.getLogger("db")
 
@@ -87,6 +88,7 @@ _COLS = [
     "title", "jd_text", "location", "remote", "employment_type", "seniority", "skills",
     "salary_min", "salary_max", "salary_currency", "url", "apply_url", "posted_at",
     "dedup_key", "trust",
+    "lat", "lng", "country_iso", "geonameid", "workplace_type", "allowed_countries",
 ]
 
 _INSERT = f"""
@@ -96,7 +98,9 @@ INSERT INTO jobs (
   %(source)s, %(external_id)s, %(board)s, %(ats_type)s, %(company_name)s, %(company_domain)s,
   %(title)s, %(jd_text)s, %(location)s, %(remote)s, %(employment_type)s, %(seniority)s, %(skills)s,
   %(salary_min)s, %(salary_max)s, %(salary_currency)s, %(url)s, %(apply_url)s, %(posted_at)s::timestamptz,
-  %(dedup_key)s, %(trust)s, NULL, 'active', now(), now(), %(embedding)s::vector
+  %(dedup_key)s, %(trust)s,
+  %(lat)s, %(lng)s, %(country_iso)s, %(geonameid)s, %(workplace_type)s, %(allowed_countries)s,
+  NULL, 'active', now(), now(), %(embedding)s::vector
 )
 ON CONFLICT (dedup_key) WHERE dedup_key IS NOT NULL DO UPDATE SET
   last_seen = now(),
@@ -113,6 +117,12 @@ ON CONFLICT (dedup_key) WHERE dedup_key IS NOT NULL DO UPDATE SET
   employment_type = COALESCE(jobs.employment_type, EXCLUDED.employment_type),
   seniority       = COALESCE(jobs.seniority, EXCLUDED.seniority),
   remote          = COALESCE(jobs.remote, EXCLUDED.remote),
+  lat               = COALESCE(jobs.lat, EXCLUDED.lat),
+  lng               = COALESCE(jobs.lng, EXCLUDED.lng),
+  country_iso       = COALESCE(jobs.country_iso, EXCLUDED.country_iso),
+  geonameid         = COALESCE(jobs.geonameid, EXCLUDED.geonameid),
+  workplace_type    = COALESCE(jobs.workplace_type, EXCLUDED.workplace_type),
+  allowed_countries = COALESCE(jobs.allowed_countries, EXCLUDED.allowed_countries),
   salary_min      = COALESCE(jobs.salary_min, EXCLUDED.salary_min),
   salary_max      = COALESCE(jobs.salary_max, EXCLUDED.salary_max),
   salary_currency = COALESCE(jobs.salary_currency, EXCLUDED.salary_currency),
@@ -131,29 +141,77 @@ def _embed_text_for(rec) -> Optional[List[float]]:
     return embed_text(blob)
 
 
+def _fetch_existing(keys: list) -> dict:
+    """Batch-fetch jd_len + has_embedding for given dedup_keys (single query)."""
+    valid = [k for k in keys if k]
+    if not valid:
+        return {}
+    with psycopg.connect(DSN) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT dedup_key, length(jd_text) AS jd_len, embedding IS NOT NULL AS has_embedding "
+                "FROM jobs WHERE dedup_key = ANY(%s)",
+                (valid,),
+            )
+            return {row[0]: {"jd_len": row[1] or 0, "has_embedding": bool(row[2])}
+                    for row in cur.fetchall()}
+
+
 def upsert_jobs(records: list) -> Dict[str, int]:
-    """Embed (parallel) + dedup + trust-gated upsert. Returns counts."""
+    """Embed (parallel, skip-if-unchanged) + dedup + trust-gated upsert. Returns counts."""
     if not records:
         return {"received": 0, "inserted": 0, "updated": 0, "embedded": 0, "errors": 0}
 
-    # 1) enrich off-DB: skills + embedding (keeps the DB txn short)
+    # 1) enrich off-DB: skills extraction
     for r in records:
         if not r.skills:
             r.skills = extract_skills(r.jd_text or r.title)
+
+    # 2) precompute dedup_keys for all records (avoids recomputing inside the upsert loop)
+    keys = [dedup_key(r) for r in records]
+
+    # 3) batch-fetch existing row metadata (one query, outside the embed phase)
+    existing = _fetch_existing(keys)
+
+    # 4) decide which records need embedding
+    #    embed if: new record | existing has no embedding | incoming JD is strictly longer
+    to_embed: Dict[int, object] = {}
+    for i, (r, k) in enumerate(zip(records, keys)):
+        ex = existing.get(k)
+        if ex is None:
+            to_embed[i] = r                          # new record
+        elif not ex["has_embedding"]:
+            to_embed[i] = r                          # existing row lacks embedding
+        elif len(r.jd_text or "") > ex["jd_len"]:
+            to_embed[i] = r                          # incoming JD is longer → embed
+
+    skip_count = len(records) - len(to_embed)
+    if skip_count:
+        log.debug("embed: skipping %d/%d (unchanged, existing embedding present)", skip_count, len(records))
+
+    # 5) embed in parallel (only the needed subset; keeps the DB txn short)
     embeds: Dict[int, Optional[List[float]]] = {}
-    with ThreadPoolExecutor(max_workers=EMBED_WORKERS) as ex:
-        futs = {ex.submit(_embed_text_for, r): i for i, r in enumerate(records)}
-        for fut in futs:
-            try:
-                embeds[futs[fut]] = fut.result()
-            except Exception:
-                embeds[futs[fut]] = None
+    if to_embed:
+        with ThreadPoolExecutor(max_workers=EMBED_WORKERS) as ex:
+            futs = {ex.submit(_embed_text_for, r): i for i, r in to_embed.items()}
+            for fut in futs:
+                try:
+                    embeds[futs[fut]] = fut.result()
+                except Exception:
+                    embeds[futs[fut]] = None
 
     inserted = updated = embedded = errors = 0
     with psycopg.connect(DSN, autocommit=False) as conn:
         with conn.cursor() as cur:
+            # L1: resolve place + classify work-mode for the whole batch, in place.
+            # Enrichment, not correctness — a geo failure must not sink the ingest.
+            try:
+                geo.geocode_records(cur, records)
+            except Exception as e:
+                conn.rollback()
+                log.warning("geocode_records failed, ingesting without geo: %s", e)
             for i, r in enumerate(records):
-                vec = embeds.get(i)
+                vec = embeds.get(i)  # None for skipped records
                 params = {
                     "source": r.source, "external_id": r.external_id,
                     "board": r.board, "ats_type": r.ats_type,
@@ -166,8 +224,12 @@ def upsert_jobs(records: list) -> Dict[str, int]:
                     "salary_currency": r.salary_currency,
                     "url": r.url, "apply_url": r.apply_url or r.url,
                     "posted_at": r.posted_at,
-                    "dedup_key": dedup_key(r), "trust": int(r.trust),
-                    "embedding": _vec_literal(vec),
+                    "dedup_key": keys[i],  # use precomputed key
+                    "trust": int(r.trust),
+                    "lat": r.lat, "lng": r.lng, "country_iso": r.country_iso,
+                    "geonameid": r.geonameid, "workplace_type": r.workplace_type,
+                    "allowed_countries": r.allowed_countries,
+                    "embedding": _vec_literal(vec),  # None if skipped; SQL keeps existing embedding
                 }
                 try:
                     cur.execute(_INSERT, params)
@@ -246,6 +308,19 @@ def penalize_boards(failed: List[str], gone: List[str]):
         with conn.cursor() as cur:
             cur.execute(sql, {"failed": ",".join(failed), "gone": ",".join(gone)})
         conn.commit()
+
+
+def close_stale_jobs() -> int:
+    """Per-board liveness diff (cf_close_stale_jobs): close active jobs that dropped
+    out of their board's feed (last_seen trails the board's latest poll) or are
+    absurdly stale. Called after each ingest. Self-healing -- a job that reappears in
+    a later poll is reactivated by upsert_jobs' ON CONFLICT (status='active')."""
+    with psycopg.connect(DSN) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT cf_close_stale_jobs()")
+            n = cur.fetchone()[0]
+        conn.commit()
+    return int(n or 0)
 
 
 def cache_stats() -> dict:

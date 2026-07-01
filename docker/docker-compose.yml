@@ -19,8 +19,8 @@ services:
       - "5678:5678"
     environment:
       # Core
-      - GENERIC_TIMEZONE=${TIMEZONE:-America/New_York}
-      - TZ=${TIMEZONE:-America/New_York}
+      - GENERIC_TIMEZONE=${TIMEZONE:-UTC}
+      - TZ=${TIMEZONE:-UTC}
       - N8N_HOST=${N8N_HOST:-localhost}
       - N8N_PORT=5678
       - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
@@ -30,7 +30,7 @@ services:
       # Auth
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER=${N8N_USER:-careerforge}
-      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-demo1234}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:?set N8N_PASSWORD in docker/.env}
 
       # Database — SQLite for local
       - DB_TYPE=sqlite
@@ -38,6 +38,12 @@ services:
 
       # Community nodes
       - N8N_COMMUNITY_PACKAGES_ENABLED=true
+      # Reproducible installs (env-managed). WARNING: with MANAGED_BY_ENV=true n8n
+      # reconciles installed community packages to EXACTLY this list on boot -- any
+      # community package NOT listed here gets UNINSTALLED. Both currently-required
+      # packages (Firecrawl, You.com) are listed; add any new one here BEFORE installing.
+      - N8N_COMMUNITY_PACKAGES_MANAGED_BY_ENV=true
+      - 'N8N_COMMUNITY_PACKAGES=["@mendable/n8n-nodes-firecrawl@2.1.2","@youdotcom-oss/n8n-nodes-youdotcom@0.2.9"]'
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       # require('fs') for Parse Personal Info, Load Skeletons, Build Scorer Input
       # require('https') for Search Salary Data, You.com Research
@@ -67,6 +73,10 @@ services:
       - ATS_WORKDAY_ENABLED=${ATS_WORKDAY_ENABLED:-false}
       - ATS_SCRAPE_ENABLED=${ATS_SCRAPE_ENABLED:-false}
       - LIVE_SEARCH_SUPPLEMENT=${LIVE_SEARCH_SUPPLEMENT:-false}
+      # Find-time third-party board lanes -- default OFF (company-direct first; P0).
+      # Opt in per-deploy; the IF: RemoteOK/Adzuna Disabled? gates read these via $env.
+      - REMOTEOK_ENABLED=${REMOTEOK_ENABLED:-false}
+      - ADZUNA_ENABLED=${ADZUNA_ENABLED:-false}
 
       # File access
       - N8N_RESTRICT_FILE_ACCESS_TO=/data;/home/node/.n8n-files
@@ -135,6 +145,7 @@ services:
       - MATCHER_DEVICE=${MATCHER_DEVICE:-cpu}
       - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
       - VALIDATE_TOP_N=${VALIDATE_TOP_N:-12}
+      - RENDERER_URL=${RENDERER_URL:-http://renderer-service:8080}   # Tier 3 headless liveness (optional; unset -> Firecrawl only)
       # ── Discovery ingestion (Phase 1): PG cache write access ──
       - PGHOST=postgres-service
       - PGPORT=5432
@@ -142,8 +153,11 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-cf_local_dev}
       - POSTGRES_DB=${POSTGRES_DB:-careerforge}
       - INGEST_MAX_PER_PROVIDER=${INGEST_MAX_PER_PROVIDER:-250}
-      - INGEST_EMBED_WORKERS=${INGEST_EMBED_WORKERS:-4}
-      - ATS_DUE_LIMIT=${ATS_DUE_LIMIT:-40}            # boards polled per ATS per ingest run (curated tier polls first)
+      - INGEST_EMBED_WORKERS=${INGEST_EMBED_WORKERS:-6}
+      - ATS_DUE_LIMIT=${ATS_DUE_LIMIT:-120}           # boards polled per ATS per ingest run (curated tier polls first; freshness)
+      # Third-party aggregator ingest -- default OFF (company-direct CORE). When true,
+      # the remoteok provider registers into ingest; otherwise it never loads. (P1)
+      - REMOTEOK_ENABLED=${REMOTEOK_ENABLED:-false}
       # ── Keyed providers (BYOK; absent = silently skipped, never errors) ──
       - FANTASTIC_API_KEY=${FANTASTIC_API_KEY}
       - JSEARCH_API_KEY=${JSEARCH_API_KEY}
@@ -159,6 +173,31 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5680/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ── renderer — Tier 3 headless liveness (optional, env-gated) ──
+  #  Real Chromium renders SPA job pages to read their "no longer available"
+  #  state (a plain HTTP status / bs4 can't -- dead Workday pages return 200).
+  #  The matcher calls it (RENDERER_URL) only for jobs its JSON-API liveness
+  #  can't resolve; if this service is absent the matcher degrades to Firecrawl.
+  renderer:
+    build:
+      context: ../services/renderer
+    container_name: careerforge_renderer
+    hostname: renderer-service
+    restart: unless-stopped
+    ports:
+      - "5681:8080"
+    environment:
+      - RENDER_MAX_CONCURRENCY=${RENDER_MAX_CONCURRENCY:-2}
+      - RENDER_TIMEOUT_MS=${RENDER_TIMEOUT_MS:-25000}
+      - RENDER_IDLE_MS=${RENDER_IDLE_MS:-8000}
+    mem_limit: 1500m
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
       interval: 30s
       timeout: 10s
       retries: 3

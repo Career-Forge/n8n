@@ -80,8 +80,8 @@ INSERT INTO app_settings(key,value) VALUES ('adzuna_app_id','...'),('adzuna_app_
 
 | Provider | Tier | Setup |
 |---|---|---|
-| RemoteOK | Free (keyless) | On by default — remote jobs + salary. |
-| Adzuna | Free key | `app_settings` rows (section 5). |
+| RemoteOK | Free (keyless) | Default OFF -- opt-in via `REMOTEOK_ENABLED=true`. Remote jobs + salary. |
+| Adzuna | Free key | Default OFF -- opt-in via `ADZUNA_ENABLED=true` + `app_settings` keys (section 5). |
 | Serper / You.com / Firecrawl | Free credits | `.env` keys. |
 | Ollama bge-m3 | Free (local) | `ollama pull bge-m3`. |
 | **Apollo** | Premium (BYOK) | Credential + `apollo_enabled=true`. |
