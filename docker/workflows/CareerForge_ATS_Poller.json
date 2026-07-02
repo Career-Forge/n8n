@@ -60,8 +60,8 @@
       },
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       }
     },
@@ -209,8 +209,8 @@
       },
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       }
     },
@@ -248,8 +248,8 @@
       },
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       }
     },
@@ -271,8 +271,8 @@
       },
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       }
     },
@@ -310,8 +310,8 @@
       ],
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       }
     }
@@ -464,5 +464,6 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "meta": {}
+  "meta": {},
+  "id": "CFatsPoller00001"
 }

@@ -26,8 +26,8 @@
       "webhookId": "careerforge-telegram",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -197,14 +197,14 @@
       "webhookId": "1f3cf423-2def-4887-8e40-4fd9820c2e23",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "// Aggregate Jobs v9 — composite-key dedup (S2d) + tier-aware ordering\n// Changes vs v8:\n//   - Dedup by canonical apply-URL OR lowercased company+title, so the SAME job\n//     surfaced by different sources (RemoteOK url vs Adzuna url vs web) collapses to one.\n//   - On a collision, KEEP the lower source_tier (structured/ATS preferred over web),\n//     and backfill salary + location onto the kept job from the dropped duplicate.\n//   - (v8 carried over) tier-aware sort, Tier 3+ dropped, tier_counts for display.\n\nconst sourceCounts = {};\nconst byKey = new Map(); // dedup key -> kept job (a job may be reachable by several keys)\n\nfunction dedupKeys(job) {\n  const ks = [];\n  if (job.url) ks.push('u:' + job.url.replace(/[?#].*$/, '').replace(/\\/+$/, '').toLowerCase());\n  const ct = ((job.company || '') + '|' + (job.title || '')).toLowerCase().replace(/\\s+/g, ' ').trim();\n  if (ct.replace(/\\|/g, '').length > 4) ks.push('ct:' + ct);\n  return ks;\n}\n\nfor (const item of $input.all()) {\n  const jobs = item.json.jobs || [];\n  const source = item.json.source || 'unknown';\n  sourceCounts[source] = (sourceCounts[source] || 0) + jobs.length;\n  for (const job of jobs) {\n    if (!job || !job.url) continue;\n    const ks = dedupKeys(job);\n    let existing = null;\n    for (const k of ks) { if (byKey.has(k)) { existing = byKey.get(k); break; } }\n    if (!existing) { for (const k of ks) byKey.set(k, job); continue; }\n    // collision: keep lower tier; backfill salary/location from the dropped dup\n    const curTier = existing.source_tier || 99;\n    const newTier = job.source_tier || 99;\n    const keep = newTier < curTier ? job : existing;\n    const drop = newTier < curTier ? existing : job;\n    if (!keep.salary_min && drop.salary_min) { keep.salary_min = drop.salary_min; keep.salary_max = drop.salary_max; keep.salary_currency = drop.salary_currency; }\n    if ((!keep.location || keep.location === 'unknown') && drop.location && drop.location !== 'unknown') keep.location = drop.location;\n    for (const k of dedupKeys(existing)) byKey.set(k, keep);\n    for (const k of ks) byKey.set(k, keep);\n  }\n}\n\nconst allJobs = Array.from(new Set(byKey.values()));\n\nconst expandCtx = $('Parse Expand Query').first().json;\nconst roleFamilies    = expandCtx.role_families    || [];\nconst excludedRoles   = expandCtx.excluded_roles   || [];\nconst locationCanon   = (expandCtx.location_canonical || '').trim().toLowerCase();\nconst remotePref      = expandCtx.remote_preference  || 'open';\nconst freshness       = expandCtx.freshness          || 'qdr:w';\n\nconst freshnessMs = { 'qdr:h': 3600000, 'qdr:d': 86400000, 'qdr:w': 604800000, 'qdr:m': 2592000000, 'qdr:y': 31536000000 }[freshness] || 604800000;\nconst cutoff = Date.now() - freshnessMs;\n\nlet filtered = allJobs;\n\n// Drop Tier 3 aggregators and Tier 4 unknown pages from the main ranked results.\nfiltered = filtered.filter(j => (j.source_tier || 4) < 3);\n\n// Role family filter\nif (roleFamilies.length > 0) {\n  filtered = filtered.filter(j => {\n    const haystack = (j.title + ' ' + (j.department || '')).toLowerCase();\n    if (excludedRoles.some(excl => {\n      const terms = excl.toLowerCase().split(/\\s+/);\n      return terms.every(t => new RegExp('\\\\b' + t + '\\\\b').test(haystack));\n    })) return false;\n    return roleFamilies.some(variant => {\n      const terms = variant.toLowerCase().split(/\\s+/).filter(t => t.length > 1);\n      return terms.every(term => term.length <= 3\n        ? new RegExp('\\\\b' + term + '\\\\b').test(haystack)\n        : haystack.includes(term));\n    });\n  });\n}\n\n// Location filter (hard, only when set and not remote_only)\nif (remotePref !== 'remote_only' && locationCanon && !['any','anywhere','worldwide'].includes(locationCanon)) {\n  const locTerms = locationCanon.split(/[\\s,]+/).filter(t => t.length > 1);\n  filtered = filtered.filter(j => {\n    const src = (j.source || '').toLowerCase();\n    if (src.includes('firecrawl') || src.includes('serper') || src.includes('youcom')) return true;\n    const hay = (j.location || '').toLowerCase();\n    if (!hay || hay === 'unknown') return true;\n    return locTerms.some(t => hay.includes(t));\n  });\n}\n\n// Recency filter (soft)\nfiltered = filtered.filter(j => {\n  if (!j.updated_at) return true;\n  const t = new Date(j.updated_at).getTime();\n  return isNaN(t) || t >= cutoff;\n});\n\n// Sort: tier first (Tier 1 ATS at top), then recency within tier\nfiltered.sort((a, b) => {\n  const tierDiff = (a.source_tier || 99) - (b.source_tier || 99);\n  if (tierDiff !== 0) return tierDiff;\n  const ad = new Date(a.updated_at || 0).getTime() || 0;\n  const bd = new Date(b.updated_at || 0).getTime() || 0;\n  return bd - ad;\n});\n\n// Tier composition for downstream display\nconst tierCounts = { 1: 0, 2: 0, '2.5': 0, 3: 0 };\nfor (const j of filtered) {\n  const t = j.source_tier;\n  if (t === 1) tierCounts[1]++;\n  else if (t === 2) tierCounts[2]++;\n  else if (t === 2.5) tierCounts['2.5']++;\n  else if (t === 3) tierCounts[3]++;\n}\n\nconst top = filtered.slice(0, 50);\nreturn [{ json: {\n  jobs: top, count: top.length, total_raw: allJobs.length,\n  sources: sourceCounts, tier_counts: tierCounts,\n  filter_applied: { role_families: roleFamilies, location: locationCanon || null, remote_preference: remotePref }\n} }];\n"
+        "jsCode": "// Aggregate Jobs v9 — composite-key dedup (S2d) + tier-aware ordering\n// Changes vs v8:\n//   - Dedup by canonical apply-URL OR lowercased company+title, so the SAME job\n//     surfaced by different sources (RemoteOK url vs Adzuna url vs web) collapses to one.\n//   - On a collision, KEEP the lower source_tier (structured/ATS preferred over web),\n//     and backfill salary + location onto the kept job from the dropped duplicate.\n//   - (v8 carried over) tier-aware sort, Tier 3+ dropped, tier_counts for display.\n\n// Recruiting aggregators that post on real ATSes (so they classify Tier 1) but are\n// not the employer — demote to Tier 3 so the existing tier filter drops them.\nconst AGGREGATORS = new Set(['jobgether','weekdayworks','weekday','cutshort','instahyre','crossover','turing','braintrust','toptal','uplers','remotebase','hirist','talentprise']);\nconst sourceCounts = {};\nconst byKey = new Map(); // dedup key -> kept job (a job may be reachable by several keys)\n\nfunction dedupKeys(job) {\n  const ks = [];\n  if (job.url) ks.push('u:' + job.url.replace(/[?#].*$/, '').replace(/\\/+$/, '').toLowerCase());\n  const ct = ((job.company || '') + '|' + (job.title || '')).toLowerCase().replace(/\\s+/g, ' ').trim();\n  if (ct.replace(/\\|/g, '').length > 4) ks.push('ct:' + ct);\n  return ks;\n}\n\nfor (const item of $input.all()) {\n  const jobs = item.json.jobs || [];\n  const source = item.json.source || 'unknown';\n  sourceCounts[source] = (sourceCounts[source] || 0) + jobs.length;\n  for (const job of jobs) {\n    if (!job || !job.url) continue;\n    if (AGGREGATORS.has((job.company || '').toLowerCase())) { job.source_tier = 3; job.tier_label = 'aggregator'; }\n    const ks = dedupKeys(job);\n    let existing = null;\n    for (const k of ks) { if (byKey.has(k)) { existing = byKey.get(k); break; } }\n    if (!existing) { for (const k of ks) byKey.set(k, job); continue; }\n    // collision: keep lower tier; backfill salary/location from the dropped dup\n    const curTier = existing.source_tier || 99;\n    const newTier = job.source_tier || 99;\n    const keep = newTier < curTier ? job : existing;\n    const drop = newTier < curTier ? existing : job;\n    if (!keep.salary_min && drop.salary_min) { keep.salary_min = drop.salary_min; keep.salary_max = drop.salary_max; keep.salary_currency = drop.salary_currency; }\n    if ((!keep.location || keep.location === 'unknown') && drop.location && drop.location !== 'unknown') keep.location = drop.location;\n    for (const k of dedupKeys(existing)) byKey.set(k, keep);\n    for (const k of ks) byKey.set(k, keep);\n  }\n}\n\nconst allJobs = Array.from(new Set(byKey.values()));\n\nconst expandCtx = $('Parse Expand Query').first().json;\nconst roleFamilies    = expandCtx.role_families    || [];\nconst excludedRoles   = expandCtx.excluded_roles   || [];\nconst locationCanon   = (expandCtx.location_canonical || '').trim().toLowerCase();\nconst remotePref      = expandCtx.remote_preference  || 'open';\nconst freshness       = expandCtx.freshness          || 'qdr:w';\n\nconst freshnessMs = { 'qdr:h': 3600000, 'qdr:d': 86400000, 'qdr:w': 604800000, 'qdr:m': 2592000000, 'qdr:y': 31536000000 }[freshness] || 604800000;\nconst cutoff = Date.now() - freshnessMs;\n\nlet filtered = allJobs;\n\n// Drop Tier 3 aggregators and Tier 4 unknown pages from the main ranked results.\nfiltered = filtered.filter(j => (j.source_tier || 4) < 3);\n\n// Role family filter\nif (roleFamilies.length > 0) {\n  filtered = filtered.filter(j => {\n    const haystack = (j.title + ' ' + (j.department || '')).toLowerCase();\n    if (excludedRoles.some(excl => {\n      const terms = excl.toLowerCase().split(/\\s+/);\n      return terms.every(t => new RegExp('\\\\b' + t + '\\\\b').test(haystack));\n    })) return false;\n    return roleFamilies.some(variant => {\n      const terms = variant.toLowerCase().split(/\\s+/).filter(t => t.length > 1);\n      return terms.every(term => term.length <= 3\n        ? new RegExp('\\\\b' + term + '\\\\b').test(haystack)\n        : haystack.includes(term));\n    });\n  });\n}\n\n// Location filter (hard, only when set and not remote_only)\nif (remotePref !== 'remote_only' && locationCanon && !['any','anywhere','worldwide'].includes(locationCanon)) {\n  const locTerms = locationCanon.split(/[\\s,]+/).filter(t => t.length > 1);\n  filtered = filtered.filter(j => {\n    const src = (j.source || '').toLowerCase();\n    if (src.includes('firecrawl') || src.includes('serper') || src.includes('youcom')) return true;\n    const hay = (j.location || '').toLowerCase();\n    if (!hay || hay === 'unknown') return true;\n    return locTerms.some(t => hay.includes(t));\n  });\n}\n\n// Recency filter (soft)\nfiltered = filtered.filter(j => {\n  if (!j.updated_at) return true;\n  const t = new Date(j.updated_at).getTime();\n  return isNaN(t) || t >= cutoff;\n});\n\n// Sort: tier first (Tier 1 ATS at top), then recency within tier\nfiltered.sort((a, b) => {\n  const tierDiff = (a.source_tier || 99) - (b.source_tier || 99);\n  if (tierDiff !== 0) return tierDiff;\n  const ad = new Date(a.updated_at || 0).getTime() || 0;\n  const bd = new Date(b.updated_at || 0).getTime() || 0;\n  return bd - ad;\n});\n\n// Tier composition for downstream display\nconst tierCounts = { 1: 0, 2: 0, '2.5': 0, 3: 0 };\nfor (const j of filtered) {\n  const t = j.source_tier;\n  if (t === 1) tierCounts[1]++;\n  else if (t === 2) tierCounts[2]++;\n  else if (t === 2.5) tierCounts['2.5']++;\n  else if (t === 3) tierCounts[3]++;\n}\n\nconst top = filtered.slice(0, 50);\nreturn [{ json: {\n  jobs: top, count: top.length, total_raw: allJobs.length,\n  sources: sourceCounts, tier_counts: tierCounts,\n  filter_applied: { role_families: roleFamilies, location: locationCanon || null, remote_preference: remotePref }\n} }];\n"
       },
       "id": "35b2221a-1ccc-4a49-a2b0-c3497e908847",
       "name": "Aggregate Jobs",
@@ -300,8 +300,8 @@
       "webhookId": "4fe62b0e-e3e8-4629-862c-f20402e6197a",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -322,8 +322,8 @@
       "webhookId": "6115f6cc-47ba-4c99-bf1d-28031086b4f5",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -346,14 +346,14 @@
       "webhookId": "24d3d0a4-c44b-4989-9cd1-6460d700ce0a",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $('Extract Input').first().json.chat_id;\nconst rawMessage = $('Telegram Trigger').first().json.message?.text || '';\nconst entities = $('Route Intent').first().json.output?.entities || {};\nconst jobNumber = entities.job_number;\nconst urlMatch = rawMessage.match(/https?:\\/\\/[^\\s]+/);\nif (urlMatch) {\n  const jobUrl = decodeURIComponent(urlMatch[0]);\n  let company = 'unknown'; let source = 'web';\n  const m = { ashby: jobUrl.match(/jobs\\.ashbyhq\\.com\\/([^\\/]+)\\//), lever: jobUrl.match(/jobs\\.lever\\.co\\/([^\\/]+)\\//), greenhouse: jobUrl.match(/(?:boards|job-boards)\\.greenhouse\\.io\\/([^\\/]+)\\//), workday: jobUrl.match(/([^.]+)\\.wd\\d+\\.myworkdayjobs\\.com\\//), workable: jobUrl.match(/apply\\.workable\\.com\\/([^\\/]+)\\//) };\n  for (const [src, match] of Object.entries(m)) { if (match) { company = match[1]; source = src; break; } }\n  return [{ json: { chat_id: chatId, job_number: 0, direct_url: jobUrl, source, company_slug: company, greenhouse_id: null, job: { job_id: `direct-${company}-0`, title: '', company, location: '', url: jobUrl, description_snippet: '' } } }];\n}\nif (!jobNumber) return [{ json: { chat_id: chatId, error: 'No job number provided. Reply with a number (1-5) after a job search, or paste a job URL directly.' } }];\nconst lastJobs = staticData.last_jobs || {};\nconst job = lastJobs[jobNumber];\nif (!job) return [{ json: { chat_id: chatId, error: `Job #${jobNumber} not found. Run a job search first, or paste a job URL directly.` } }];\nconst parts = job.job_id.split('-');\nconst greenhouseId = parts.pop();\nconst companySlug = parts.join('-');\nreturn [{ json: { chat_id: chatId, job_number: jobNumber, company_slug: companySlug, greenhouse_id: greenhouseId, source: job.source || 'greenhouse', job } }];"
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $('Extract Input').first().json.chat_id;\nconst rawMessage = $('Telegram Trigger').first().json.message?.text || '';\nconst entities = $('Route Intent').first().json.output?.entities || {};\nconst jobNumber = entities.job_number;\nconst urlMatch = rawMessage.match(/https?:\\/\\/[^\\s]+/);\nif (urlMatch) {\n  const jobUrl = decodeURIComponent(urlMatch[0]);\n  let company = 'unknown'; let source = 'web';\n  const m = { ashby: jobUrl.match(/jobs\\.ashbyhq\\.com\\/([^\\/]+)\\//), lever: jobUrl.match(/jobs\\.lever\\.co\\/([^\\/]+)\\//), greenhouse: jobUrl.match(/(?:boards|job-boards)\\.greenhouse\\.io\\/([^\\/]+)\\//), workday: jobUrl.match(/([^.\\/]+)\\.wd\\d+\\.myworkdayjobs\\.com\\//), workable: jobUrl.match(/apply\\.workable\\.com\\/([^\\/]+)\\//) };\n  for (const [src, match] of Object.entries(m)) { if (match) { company = match[1]; source = src; break; } }\n  return [{ json: { chat_id: chatId, job_number: 0, direct_url: jobUrl, source, company_slug: company, greenhouse_id: null, job: { job_id: `direct-${company}-0`, title: '', company, location: '', url: jobUrl, description_snippet: '' } } }];\n}\nif (!jobNumber) return [{ json: { chat_id: chatId, error: 'No job number provided. Reply with a number (1-5) after a job search, or paste a job URL directly.' } }];\nconst lastJobs = staticData.last_jobs || {};\nconst job = lastJobs[jobNumber];\nif (!job) return [{ json: { chat_id: chatId, error: `Job #${jobNumber} not found. Run a job search first, or paste a job URL directly.` } }];\nconst parts = job.job_id.split('-');\nconst greenhouseId = parts.pop();\nconst companySlug = parts.join('-');\nreturn [{ json: { chat_id: chatId, job_number: jobNumber, company_slug: companySlug, greenhouse_id: greenhouseId, source: job.source || 'greenhouse', job } }];"
       },
       "id": "40364d70-e69d-4b1a-a63e-6643bb1b7b62",
       "name": "Retrieve Job",
@@ -413,8 +413,8 @@
       "webhookId": "ad587865-b92c-4b17-81f2-445f8f7f2983",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -611,8 +611,8 @@
       "webhookId": "d0a61d6e-acfe-47a3-b246-5cace133c894",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -669,8 +669,8 @@
       "webhookId": "2448516e-8fcb-416b-9e60-b46ce1bfebe6",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -723,8 +723,8 @@
       "webhookId": "6ee1a6bd-782e-40c0-87f9-a88bb1705c7c",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -790,8 +790,8 @@
       "webhookId": "087b87c4-eb2b-47c3-8020-fd9af234ff6e",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -808,7 +808,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst ctx = $('Prepare Apply Context').first().json;\nstaticData.last_apply = { job_id: ctx.job_number, job_title: ctx.job_title, company: ctx.company, seniority_mode: ctx.seniority_mode, resume_json: $('ResumeForge').first().json.output || null, cover_json: $('CoverForge').first().json.output || null, forge_score: ctx.forge_score || null, skeleton_mode: ctx.seniority_mode, resume_text: ctx.resume_text || '', personal: ctx.personal || {}, resume_skeleton: ctx.resume_skeleton || '', cover_skeleton: ctx.cover_skeleton || '', job_description: ctx.job_description || '', location: ctx.location || '', timestamp: new Date().toISOString() };\nreturn [{ json: { chat_id: ctx.chat_id, message: \"\\u2705 *Done!* Resume and cover letter delivered.\\n\\nReply with changes ('shorter', 'more Python', 'swap bullet 2') or 'track' to save this application.\" } }];"
+        "jsCode": "// Store Apply Context — fixed: S6b-2 deleted ResumeForge/CoverForge; read the\n// 2-phase outputs instead (guarded, mirrors S6c's Save Apply Context fix).\nconst staticData = $getWorkflowStaticData('global');\nconst ctx = $('Prepare Apply Context').first().json;\nlet resumeJson = null;\ntry { const p = $('Parse Pass2').first().json || {}; resumeJson = p.pass2 || p || null; } catch (e) { resumeJson = null; }\nlet coverJson = null;\ntry { coverJson = $('Parse Cover Pass2').first().json || null; } catch (e) { coverJson = null; }\nstaticData.last_apply = { job_id: ctx.job_number, job_title: ctx.job_title, company: ctx.company, seniority_mode: ctx.seniority_mode, resume_json: resumeJson, cover_json: coverJson, forge_score: ctx.forge_score || null, skeleton_mode: ctx.seniority_mode, resume_text: ctx.resume_text || '', personal: ctx.personal || {}, resume_skeleton: ctx.resume_skeleton || '', cover_skeleton: ctx.cover_skeleton || '', job_description: ctx.job_description || '', location: ctx.location || '', timestamp: new Date().toISOString() };\nreturn [{ json: { chat_id: ctx.chat_id, message: \"\\u2705 *Done!* Resume and cover letter delivered.\\n\\nReply with changes ('shorter', 'more Python', 'swap bullet 2') or 'track' to save this application.\" } }];"
       },
       "id": "148106f3-296e-46e1-9ece-a0442d62f811",
       "name": "Store Apply Context",
@@ -838,8 +838,8 @@
       "webhookId": "57a354c7-77d9-4458-a2e2-9e9eef47bfd5",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -875,8 +875,8 @@
       "webhookId": "6d204191-3bd0-4ab4-94fc-ed50854fd32e",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -912,8 +912,8 @@
       "webhookId": "8708d93b-8009-4ef2-a78a-a10ff6a21f20",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -982,8 +982,8 @@
       "webhookId": "4061cf2d-f930-4a47-ae29-52bdd6235dab",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -1055,8 +1055,8 @@
       "webhookId": "66d01378-2dac-45fd-950d-20b2cca4220d",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -1180,8 +1180,8 @@
       "webhookId": "f81fa9ed-82fd-4763-b1c6-998a83b0d3ec",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -1250,8 +1250,8 @@
       "webhookId": "dd0e1f3c-f7cc-4622-9cb6-7405bdb7aa25",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -1368,8 +1368,8 @@
       "webhookId": "4d419b1b-51dd-4aca-a959-233fe2c2e2bb",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -1405,8 +1405,8 @@
       "webhookId": "bdcdd644-6135-45b1-abad-372dfb718d84",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -1557,8 +1557,8 @@
       "webhookId": "78b21787-7f55-4084-9292-9aeeef9c7a94",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -1630,8 +1630,8 @@
       "webhookId": "90e57a17-7cc0-4abc-82b2-4d537b95ab61",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -1700,8 +1700,8 @@
       "webhookId": "6b04ab22-14cd-48bc-b04b-127258886590",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -1773,8 +1773,8 @@
       "webhookId": "ed3e2e19-40c9-4fdc-8916-d42326853cd2",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -1796,8 +1796,8 @@
       "name": "OpenRouter Chat Model",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -1820,8 +1820,8 @@
       "name": "OpenRouter Chat Model1",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -1840,8 +1840,8 @@
       "name": "OpenRouter Chat Model2",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -1874,8 +1874,8 @@
       "name": "OpenRouter Chat Model3",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -1894,8 +1894,8 @@
       "name": "OpenRouter Chat Model4",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -1914,8 +1914,8 @@
       "name": "OpenRouter Chat Model5",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -1934,8 +1934,8 @@
       "name": "OpenRouter Chat Model8",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -1954,8 +1954,8 @@
       "name": "OpenRouter Chat Model9",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -1974,8 +1974,8 @@
       "name": "OpenRouter Chat Model10",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -1994,8 +1994,8 @@
       "name": "OpenRouter Chat Model11",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -2077,8 +2077,8 @@
       "webhookId": "55e5a16b-683b-4f8e-95fe-bb26dafd4ff3",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -2121,8 +2121,8 @@
       "name": "OpenRouter Chat Model12",
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -2191,8 +2191,8 @@
       "webhookId": "bbc4281b-8fe1-45ad-95e6-283652c2f90f",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -2213,8 +2213,8 @@
       "webhookId": "96904564-7964-4a10-83ed-c597a4dc7032",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -2295,8 +2295,8 @@
       "webhookId": "e884b15f-6234-40c5-b833-fb5830282377",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -2351,8 +2351,8 @@
       "webhookId": "9a101063-5a00-417a-806a-b74018966a13",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -2386,8 +2386,8 @@
       "name": "You.com",
       "credentials": {
         "youDotComApi": {
-          "id": "s2UBYXUFAom4193K",
-          "name": "You.com account"
+          "id": "Hnjqssqf9Pxloh3J",
+          "name": "CareerForge_You.com"
         }
       }
     },
@@ -2460,8 +2460,8 @@
       "name": "Serper Job Search",
       "credentials": {
         "httpHeaderAuth": {
-          "id": "aaGlxQQAKSikN3Te",
-          "name": "Serper API"
+          "id": "yKRm3wIwsRT3cnZ7",
+          "name": "CareerForge_Serper"
         }
       }
     },
@@ -2480,7 +2480,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// --- URL Tier Classifier ---------------------------------------------------\n// Tiers: 1 = direct ATS, 2 = curated boards, 2.5 = unknown career page,\n//        3 = general aggregator, 4 = unknown / probably not a job\nfunction classifyUrlTier(url) {\n  if (!url) return { tier: 4, label: 'invalid' };\n  const u = url.toLowerCase();\n  // TIER 1 — Direct ATS platforms\n  if (/(?:boards|job-boards)\\.greenhouse\\.io/.test(u)) return { tier: 1, label: 'ats:greenhouse' };\n  if (/jobs\\.lever\\.co/.test(u)) return { tier: 1, label: 'ats:lever' };\n  if (/jobs\\.ashbyhq\\.com/.test(u)) return { tier: 1, label: 'ats:ashby' };\n  if (/[\\w-]+\\.wd\\d+\\.myworkdayjobs\\.com/.test(u)) return { tier: 1, label: 'ats:workday' };\n  if (/apply\\.workable\\.com/.test(u)) return { tier: 1, label: 'ats:workable' };\n  if (/jobs\\.smartrecruiters\\.com/.test(u)) return { tier: 1, label: 'ats:smartrecruiters' };\n  if (/workatastartup\\.com\\/jobs\\//.test(u)) return { tier: 1, label: 'ats:yc' };\n  if (/[\\w-]+\\.recruitee\\.com/.test(u)) return { tier: 1, label: 'ats:recruitee' };\n  if (/[\\w-]+\\.personio\\.(com|de)/.test(u)) return { tier: 1, label: 'ats:personio' };\n  if (/[\\w-]+\\.bamboohr\\.com/.test(u)) return { tier: 1, label: 'ats:bamboohr' };\n  if (/[\\w-]+\\.jobvite\\.com/.test(u)) return { tier: 1, label: 'ats:jobvite' };\n  if (/careers-[\\w-]+\\.icims\\.com/.test(u)) return { tier: 1, label: 'ats:icims' };\n  if (/[\\w-]+\\.taleo\\.net/.test(u)) return { tier: 1, label: 'ats:taleo' };\n  if (/successfactors\\.(com|eu)/.test(u)) return { tier: 1, label: 'ats:successfactors' };\n  if (/[\\w-]+\\.eightfold\\.ai/.test(u)) return { tier: 1, label: 'ats:eightfold' };\n  // TIER 2 — Curated remote/aggregator boards\n  if (/weworkremotely\\.com\\/(remote-jobs|listings)\\//.test(u)) return { tier: 2, label: 'curated:wwr' };\n  if (/remoteok\\.(com|io)/.test(u)) return { tier: 2, label: 'curated:remoteok' };\n  if (/himalayas\\.app\\/jobs\\//.test(u)) return { tier: 2, label: 'curated:himalayas' };\n  if (/remotive\\.(com|io)\\/(jobs|remote-jobs)\\//.test(u)) return { tier: 2, label: 'curated:remotive' };\n  if (/jobicy\\.com/.test(u)) return { tier: 2, label: 'curated:jobicy' };\n  if (/wellfound\\.com\\/jobs\\//.test(u)) return { tier: 2, label: 'curated:wellfound' };\n  if (/arbeitnow\\.com\\/jobs\\//.test(u)) return { tier: 2, label: 'curated:arbeitnow' };\n  if (/ai-jobs\\.net\\/job\\//.test(u)) return { tier: 2, label: 'curated:aijobs' };\n  if (/builtin(nyc|sf|la|chicago|seattle|boston|austin)?\\.com\\/job\\//.test(u)) return { tier: 2, label: 'curated:builtin' };\n  // TIER 3 — General web aggregators (often listings pages, low signal)\n  if (/linkedin\\.com/.test(u)) return { tier: 3, label: 'aggregator:linkedin' };\n  if (/indeed\\.com/.test(u)) return { tier: 3, label: 'aggregator:indeed' };\n  if (/glassdoor\\.com/.test(u)) return { tier: 3, label: 'aggregator:glassdoor' };\n  if (/ziprecruiter\\.com/.test(u)) return { tier: 3, label: 'aggregator:ziprecruiter' };\n  if (/dice\\.com/.test(u)) return { tier: 3, label: 'aggregator:dice' };\n  if (/monster\\.com/.test(u)) return { tier: 3, label: 'aggregator:monster' };\n  if (/simplyhired\\.com/.test(u)) return { tier: 3, label: 'aggregator:simplyhired' };\n  if (/careerbuilder\\.com/.test(u)) return { tier: 3, label: 'aggregator:careerbuilder' };\n  if (/snagajob\\.com/.test(u)) return { tier: 3, label: 'aggregator:snagajob' };\n  if (/theladders\\.com/.test(u)) return { tier: 3, label: 'aggregator:theladders' };\n  if (/jora\\.com/.test(u)) return { tier: 3, label: 'aggregator:jora' };\n  if (/talent\\.com/.test(u)) return { tier: 3, label: 'aggregator:talent' };\n  if (/jobs2careers\\.com/.test(u)) return { tier: 3, label: 'aggregator:jobs2careers' };\n  // TIER 2.5 — Plausible career page on unrecognized domain\n  if (/^https?:\\/\\/(careers|jobs|apply|hiring|talent|work|join)\\.[\\w-]+\\.[\\w.]+/.test(u)) {\n    return { tier: 2.5, label: 'career:subdomain' };\n  }\n  if (/\\/(careers|jobs|join-us|join_us|apply|positions|openings|opportunities|vacancies|hiring|work-with-us)\\//.test(u)) {\n    return { tier: 2.5, label: 'career:path' };\n  }\n  // TIER 4 — Anything else\n  return { tier: 4, label: 'unknown' };\n}\n\nconst hits = $input.all();\nconst allJobs = [];\n\nfor (const item of hits) {\n  const results = item.json.organic || [];  // Serper-specific\n  for (const r of results) {\n    const url = r.link || '';              // Serper-specific\n    if (!url) continue;\n    let company = 'unknown', m;\n    if ((m = url.match(/([^.]+)\\.wd\\d+\\.myworkdayjobs\\.com/))) company = m[1];\n    else if ((m = url.match(/boards\\.greenhouse\\.io\\/([^/?]+)/))) company = m[1];\n    else if ((m = url.match(/jobs\\.lever\\.co\\/([^/?]+)/))) company = m[1];\n    else if ((m = url.match(/jobs\\.ashbyhq\\.com\\/([^/?]+)/))) company = m[1];\n    else if ((m = url.match(/apply\\.workable\\.com\\/([^/?]+)/))) company = m[1];\n    else if ((m = url.match(/jobs\\.smartrecruiters\\.com\\/([^/?]+)/))) company = m[1];\n    const __tier = classifyUrlTier(url);\n    allJobs.push({\n      job_id: `serper-${company}-${allJobs.length}`,  // serper prefix\n      title: r.title || '',\n      company,\n      location: '',\n      department: '',\n      url,\n      description_snippet: (r.snippet || '').substring(0, 500),  // Serper-specific\n      updated_at: r.date || '',                                    // Serper-specific\n      source: 'serper',                                            // serper source\n      source_tier: __tier.tier,\n      tier_label: __tier.label\n    });\n  }\n}\n\nreturn [{ json: { jobs: allJobs, source: 'serper', count: allJobs.length } }];"
+        "jsCode": "// --- URL Tier Classifier ---------------------------------------------------\n// Tiers: 1 = direct ATS, 2 = curated boards, 2.5 = unknown career page,\n//        3 = general aggregator, 4 = unknown / probably not a job\nfunction classifyUrlTier(url) {\n  if (!url) return { tier: 4, label: 'invalid' };\n  const u = url.toLowerCase();\n  // TIER 1 — Direct ATS platforms\n  if (/(?:boards|job-boards)\\.greenhouse\\.io/.test(u)) return { tier: 1, label: 'ats:greenhouse' };\n  if (/jobs\\.lever\\.co/.test(u)) return { tier: 1, label: 'ats:lever' };\n  if (/jobs\\.ashbyhq\\.com/.test(u)) return { tier: 1, label: 'ats:ashby' };\n  if (/[\\w-]+\\.wd\\d+\\.myworkdayjobs\\.com/.test(u)) return { tier: 1, label: 'ats:workday' };\n  if (/apply\\.workable\\.com/.test(u)) return { tier: 1, label: 'ats:workable' };\n  if (/jobs\\.smartrecruiters\\.com/.test(u)) return { tier: 1, label: 'ats:smartrecruiters' };\n  if (/workatastartup\\.com\\/jobs\\//.test(u)) return { tier: 1, label: 'ats:yc' };\n  if (/[\\w-]+\\.recruitee\\.com/.test(u)) return { tier: 1, label: 'ats:recruitee' };\n  if (/[\\w-]+\\.personio\\.(com|de)/.test(u)) return { tier: 1, label: 'ats:personio' };\n  if (/[\\w-]+\\.bamboohr\\.com/.test(u)) return { tier: 1, label: 'ats:bamboohr' };\n  if (/[\\w-]+\\.jobvite\\.com/.test(u)) return { tier: 1, label: 'ats:jobvite' };\n  if (/careers-[\\w-]+\\.icims\\.com/.test(u)) return { tier: 1, label: 'ats:icims' };\n  if (/[\\w-]+\\.taleo\\.net/.test(u)) return { tier: 1, label: 'ats:taleo' };\n  if (/successfactors\\.(com|eu)/.test(u)) return { tier: 1, label: 'ats:successfactors' };\n  if (/[\\w-]+\\.eightfold\\.ai/.test(u)) return { tier: 1, label: 'ats:eightfold' };\n  // TIER 2 — Curated remote/aggregator boards\n  if (/weworkremotely\\.com\\/(remote-jobs|listings)\\//.test(u)) return { tier: 2, label: 'curated:wwr' };\n  if (/remoteok\\.(com|io)/.test(u)) return { tier: 2, label: 'curated:remoteok' };\n  if (/himalayas\\.app\\/jobs\\//.test(u)) return { tier: 2, label: 'curated:himalayas' };\n  if (/remotive\\.(com|io)\\/(jobs|remote-jobs)\\//.test(u)) return { tier: 2, label: 'curated:remotive' };\n  if (/jobicy\\.com/.test(u)) return { tier: 2, label: 'curated:jobicy' };\n  if (/wellfound\\.com\\/jobs\\//.test(u)) return { tier: 2, label: 'curated:wellfound' };\n  if (/arbeitnow\\.com\\/jobs\\//.test(u)) return { tier: 2, label: 'curated:arbeitnow' };\n  if (/ai-jobs\\.net\\/job\\//.test(u)) return { tier: 2, label: 'curated:aijobs' };\n  if (/builtin(nyc|sf|la|chicago|seattle|boston|austin)?\\.com\\/job\\//.test(u)) return { tier: 2, label: 'curated:builtin' };\n  // TIER 3 — General web aggregators (often listings pages, low signal)\n  if (/linkedin\\.com/.test(u)) return { tier: 3, label: 'aggregator:linkedin' };\n  if (/indeed\\.com/.test(u)) return { tier: 3, label: 'aggregator:indeed' };\n  if (/glassdoor\\.com/.test(u)) return { tier: 3, label: 'aggregator:glassdoor' };\n  if (/ziprecruiter\\.com/.test(u)) return { tier: 3, label: 'aggregator:ziprecruiter' };\n  if (/dice\\.com/.test(u)) return { tier: 3, label: 'aggregator:dice' };\n  if (/monster\\.com/.test(u)) return { tier: 3, label: 'aggregator:monster' };\n  if (/simplyhired\\.com/.test(u)) return { tier: 3, label: 'aggregator:simplyhired' };\n  if (/careerbuilder\\.com/.test(u)) return { tier: 3, label: 'aggregator:careerbuilder' };\n  if (/snagajob\\.com/.test(u)) return { tier: 3, label: 'aggregator:snagajob' };\n  if (/theladders\\.com/.test(u)) return { tier: 3, label: 'aggregator:theladders' };\n  if (/jora\\.com/.test(u)) return { tier: 3, label: 'aggregator:jora' };\n  if (/talent\\.com/.test(u)) return { tier: 3, label: 'aggregator:talent' };\n  if (/jobs2careers\\.com/.test(u)) return { tier: 3, label: 'aggregator:jobs2careers' };\n  // TIER 2.5 — Plausible career page on unrecognized domain\n  if (/^https?:\\/\\/(careers|jobs|apply|hiring|talent|work|join)\\.[\\w-]+\\.[\\w.]+/.test(u)) {\n    return { tier: 2.5, label: 'career:subdomain' };\n  }\n  if (/\\/(careers|jobs|join-us|join_us|apply|positions|openings|opportunities|vacancies|hiring|work-with-us)\\//.test(u)) {\n    return { tier: 2.5, label: 'career:path' };\n  }\n  // TIER 4 — Anything else\n  return { tier: 4, label: 'unknown' };\n}\n\nconst hits = $input.all();\nconst allJobs = [];\n\nfor (const item of hits) {\n  const results = item.json.organic || [];  // Serper-specific\n  for (const r of results) {\n    const url = r.link || '';              // Serper-specific\n    if (!url) continue;\n    let company = 'unknown', m;\n    if ((m = url.match(/([^.\\/]+)\\.wd\\d+\\.myworkdayjobs\\.com/))) company = m[1];\n    else if ((m = url.match(/boards\\.greenhouse\\.io\\/([^/?]+)/))) company = m[1];\n    else if ((m = url.match(/jobs\\.lever\\.co\\/([^/?]+)/))) company = m[1];\n    else if ((m = url.match(/jobs\\.ashbyhq\\.com\\/([^/?]+)/))) company = m[1];\n    else if ((m = url.match(/apply\\.workable\\.com\\/([^/?]+)/))) company = m[1];\n    else if ((m = url.match(/jobs\\.smartrecruiters\\.com\\/([^/?]+)/))) company = m[1];\n    const __tier = classifyUrlTier(url);\n    allJobs.push({\n      job_id: `serper-${company}-${allJobs.length}`,  // serper prefix\n      title: r.title || '',\n      company,\n      location: '',\n      department: '',\n      url,\n      description_snippet: (r.snippet || '').substring(0, 500),  // Serper-specific\n      updated_at: r.date || '',                                    // Serper-specific\n      source: 'serper',                                            // serper source\n      source_tier: __tier.tier,\n      tier_label: __tier.label\n    });\n  }\n}\n\nreturn [{ json: { jobs: allJobs, source: 'serper', count: allJobs.length } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -2720,8 +2720,8 @@
       "webhookId": "97ea96fb-b932-416f-a08f-6546bed3f9ef",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -2776,8 +2776,8 @@
       "webhookId": "07888d9f-6eef-4a1c-96c5-839ca5d477ed",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -2832,8 +2832,8 @@
       "webhookId": "da46c2c3-3818-4925-a009-a04871302701",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -2869,8 +2869,8 @@
       "webhookId": "627acd6d-a207-46ef-bac8-a31f307ffa14",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -2906,8 +2906,8 @@
       "webhookId": "3729635c-ef40-4dde-ab47-9a89b084b9e9",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -2943,8 +2943,8 @@
       "webhookId": "5efdf524-8ac4-4883-8860-be90ab3ab93c",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -2980,8 +2980,8 @@
       "webhookId": "2b2cbee4-02fe-435a-bc8d-782fefa1b2d9",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -3037,8 +3037,8 @@
       "name": "Firecrawl Search",
       "credentials": {
         "firecrawlApi": {
-          "id": "sTMgw2RCqCvdZKyw",
-          "name": "Firecrawl account"
+          "id": "vxacfyzUmSLNVHkV",
+          "name": "CareerForge_Firecrawl"
         }
       }
     },
@@ -3087,8 +3087,8 @@
       "typeVersion": 4.4,
       "credentials": {
         "firecrawlApi": {
-          "id": "sTMgw2RCqCvdZKyw",
-          "name": "Firecrawl account"
+          "id": "vxacfyzUmSLNVHkV",
+          "name": "CareerForge_Firecrawl"
         }
       }
     },
@@ -3128,7 +3128,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Build Telegraph Body v4 — tier-aware ordering, token gate, location fallback.\nconst sd = $getWorkflowStaticData('global');\nconst scored = $('Parse Scorer Output').first().json.scored || [];\nconst aggregateOut = $('Aggregate Jobs').first().json;\nconst allJobs = aggregateOut.jobs || [];\nconst intent = sd.last_search_intent || {};\n\nconst jobMap = {};\nfor (const j of allJobs) jobMap[j.job_id] = j;\n\nfunction salaryStr(job) { const lo = job.salary_min, hi = job.salary_max; if (!lo && !hi) return ''; const sym = {USD:'$',INR:'₹',GBP:'£',EUR:'€',AUD:'A$',CAD:'C$',SGD:'S$',CHF:'CHF ',NZD:'NZ$',ZAR:'R',BRL:'R$',MXN:'MX$',PLN:'zł '}[job.salary_currency] || (job.salary_currency ? job.salary_currency + ' ' : '$'); const lakh = job.salary_currency === 'INR'; const f = lakh ? (n => { const v = n/100000; return (v % 1 ? v.toFixed(1) : v) + 'L'; }) : (n => n >= 1000 ? (Math.round(n/1000) + 'k') : ('' + n)); return sym + ((lo && hi) ? (f(lo) + '–' + f(hi)) : (f(lo || hi) + '+')); }\nfunction scoreEmoji(s) { return s >= 70 ? '🟢' : s >= 55 ? '🟡' : '⚪'; }\nfunction tierGlyph(t)  { return t === 1 ? '✅' : t === 2 ? '🌿' : t === 2.5 ? '🏢' : t === 3 ? '🌐' : ''; }\nfunction clean(slug) { return (slug || '').replace(/-/g,' ').replace(/\\b\\w/g, l => l.toUpperCase()); }\nfunction displayLocation(job) {\n  const dl = (job.detected_location || '').trim();\n  if (dl && !/^(unknown|n\\/?a|null|undefined)$/i.test(dl)) return dl;\n  const loc = (job.location || '').trim();\n  if (loc && !/^(unknown|n\\/?a|null|undefined)$/i.test(loc)) return loc;\n  const hay = ((job.title || '') + ' ' + (job.description_snippet || '')).toLowerCase();\n  if (intent.remote_preference === 'remote_only' || hay.includes('remote')) return 'Remote';\n  return 'Location not specified';\n}\n\nconst rankedJobs = scored\n  .map(s => ({ ...(jobMap[s.job_id] || {}), fit_score: s.fit_score, one_liner: s.one_liner, detected_location: s.detected_location, location_match: s.location_match, score100: s.score100, sub_scores: s.sub_scores, bottleneck: s.bottleneck, bin: s.bin }))\n  .filter(j => j && j.url)\n  .filter(j => !(j.location_match === 'mismatch' && intent.location_canonical && intent.remote_preference !== 'remote_only'))\n  .sort((a, b) => {\n    const tierDiff = (a.source_tier || 99) - (b.source_tier || 99);\n    if (tierDiff !== 0) return tierDiff;\n    const scoreDiff = (b.score100 || 0) - (a.score100 || 0);\n    if (scoreDiff !== 0) return scoreDiff;\n    return (new Date(b.updated_at || 0).getTime() || 0) - (new Date(a.updated_at || 0).getTime() || 0);\n  })\n  .slice(0, 40);\n\nconst badges = [];\nif (intent.location_canonical) badges.push('📍 ' + String(intent.location_canonical).split(',')[0]);\nif (intent.salary_signals?.length) badges.push('💰 ' + intent.salary_signals[0]);\nif (intent.visa_signals?.length) badges.push('🛂 ' + intent.visa_signals[0]);\nif (intent.industry_signals?.length) badges.push('🏭 ' + intent.industry_signals[0]);\nif (intent.seniority && intent.seniority !== 'any') badges.push('📊 ' + intent.seniority);\nif (intent.remote_preference === 'remote_only') badges.push('🌍 Remote only');\n\nconst searchContext = (intent.role_families?.slice(0,3).join(', ') || 'Jobs')\n  + (badges.length ? ' · ' + badges.join(' · ') : '')\n  + ' · ' + rankedJobs.length + ' results';\n\nconst finalTierCounts = { 1: 0, 2: 0, '2.5': 0, 3: 0 };\nfor (const j of rankedJobs) {\n  const t = j.source_tier;\n  if (t === 1) finalTierCounts[1]++;\n  else if (t === 2) finalTierCounts[2]++;\n  else if (t === 2.5) finalTierCounts['2.5']++;\n  else if (t === 3) finalTierCounts[3]++;\n}\nconst tierBadgeParts = [];\nif (finalTierCounts[1])     tierBadgeParts.push('✅ ' + finalTierCounts[1] + ' ATS');\nif (finalTierCounts[2])     tierBadgeParts.push('🌿 ' + finalTierCounts[2] + ' Curated');\nif (finalTierCounts['2.5']) tierBadgeParts.push('🏢 ' + finalTierCounts['2.5'] + ' Career');\nif (finalTierCounts[3])     tierBadgeParts.push('🌐 ' + finalTierCounts[3] + ' Aggregator');\nconst tierBadgeLine = tierBadgeParts.length ? ('Sources: ' + tierBadgeParts.join(' · ')) : '';\n\nconst contentNodes = [\n  { tag: 'p', children: [{ tag: 'i', children: [searchContext] }] },\n];\nif (tierBadgeLine) contentNodes.push({ tag: 'p', children: [{ tag: 'i', children: [tierBadgeLine] }] });\ncontentNodes.push({ tag: 'p', children: ['Reply with a number in Telegram to generate a tailored resume + cover letter.'] });\ncontentNodes.push({ tag: 'hr' });\n\nconst providers = new Set();\nfor (const j of rankedJobs) if (j.source) providers.add(j.source);\nif (providers.size > 0) {\n  const labels = { firecrawl: '🔥 Firecrawl', youcom: '🔍 You.com', serper: '⚡ Serper' };\n  contentNodes.push({ tag: 'p', children: [{ tag: 'i', children: ['Powered by: ' + [...providers].map(p => labels[p] || p).join(' · ')] }] });\n  contentNodes.push({ tag: 'hr' });\n}\n\nfor (const [i, job] of rankedJobs.entries()) {\n  const score = (job.score100 != null) ? job.score100 : (job.fit_score || 0) * 10;\n  const tg = tierGlyph(job.source_tier);\n  const posted = job.updated_at ? new Date(job.updated_at).toLocaleDateString('en-US', {month:'short',day:'numeric'}) : '';\n  contentNodes.push({ tag: 'h4', children: [(i + 1) + '. ' + scoreEmoji(score) + (tg ? ' ' + tg : '') + ' ', { tag: 'a', attrs: { href: job.url }, children: [job.title || 'Unknown Role'] }] });\n  const metaParts = [clean(job.company) || 'Unknown', displayLocation(job)];\n  { const _sal = salaryStr(job); if (_sal) metaParts.push('💰 ' + _sal); }\n  metaParts.push(score + '/100');\n  if (posted) metaParts.push(posted);\n  contentNodes.push({ tag: 'p', children: [{ tag: 'i', children: [metaParts.join(' · ')] }] });\n  if (job.one_liner) contentNodes.push({ tag: 'blockquote', children: [job.one_liner] });\n  if (job.sub_scores) { const ss = job.sub_scores; contentNodes.push({ tag: 'p', children: [{ tag: 'i', children: ['Skills ' + ss.skills + ' · Exp ' + ss.experience + ' · Visa ' + ss.workauth + ' · Loc ' + ss.location + ' · Comp ' + ss.compensation + (job.bottleneck ? ' — weakest: ' + job.bottleneck : '')] }] }); }\n}\n\nconst top3 = rankedJobs.slice(0, 3);\nconst _degraded = (($('Parse Scorer Output').first().json || {}).strategy === 'neutral_fallback');\nlet top3Msg = '🎯 *Found ' + rankedJobs.length + ' roles*\\n';\nif (_degraded) top3Msg += '⚠️ _Scoring degraded — showing by source quality_\\n';\nif (((intent.ambiguity_flags) || []).indexOf('F1_OPT_REMOTE_LOCATION') !== -1) top3Msg += (intent._f1_note || '🛂 F-1 OPT: remote work must be performed inside the US.') + '\\n';\n  if (badges.length) top3Msg += badges.join(' · ') + '\\n';\nif (tierBadgeLine) top3Msg += '_' + tierBadgeLine + '_\\n';\ntop3Msg += '\\n';\nfor (const [i, job] of top3.entries()) {\n  const titleClean = (job.title || 'Unknown').replace(/[\\[\\]]/g, '');\n  const tg = tierGlyph(job.source_tier);\n  top3Msg += '*' + (i+1) + '.* ' + (tg ? tg + ' ' : '') + '[' + titleClean + '](' + job.url + ')\\n';\n  top3Msg += '    🏢 ' + clean(job.company) + ' · 📍 ' + displayLocation(job) + '\\n';\n  top3Msg += '    📊 ' + ((job.score100 != null) ? job.score100 : (job.fit_score || 0) * 10) + '/100 — ' + (job.one_liner || '') + '\\n\\n';\n}\nif (!top3.length) top3Msg += '_No direct job pages survived filtering. Try broadening the query._\\n\\n';\n\nconst _lt = $('Load Telegraph Token').first();\nconst token = (_lt && _lt.json && _lt.json.value) || sd.telegraph_token || '';\nconst pageTitle = 'CareerForge — ' + rankedJobs.length + ' Jobs · ' + new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});\n\nreturn [{ json: {\n  access_token: token,\n  title: pageTitle,\n  author_name: 'CareerForge',\n  content: JSON.stringify(contentNodes),\n  return_content: 'false',\n  top3_msg: top3Msg,\n  total_jobs: rankedJobs.length,\n  badges,\n  rankedJobs,\n  has_token: Boolean(token)\n} }];\n"
+        "jsCode": "// Build Telegraph Body v4 — tier-aware ordering, token gate, location fallback.\nconst sd = $getWorkflowStaticData('global');\nconst scored = $('Parse Scorer Output').first().json.scored || [];\nconst aggregateOut = $('Aggregate Jobs').first().json;\nconst allJobs = aggregateOut.jobs || [];\nconst intent = sd.last_search_intent || {};\n\nconst jobMap = {};\nfor (const j of allJobs) jobMap[j.job_id] = j;\n\nfunction salaryStr(job) { const lo = job.salary_min, hi = job.salary_max; if (!lo && !hi) return ''; const sym = {USD:'$',INR:'₹',GBP:'£',EUR:'€',AUD:'A$',CAD:'C$',SGD:'S$',CHF:'CHF ',NZD:'NZ$',ZAR:'R',BRL:'R$',MXN:'MX$',PLN:'zł '}[job.salary_currency] || (job.salary_currency ? job.salary_currency + ' ' : '$'); const lakh = job.salary_currency === 'INR'; const f = lakh ? (n => { const v = n/100000; return (v % 1 ? v.toFixed(1) : v) + 'L'; }) : (n => n >= 1000 ? (Math.round(n/1000) + 'k') : ('' + n)); return sym + ((lo && hi) ? (f(lo) + '–' + f(hi)) : (f(lo || hi) + '+')); }\nfunction scoreEmoji(s) { return s >= 70 ? '🟢' : s >= 55 ? '🟡' : '⚪'; }\nfunction tierGlyph(t)  { return t === 1 ? '✅' : t === 2 ? '🌿' : t === 2.5 ? '🏢' : t === 3 ? '🌐' : ''; }\nfunction clean(slug) { return (slug || '').replace(/-/g,' ').replace(/\\b\\w/g, l => l.toUpperCase()); }\nfunction displayLocation(job) {\n  const dl = (job.detected_location || '').trim();\n  if (dl && !/^(unknown|n\\/?a|null|undefined)$/i.test(dl)) return dl;\n  const loc = (job.location || '').trim();\n  if (loc && !/^(unknown|n\\/?a|null|undefined)$/i.test(loc)) return loc;\n  const hay = ((job.title || '') + ' ' + (job.description_snippet || '')).toLowerCase();\n  if (intent.remote_preference === 'remote_only' || hay.includes('remote')) return 'Remote';\n  return 'Location not specified';\n}\n\nconst rankedJobs = scored\n  .map(s => ({ ...(jobMap[s.job_id] || {}), fit_score: s.fit_score, one_liner: s.one_liner, detected_location: s.detected_location, location_match: s.location_match, score100: s.score100, sub_scores: s.sub_scores, bottleneck: s.bottleneck, bin: s.bin }))\n  .filter(j => j && j.url)\n  .filter(j => !(j.location_match === 'mismatch' && intent.location_canonical && intent.remote_preference !== 'remote_only'))\n  .sort((a, b) => {\n    const tierDiff = (a.source_tier || 99) - (b.source_tier || 99);\n    if (tierDiff !== 0) return tierDiff;\n    const scoreDiff = (b.score100 || 0) - (a.score100 || 0);\n    if (scoreDiff !== 0) return scoreDiff;\n    return (new Date(b.updated_at || 0).getTime() || 0) - (new Date(a.updated_at || 0).getTime() || 0);\n  })\n  .slice(0, 40);\n\nconst badges = [];\nif (intent.location_canonical) badges.push('📍 ' + String(intent.location_canonical).split(',')[0]);\nif (intent.salary_signals?.length) badges.push('💰 ' + intent.salary_signals[0]);\nif (intent.visa_signals?.length) badges.push('🛂 ' + intent.visa_signals[0]);\nif (intent.industry_signals?.length) badges.push('🏭 ' + intent.industry_signals[0]);\nif (intent.seniority && intent.seniority !== 'any') badges.push('📊 ' + intent.seniority);\nif (intent.remote_preference === 'remote_only') badges.push('🌍 Remote only');\n\nconst searchContext = (intent.role_families?.slice(0,3).join(', ') || 'Jobs')\n  + (badges.length ? ' · ' + badges.join(' · ') : '')\n  + ' · ' + rankedJobs.length + ' results';\n\nconst finalTierCounts = { 1: 0, 2: 0, '2.5': 0, 3: 0 };\nfor (const j of rankedJobs) {\n  const t = j.source_tier;\n  if (t === 1) finalTierCounts[1]++;\n  else if (t === 2) finalTierCounts[2]++;\n  else if (t === 2.5) finalTierCounts['2.5']++;\n  else if (t === 3) finalTierCounts[3]++;\n}\nconst tierBadgeParts = [];\nif (finalTierCounts[1])     tierBadgeParts.push('✅ ' + finalTierCounts[1] + ' ATS');\nif (finalTierCounts[2])     tierBadgeParts.push('🌿 ' + finalTierCounts[2] + ' Curated');\nif (finalTierCounts['2.5']) tierBadgeParts.push('🏢 ' + finalTierCounts['2.5'] + ' Career');\nif (finalTierCounts[3])     tierBadgeParts.push('🌐 ' + finalTierCounts[3] + ' Aggregator');\nconst tierBadgeLine = tierBadgeParts.length ? ('Sources: ' + tierBadgeParts.join(' · ')) : '';\n\nconst contentNodes = [\n  { tag: 'p', children: [{ tag: 'i', children: [searchContext] }] },\n];\nif (tierBadgeLine) contentNodes.push({ tag: 'p', children: [{ tag: 'i', children: [tierBadgeLine] }] });\ncontentNodes.push({ tag: 'p', children: ['Reply with a number in Telegram to generate a tailored resume + cover letter.'] });\ncontentNodes.push({ tag: 'hr' });\n\nconst providers = new Set();\nfor (const j of rankedJobs) if (j.source) providers.add(j.source);\nif (providers.size > 0) {\n  const labels = { firecrawl: '🔥 Firecrawl', youcom: '🔍 You.com', serper: '⚡ Serper' };\n  contentNodes.push({ tag: 'p', children: [{ tag: 'i', children: ['Powered by: ' + [...providers].map(p => labels[p] || p).join(' · ')] }] });\n  contentNodes.push({ tag: 'hr' });\n}\n\nfor (const [i, job] of rankedJobs.entries()) {\n  const score = (job.score100 != null) ? job.score100 : (job.fit_score || 0) * 10;\n  const tg = tierGlyph(job.source_tier);\n  const _pd = job.updated_at ? new Date(job.updated_at) : null;\n  const posted = (_pd && !isNaN(_pd.getTime())) ? _pd.toLocaleDateString('en-US', {month:'short',day:'numeric'}) : '';\n  contentNodes.push({ tag: 'h4', children: [(i + 1) + '. ' + scoreEmoji(score) + (tg ? ' ' + tg : '') + ' ', { tag: 'a', attrs: { href: job.url }, children: [job.title || 'Unknown Role'] }] });\n  const metaParts = [clean(job.company) || 'Unknown', displayLocation(job)];\n  { const _sal = salaryStr(job); if (_sal) metaParts.push('💰 ' + _sal); }\n  metaParts.push(score + '/100');\n  if (posted) metaParts.push(posted);\n  contentNodes.push({ tag: 'p', children: [{ tag: 'i', children: [metaParts.join(' · ')] }] });\n  if (job.one_liner) contentNodes.push({ tag: 'blockquote', children: [job.one_liner] });\n  if (job.sub_scores) { const ss = job.sub_scores; contentNodes.push({ tag: 'p', children: [{ tag: 'i', children: ['Skills ' + ss.skills + ' · Exp ' + ss.experience + ' · Visa ' + ss.workauth + ' · Loc ' + ss.location + ' · Comp ' + ss.compensation + (job.bottleneck ? ' — weakest: ' + job.bottleneck : '')] }] }); }\n}\n\nconst top3 = rankedJobs.slice(0, 3);\nconst _degraded = (($('Parse Scorer Output').first().json || {}).strategy === 'neutral_fallback');\nlet top3Msg = '🎯 *Found ' + rankedJobs.length + ' roles*\\n';\nif (_degraded) top3Msg += '⚠️ _Scoring degraded — showing by source quality_\\n';\nif (((intent.ambiguity_flags) || []).indexOf('F1_OPT_REMOTE_LOCATION') !== -1) top3Msg += (intent._f1_note || '🛂 F-1 OPT: remote work must be performed inside the US.') + '\\n';\n  if (badges.length) top3Msg += badges.join(' · ') + '\\n';\nif (tierBadgeLine) top3Msg += '_' + tierBadgeLine + '_\\n';\ntop3Msg += '\\n';\nfor (const [i, job] of top3.entries()) {\n  const titleClean = (job.title || 'Unknown').replace(/[\\[\\]]/g, '');\n  const tg = tierGlyph(job.source_tier);\n  top3Msg += '*' + (i+1) + '.* ' + (tg ? tg + ' ' : '') + '[' + titleClean + '](' + job.url + ')\\n';\n  top3Msg += '    🏢 ' + clean(job.company) + ' · 📍 ' + displayLocation(job) + '\\n';\n  top3Msg += '    📊 ' + ((job.score100 != null) ? job.score100 : (job.fit_score || 0) * 10) + '/100 — ' + (job.one_liner || '') + '\\n\\n';\n}\nif (!top3.length) top3Msg += '_No direct job pages survived filtering. Try broadening the query._\\n\\n';\n\nconst _lt = $('Load Telegraph Token').first();\nconst token = (_lt && _lt.json && _lt.json.value) || sd.telegraph_token || '';\nconst pageTitle = 'CareerForge — ' + rankedJobs.length + ' Jobs · ' + new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});\n\nreturn [{ json: {\n  access_token: token,\n  title: pageTitle,\n  author_name: 'CareerForge',\n  content: JSON.stringify(contentNodes),\n  return_content: 'false',\n  top3_msg: top3Msg,\n  total_jobs: rankedJobs.length,\n  badges,\n  rankedJobs,\n  has_token: Boolean(token)\n} }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -3322,8 +3322,8 @@
       "webhookId": "aa0f8ff1-d4dd-4634-9dc9-76e4c5a65950",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -3344,8 +3344,8 @@
       "webhookId": "822f20c1-8e06-4c7d-ae3b-8e2535a16f03",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -3368,8 +3368,8 @@
       "webhookId": "cd66e7b9-24f3-4b3e-9537-064eb38402b4",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -3390,8 +3390,8 @@
       "webhookId": "639ced3a-f704-4f50-8e64-ceeceb0b7520",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -3414,8 +3414,8 @@
       "webhookId": "b0340056-a2d9-4d84-9227-c7eb32ce72eb",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -3436,8 +3436,8 @@
       "webhookId": "e62b4443-c55c-4c48-9d34-b5fa532d06fe",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -3568,8 +3568,8 @@
       "webhookId": "053f88d5-f9f1-47df-b3d5-2e63a2846bc7",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -3637,8 +3637,8 @@
       "webhookId": "ffc8ab02-5828-48d9-b2e1-83c0f6e8b24e",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -3694,8 +3694,8 @@
       "webhookId": "38268152-d35e-4b46-9bb3-27de81e567b4",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -3902,8 +3902,8 @@
       "webhookId": "aaef5ef2-40b2-4685-97d0-2dcdbb2b2e13",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -4143,8 +4143,8 @@
       "webhookId": "f2fc74cf-aa6b-4328-91ef-127ec8b2ffe3",
       "credentials": {
         "telegramApi": {
-          "id": "PNR29RagTwMTSv2S",
-          "name": "Telegram account"
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
         }
       }
     },
@@ -4257,8 +4257,8 @@
       ],
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       },
       "onError": "continueRegularOutput"
@@ -4311,8 +4311,8 @@
       "alwaysOutputData": true,
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       },
       "onError": "continueRegularOutput"
@@ -4360,8 +4360,8 @@
       ],
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       },
       "onError": "continueRegularOutput"
@@ -4385,8 +4385,8 @@
       "alwaysOutputData": true,
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       },
       "onError": "continueRegularOutput"
@@ -4410,8 +4410,8 @@
       "alwaysOutputData": true,
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       },
       "onError": "continueRegularOutput"
@@ -4432,8 +4432,8 @@
       ],
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       },
       "onError": "continueRegularOutput",
@@ -4497,8 +4497,8 @@
       ],
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       },
       "onError": "continueRegularOutput",
@@ -4599,8 +4599,8 @@
       ],
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       },
       "onError": "continueRegularOutput",
@@ -4626,7 +4626,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// Assemble Resume LaTeX — S6b-1 (node jsCode source of truth)\n// ═══════════════════════════════════════════════════════════════\n// Deterministic LaTeX assembly. Adopts the command-center slot mechanism\n// (SECTION_LATEX + buildFallbackSlots = the reliability net: renders a real\n// resume from Pass-1 VERBATIM data even if Pass-2 produced nothing) onto the\n// bot's proven Lato/ATS-parsable skeleton + macros.\n//\n// Ported from careerforge-command-center/supabase/functions/document-ai/index.ts:\n//   buildFallbackSlots 1409-1455, assembly loop 1457-1497, SECTION_LATEX 124-173,\n//   sanitizeLatexContent/escapeLatexText/firstNonEmpty 1368-1407.\n// Plus the bot's normalizeLatexForPdflatex + the s6a $|$ restore + empty-body throw.\n//\n// IMPORTANT: the upstream Pass-1/Pass-2 LLM nodes emit RAW text (no structured\n// output parser — that path failed on LaTeX-heavy JSON in S2b). Parse* Code nodes\n// run the ported parseJSON before this node. We still defensively parseJSON here\n// if a string slips through.\n//\n// Header is built DETERMINISTICALLY from ctx.personal (not the LLM) — this kills\n// the entire {{EMAIL}}/$|$ render-bug class at the source.\n//\n// In:  $input.first().json = { pass1, pass2 }   (pass2 optional; fallback covers it)\n//      $('Prepare Apply Context').first().json = { personal, chat_id, job_title, company, ... }\n// Out: [{ json: { latex, chat_id, job_title, company, resumePlainText } }]   (matches\n//      the old Build Resume LaTeX output shape so Compile/Send are untouched)\n\n// ─── ONE skeleton (bot preamble + macros, retrofitted to command-center slots) ───\n// The 3 seniority .tex skeletons were byte-identical except header placeholders\n// (now code-built) and section-order comments (now driven by pass1.sectionOrder),\n// so they collapse to one. Tier still drives selection/order via Pass-1, not here.\nconst SKELETON = String.raw`\\documentclass[letterpaper,11pt]{article}\n\n\\usepackage{latexsym}\n\\usepackage[empty]{fullpage}\n\\usepackage{titlesec}\n\\usepackage{marvosym}\n\\usepackage[usenames,dvipsnames]{color}\n\\usepackage{verbatim}\n\\usepackage{enumitem}\n\\usepackage[hidelinks]{hyperref}\n\\usepackage{fancyhdr}\n\\usepackage[english]{babel}\n\\usepackage{tabularx}\n\\input{glyphtounicode}\n\n\\usepackage[default]{lato}\n\\usepackage[T1]{fontenc}\n\n\\usepackage[top=0.45in, bottom=0.45in, left=0.55in, right=0.55in]{geometry}\n\n\\pagestyle{fancy}\n\\fancyhf{}\n\\fancyfoot{}\n\\renewcommand{\\headrulewidth}{0pt}\n\\renewcommand{\\footrulewidth}{0pt}\n\n\\urlstyle{same}\n\\raggedbottom\n\\raggedright\n\\setlength{\\tabcolsep}{0in}\n\n\\titleformat{\\section}{\n  \\vspace{-5pt}\\scshape\\raggedright\\large\n}{}{0em}{}[\\color{black}\\titlerule \\vspace{-4pt}]\n\n\\pdfgentounicode=1\n\n\\newcommand{\\resumeItem}[1]{\n  \\item\\small{\n    {#1}\n  }\n}\n\\newcommand{\\resumeSubheading}[4]{\n  \\vspace{-1pt}\\item\n    \\begin{tabular*}{0.97\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}\n      \\textbf{#1} & #2 \\\\\n      \\textit{\\small#3} & \\textit{\\small #4} \\\\\n    \\end{tabular*}\\vspace{-5pt}\n}\n\\newcommand{\\resumeSubSubheading}[2]{\n    \\item\n    \\begin{tabular*}{0.97\\textwidth}{l@{\\extracolsep{\\fill}}r}\n      \\textit{\\small#1} & \\textit{\\small #2} \\\\\n    \\end{tabular*}\\vspace{-5pt}\n}\n\\newcommand{\\resumeProjectHeading}[2]{\n    \\item\n    \\begin{tabular*}{0.97\\textwidth}{l@{\\extracolsep{\\fill}}r}\n      \\small#1 & #2 \\\\\n    \\end{tabular*}\\vspace{-5pt}\n}\n\\newcommand{\\resumeSubItem}[1]{\\resumeItem{#1}\\vspace{-4pt}}\n\\renewcommand\\labelitemi{\\textbullet}\n\\renewcommand\\labelitemii{$\\vcenter{\\hbox{\\tiny$\\bullet$}}$}\n\\newcommand{\\resumeSubHeadingListStart}{\\begin{itemize}[leftmargin=0.15in, label={}]}\n\\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}}\n\\newcommand{\\resumeItemListStart}{\\begin{itemize}[noitemsep, topsep=0pt, parsep=0pt, partopsep=0pt]}\n\\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-4pt}}\n\n\\begin{document}\n\n%%% SLOT: header\n\n%%% CONTENT_SECTIONS\n\n\\end{document}`;\n\n// ─── SECTION_LATEX (command-center 124-173; uses bot-compatible macros) ───\nconst SECTION_LATEX = {\n  summary: String.raw`\\section{Summary}\n\\resumeSubHeadingListStart\n  \\small{\\item{\n%%% SLOT: summary_content\n  }}\n\\resumeSubHeadingListEnd`,\n  experience: String.raw`\\section{Experience}\n\\resumeSubHeadingListStart\n%%% SLOT: experience_entries\n\\resumeSubHeadingListEnd`,\n  internships: String.raw`\\section{Internships}\n\\resumeSubHeadingListStart\n%%% SLOT: internship_entries\n\\resumeSubHeadingListEnd`,\n  projects: String.raw`\\section{Projects}\n\\resumeSubHeadingListStart\n%%% SLOT: project_entries\n\\resumeSubHeadingListEnd`,\n  skills: String.raw`\\section{Technical Skills}\n\\resumeSubHeadingListStart\n  \\small{\\item{\n%%% SLOT: skills_content\n  }}\n\\resumeSubHeadingListEnd`,\n  education: String.raw`\\section{Education}\n\\resumeSubHeadingListStart\n%%% SLOT: education_entries\n\\resumeSubHeadingListEnd`,\n  certifications: String.raw`\\section{Certifications}\n\\resumeSubHeadingListStart\n%%% SLOT: certification_entries\n\\resumeSubHeadingListEnd`,\n  achievements: String.raw`\\section{Achievements}\n\\resumeSubHeadingListStart\n%%% SLOT: achievement_entries\n\\resumeSubHeadingListEnd`,\n  activities: String.raw`\\section{Activities \\& Leadership}\n\\resumeSubHeadingListStart\n%%% SLOT: activity_entries\n\\resumeSubHeadingListEnd`,\n};\n\nconst SLOT_MARKER = {\n  summary: '%%% SLOT: summary_content',\n  experience: '%%% SLOT: experience_entries',\n  internships: '%%% SLOT: internship_entries',\n  projects: '%%% SLOT: project_entries',\n  skills: '%%% SLOT: skills_content',\n  education: '%%% SLOT: education_entries',\n  certifications: '%%% SLOT: certification_entries',\n  achievements: '%%% SLOT: achievement_entries',\n  activities: '%%% SLOT: activity_entries',\n};\n\n// ─── Helpers ───\nfunction escapeLatexText(value) {\n  return String(value == null ? '' : value)\n    .replace(/\\\\/g, '\\\\textbackslash{}')\n    .replace(/([#$%&_{}])/g, '\\\\$1')\n    .replace(/~/g, '\\\\textasciitilde{}')\n    .replace(/\\^/g, '\\\\textasciicircum{}');\n}\n\nfunction sanitizeLatexContent(content) {\n  if (!content) return content;\n  let s = content;\n  s = s.replace(/(?<!\\\\)#(?!\\{)/g, '\\\\#');\n  s = s.replace(/(?<!\\\\)%/g, '\\\\%');\n  s = s.replace(/(?<!\\\\)&/g, '\\\\&');\n  s = s.replace(/(?<!\\\\)_(?![a-zA-Z]*\\})/g, '\\\\_');\n  s = s.replace(/\\\\begin\\{document\\}/g, '');\n  s = s.replace(/\\\\end\\{document\\}/g, '');\n  s = s.replace(/\\\\documentclass[^{]*\\{[^}]*\\}/g, '');\n  s = s.replace(/\\\\usepackage(\\[[^\\]]*\\])?\\{[^}]*\\}/g, '');\n  return s;\n}\n\nfunction firstNonEmpty(...values) {\n  return values.find((v) => String(v == null ? '' : v).trim().length > 0) ?? '';\n}\n\nfunction bulletItems(items) {\n  return (items || [])\n    .filter(Boolean)\n    .slice(0, 4)\n    .map((item) => '    \\\\resumeItem{' + escapeLatexText(item) + '}')\n    .join('\\n');\n}\n\n// Deterministic header from the parsed master resume (NOT the LLM).\nfunction buildHeaderFromPersonal(p) {\n  p = p || {};\n  const name = escapeLatexText(firstNonEmpty(p.name, 'Candidate'));\n  const parts = [];\n  const phone = firstNonEmpty(p.phone_display, p.phone);\n  if (phone) parts.push(escapeLatexText(phone));\n  if (p.email) parts.push('\\\\href{mailto:' + p.email + '}{\\\\underline{' + p.email + '}}');\n  if (p.linkedin) parts.push('\\\\href{' + p.linkedin + '}{\\\\underline{LinkedIn}}');\n  if (p.github) parts.push('\\\\href{' + p.github + '}{\\\\underline{GitHub}}');\n  if (p.portfolio) parts.push('\\\\href{' + p.portfolio + '}{\\\\underline{Portfolio}}');\n  if (p.show_location && p.location) parts.push(escapeLatexText(p.location));\n  const contact = parts.length ? '\\\\small ' + parts.join(' $|$ ') : '';\n  return '\\\\begin{center}\\n  \\\\textbf{\\\\Huge \\\\scshape ' + name + '} \\\\\\\\ \\\\vspace{4pt}\\n  ' + contact + '\\n\\\\end{center}';\n}\n\n// command-center buildFallbackSlots 1409-1455 (non-compact only; bot has no compact template)\nfunction buildFallbackSlots(pass1) {\n  const slots = {};\n  const itemEnd = '\\\\resumeItemListEnd';\n  const itemStart = '\\\\resumeItemListStart';\n  const subheading = '\\\\resumeSubheading';\n  slots.summary = pass1.summary ? escapeLatexText(pass1.summary) : '';\n\n  slots.experience = (pass1.companies || []).flatMap((company) =>\n    (company.positions || []).filter((pos) => pos.isSelected !== false).map((pos) => {\n      const bullets = bulletItems(pos.keyAchievements || []);\n      if (!bullets) return '';\n      return subheading + '{' + escapeLatexText(pos.title) + '}{' + escapeLatexText((pos.startDate || '') + ' -- ' + (pos.endDate || '')) + '}{' + escapeLatexText(company.company) + '}{' + escapeLatexText(pos.location) + '}\\n' + itemStart + '\\n' + bullets + '\\n' + itemEnd;\n    })\n  ).filter(Boolean).join('\\n');\n\n  slots.internships = (pass1.selectedInternships || []).map((intern) => {\n    const bullets = bulletItems(intern.keyAchievements || []);\n    if (!bullets) return '';\n    return subheading + '{' + escapeLatexText(intern.title) + '}{' + escapeLatexText((intern.startDate || '') + ' -- ' + (intern.endDate || '')) + '}{' + escapeLatexText(intern.company) + '}{' + escapeLatexText(intern.location) + '}\\n' + itemStart + '\\n' + bullets + '\\n' + itemEnd;\n  }).filter(Boolean).join('\\n');\n\n  slots.projects = (pass1.selectedProjects || []).map((project) => {\n    const bullets = bulletItems(project.descriptionPoints || []);\n    if (!bullets) return '';\n    return '\\\\resumeProjectHeading{\\\\textbf{' + escapeLatexText(project.name) + '} $|$ \\\\emph{' + escapeLatexText(project.techStack) + '}}{' + escapeLatexText(project.date) + '}\\n' + itemStart + '\\n' + bullets + '\\n' + itemEnd;\n  }).filter(Boolean).join('\\n');\n\n  slots.skills = (pass1.skillsCategories || []).map((cat) => {\n    const skills = Array.isArray(cat.skills) ? cat.skills.join(', ') : '';\n    return skills ? '\\\\textbf{' + escapeLatexText(cat.category) + ':} ' + escapeLatexText(skills) + ' \\\\\\\\' : '';\n  }).filter(Boolean).join('\\n');\n\n  slots.education = (pass1.education || []).slice(0, 2).map((edu) =>\n    '\\\\resumeSubheading{' + escapeLatexText([edu.degree, edu.major].filter(Boolean).join(' -- ')) + '}{' + escapeLatexText(edu.graduationDate) + '}{' + escapeLatexText(edu.institution) + '}{' + escapeLatexText(edu.gpa ? 'GPA: ' + edu.gpa : '') + '}'\n  ).join('\\n');\n\n  slots.certifications = (pass1.certifications || []).filter((cert) => cert.qualityTier !== 'completion_only').map((cert) =>\n    '\\\\resumeProjectHeading{\\\\textbf{' + escapeLatexText(cert.name) + '} $|$ \\\\emph{' + escapeLatexText(cert.issuer) + '}}{' + escapeLatexText(cert.date) + '}'\n  ).join('\\n');\n\n  slots.achievements = (pass1.selectedAchievements || []).map((a) => '\\\\resumeItem{' + escapeLatexText(firstNonEmpty(a.description, a.title)) + '}').join('\\n');\n\n  slots.activities = (pass1.activities || []).map((act) =>\n    '\\\\resumeProjectHeading{\\\\textbf{' + escapeLatexText(act.name) + '} $|$ \\\\emph{' + escapeLatexText(act.organization) + '}}{' + escapeLatexText(act.date) + '}\\n' + itemStart + '\\n    \\\\resumeItem{' + escapeLatexText(act.description) + '}\\n' + itemEnd\n  ).join('\\n');\n\n  return slots;\n}\n\nfunction normalizeLatexForPdflatex(input) {\n  if (!input) return input;\n  let s = input.replace(/\\r\\n/g, '\\n');\n  s = s.replace(/[“”]/g, '\"').replace(/[‘’]/g, \"'\")\n    .replace(/…/g, '...').replace(/[–—]/g, '--').replace(/ /g, ' ');\n  s = s.replace(/₹/g, 'INR ').replace(/€/g, 'EUR ').replace(/£/g, 'GBP ')\n    .replace(/(?<!\\\\)\\$/g, '\\\\$');\n  s = s.replace(/[^\\x09\\x0A\\x0D\\x20-\\x7E]/g, '');\n  return s;\n}\n\n// Defensive: parse LaTeX-heavy JSON if a raw string reached us (escapes literal\n// \\n\\r\\t inside string values only). Ported from index.ts 319-378.\nfunction parseJSON(content) {\n  if (content && typeof content === 'object') return content;\n  let cleaned = String(content || '').replace(/```json\\s*/gi, '').replace(/```\\s*/g, '').trim();\n  try { return JSON.parse(cleaned); } catch (e) {}\n  const firstBrace = cleaned.indexOf('{');\n  const lastBrace = cleaned.lastIndexOf('}');\n  if (firstBrace !== -1 && lastBrace > firstBrace) {\n    let extracted = cleaned.substring(firstBrace, lastBrace + 1);\n    try { return JSON.parse(extracted); } catch (e) {}\n    let fixed = '';\n    let inString = false;\n    let escape = false;\n    for (let i = 0; i < extracted.length; i++) {\n      const ch = extracted[i];\n      if (escape) { fixed += ch; escape = false; continue; }\n      if (ch === '\\\\' && inString) { fixed += ch; escape = true; continue; }\n      if (ch === '\"') { inString = !inString; fixed += ch; continue; }\n      if (inString) {\n        if (ch === '\\n') { fixed += '\\\\n'; continue; }\n        if (ch === '\\r') { fixed += '\\\\r'; continue; }\n        if (ch === '\\t') { fixed += '\\\\t'; continue; }\n      }\n      fixed += ch;\n    }\n    fixed = fixed.replace(/,\\s*}/g, '}').replace(/,\\s*]/g, ']');\n    try { return JSON.parse(fixed); } catch (e) {}\n  }\n  return {};\n}\n\nfunction derivePlainText(pass1) {\n  const L = [];\n  for (const comp of (pass1.companies || [])) {\n    for (const pos of (comp.positions || [])) {\n      if (pos.isSelected === false) continue;\n      L.push((pos.title || '') + ' at ' + (comp.company || '') + ' (' + (pos.startDate || '') + ' - ' + (pos.endDate || '') + ')');\n      for (const a of (pos.keyAchievements || [])) L.push('- ' + a);\n      L.push('');\n    }\n  }\n  for (const intern of (pass1.selectedInternships || [])) {\n    L.push((intern.title || '') + ' at ' + (intern.company || ''));\n    for (const a of (intern.keyAchievements || [])) L.push('- ' + a);\n    L.push('');\n  }\n  for (const proj of (pass1.selectedProjects || [])) {\n    L.push('Project: ' + (proj.name || '') + ' | ' + (proj.techStack || ''));\n    for (const d of (proj.descriptionPoints || [])) L.push('- ' + d);\n    L.push('');\n  }\n  if ((pass1.skillsCategories || []).length) {\n    L.push('Skills:');\n    for (const cat of pass1.skillsCategories) L.push((cat.category || '') + ': ' + ((cat.skills || []).join(', ')));\n    L.push('');\n  }\n  for (const edu of (pass1.education || [])) {\n    L.push((edu.degree || '') + ' in ' + (edu.major || '') + ' - ' + (edu.institution || '') + ' (' + (edu.graduationDate || '') + ')');\n  }\n  return L.join('\\n');\n}\n\n// ─── Main ───\nconst data = $input.first().json || {};\nconst pass1 = parseJSON(data.pass1 || {});\nconst pass2 = parseJSON(data.pass2 || {});\nconst ctx = $('Prepare Apply Context').first().json || {};\nconst personal = ctx.personal || {};\n\nconst sectionOrder = (Array.isArray(pass1.sectionOrder) && pass1.sectionOrder.length)\n  ? pass1.sectionOrder\n  : ['experience', 'projects', 'skills', 'education'];\n\nconst fallbackSlots = buildFallbackSlots(pass1);\n\nconst slotMap = {\n  summary: pass2.summary_content || fallbackSlots.summary || '',\n  experience: pass2.experience_entries || fallbackSlots.experience || '',\n  internships: pass2.internship_entries || fallbackSlots.internships || '',\n  projects: pass2.project_entries || fallbackSlots.projects || '',\n  skills: pass2.skills_content || fallbackSlots.skills || '',\n  education: pass2.education_entries || fallbackSlots.education || '',\n  certifications: pass2.certification_entries || fallbackSlots.certifications || '',\n  achievements: pass2.achievement_entries || fallbackSlots.achievements || '',\n  activities: pass2.activity_entries || fallbackSlots.activities || '',\n};\n\nconst contentSections = sectionOrder.map((section) => {\n  const tpl = SECTION_LATEX[section];\n  if (!tpl) return '';\n  const slotContent = slotMap[section];\n  if (slotContent === undefined || slotContent === '') return '';\n  // split/join (never String.replace — slot content carries $ and \\, which the\n  // replacement-string parser would mangle: the $-in-replace footgun)\n  return tpl.split(SLOT_MARKER[section]).join(sanitizeLatexContent(slotContent));\n}).filter(Boolean).join('\\n\\n');\n\nconst headerLatex = buildHeaderFromPersonal(personal);\n\nconst finalLatex = SKELETON\n  .split('%%% SLOT: header').join(headerLatex)\n  .split('%%% CONTENT_SECTIONS').join(contentSections);\n\n// normalize, then restore the intentional $|$ separators normalize over-escapes (s6a)\nconst normalized = normalizeLatexForPdflatex(finalLatex).split('\\\\$|\\\\$').join('$|$');\n\n// never ship a blank resume — guard the assembled body\nconst body = (normalized.match(/\\\\begin\\{document\\}([\\s\\S]*?)\\\\end\\{document\\}/) || [])[1] || '';\nconst bodyClean = body.replace(/%.*$/gm, '').replace(/\\\\(begin|end)\\{center\\}/g, '').trim();\nif (!bodyClean || contentSections.trim().length === 0) {\n  throw new Error('Assemble Resume LaTeX produced an empty body (sections=' + sectionOrder.join(',') + '). Refusing to compile a blank resume.');\n}\n\nreturn [{\n  json: {\n    latex: normalized,\n    chat_id: ctx.chat_id,\n    job_title: ctx.job_title,\n    company: ctx.company,\n    resumePlainText: pass2.resumePlainText || derivePlainText(pass1),\n  },\n}];\n"
+        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// Assemble Resume LaTeX — S6b-1 (node jsCode source of truth)\n// ═══════════════════════════════════════════════════════════════\n// Deterministic LaTeX assembly. Adopts the command-center slot mechanism\n// (SECTION_LATEX + buildFallbackSlots = the reliability net: renders a real\n// resume from Pass-1 VERBATIM data even if Pass-2 produced nothing) onto the\n// bot's proven Lato/ATS-parsable skeleton + macros.\n//\n// Ported from careerforge-command-center/supabase/functions/document-ai/index.ts:\n//   buildFallbackSlots 1409-1455, assembly loop 1457-1497, SECTION_LATEX 124-173,\n//   sanitizeLatexContent/escapeLatexText/firstNonEmpty 1368-1407.\n// Plus the bot's normalizeLatexForPdflatex + the s6a $|$ restore + empty-body throw.\n//\n// IMPORTANT: the upstream Pass-1/Pass-2 LLM nodes emit RAW text (no structured\n// output parser — that path failed on LaTeX-heavy JSON in S2b). Parse* Code nodes\n// run the ported parseJSON before this node. We still defensively parseJSON here\n// if a string slips through.\n//\n// Header is built DETERMINISTICALLY from ctx.personal (not the LLM) — this kills\n// the entire {{EMAIL}}/$|$ render-bug class at the source.\n//\n// In:  $input.first().json = { pass1, pass2 }   (pass2 optional; fallback covers it)\n//      $('Prepare Apply Context').first().json = { personal, chat_id, job_title, company, ... }\n// Out: [{ json: { latex, chat_id, job_title, company, resumePlainText } }]   (matches\n//      the old Build Resume LaTeX output shape so Compile/Send are untouched)\n\n// ─── ONE skeleton (bot preamble + macros, retrofitted to command-center slots) ───\n// The 3 seniority .tex skeletons were byte-identical except header placeholders\n// (now code-built) and section-order comments (now driven by pass1.sectionOrder),\n// so they collapse to one. Tier still drives selection/order via Pass-1, not here.\nconst SKELETON = String.raw`\\documentclass[letterpaper,11pt]{article}\n\n\\usepackage{latexsym}\n\\usepackage[empty]{fullpage}\n\\usepackage{titlesec}\n\\usepackage{marvosym}\n\\usepackage[usenames,dvipsnames]{color}\n\\usepackage{verbatim}\n\\usepackage{enumitem}\n\\usepackage[hidelinks]{hyperref}\n\\usepackage{fancyhdr}\n\\usepackage[english]{babel}\n\\usepackage{tabularx}\n\\input{glyphtounicode}\n\n\\usepackage[default]{lato}\n\\usepackage[T1]{fontenc}\n\n\\usepackage[top=0.45in, bottom=0.45in, left=0.55in, right=0.55in]{geometry}\n\n\\pagestyle{fancy}\n\\fancyhf{}\n\\fancyfoot{}\n\\renewcommand{\\headrulewidth}{0pt}\n\\renewcommand{\\footrulewidth}{0pt}\n\n\\urlstyle{same}\n\\raggedbottom\n\\raggedright\n\\setlength{\\tabcolsep}{0in}\n\n\\titleformat{\\section}{\n  \\vspace{-5pt}\\scshape\\raggedright\\large\n}{}{0em}{}[\\color{black}\\titlerule \\vspace{-4pt}]\n\n\\pdfgentounicode=1\n\n\\newcommand{\\resumeItem}[1]{\n  \\item\\small{\n    {#1}\n  }\n}\n\\newcommand{\\resumeSubheading}[4]{\n  \\vspace{-1pt}\\item\n    \\begin{tabular*}{0.97\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}\n      \\textbf{#1} & #2 \\\\\n      \\textit{\\small#3} & \\textit{\\small #4} \\\\\n    \\end{tabular*}\\vspace{-5pt}\n}\n\\newcommand{\\resumeSubSubheading}[2]{\n    \\item\n    \\begin{tabular*}{0.97\\textwidth}{l@{\\extracolsep{\\fill}}r}\n      \\textit{\\small#1} & \\textit{\\small #2} \\\\\n    \\end{tabular*}\\vspace{-5pt}\n}\n\\newcommand{\\resumeProjectHeading}[2]{\n    \\item\n    \\begin{tabular*}{0.97\\textwidth}{l@{\\extracolsep{\\fill}}r}\n      \\small#1 & #2 \\\\\n    \\end{tabular*}\\vspace{-5pt}\n}\n\\newcommand{\\resumeSubItem}[1]{\\resumeItem{#1}\\vspace{-4pt}}\n\\renewcommand\\labelitemi{\\textbullet}\n\\renewcommand\\labelitemii{$\\vcenter{\\hbox{\\tiny$\\bullet$}}$}\n\\newcommand{\\resumeSubHeadingListStart}{\\begin{itemize}[leftmargin=0.15in, label={}]}\n\\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}}\n\\newcommand{\\resumeItemListStart}{\\begin{itemize}[noitemsep, topsep=0pt, parsep=0pt, partopsep=0pt]}\n\\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-4pt}}\n\n\\begin{document}\n\n%%% SLOT: header\n\n%%% CONTENT_SECTIONS\n\n\\end{document}`;\n\n// ─── SECTION_LATEX (command-center 124-173; uses bot-compatible macros) ───\nconst SECTION_LATEX = {\n  summary: String.raw`\\section{Summary}\n\\resumeSubHeadingListStart\n  \\small{\\item{\n%%% SLOT: summary_content\n  }}\n\\resumeSubHeadingListEnd`,\n  experience: String.raw`\\section{Experience}\n\\resumeSubHeadingListStart\n%%% SLOT: experience_entries\n\\resumeSubHeadingListEnd`,\n  internships: String.raw`\\section{Internships}\n\\resumeSubHeadingListStart\n%%% SLOT: internship_entries\n\\resumeSubHeadingListEnd`,\n  projects: String.raw`\\section{Projects}\n\\resumeSubHeadingListStart\n%%% SLOT: project_entries\n\\resumeSubHeadingListEnd`,\n  skills: String.raw`\\section{Technical Skills}\n\\resumeSubHeadingListStart\n  \\small{\\item{\n%%% SLOT: skills_content\n  }}\n\\resumeSubHeadingListEnd`,\n  education: String.raw`\\section{Education}\n\\resumeSubHeadingListStart\n%%% SLOT: education_entries\n\\resumeSubHeadingListEnd`,\n  certifications: String.raw`\\section{Certifications}\n\\resumeSubHeadingListStart\n%%% SLOT: certification_entries\n\\resumeSubHeadingListEnd`,\n  achievements: String.raw`\\section{Achievements}\n\\resumeSubHeadingListStart\n%%% SLOT: achievement_entries\n\\resumeSubHeadingListEnd`,\n  activities: String.raw`\\section{Activities \\& Leadership}\n\\resumeSubHeadingListStart\n%%% SLOT: activity_entries\n\\resumeSubHeadingListEnd`,\n};\n\nconst SLOT_MARKER = {\n  summary: '%%% SLOT: summary_content',\n  experience: '%%% SLOT: experience_entries',\n  internships: '%%% SLOT: internship_entries',\n  projects: '%%% SLOT: project_entries',\n  skills: '%%% SLOT: skills_content',\n  education: '%%% SLOT: education_entries',\n  certifications: '%%% SLOT: certification_entries',\n  achievements: '%%% SLOT: achievement_entries',\n  activities: '%%% SLOT: activity_entries',\n};\n\n// ─── Helpers ───\nfunction escapeLatexText(value) {\n  return String(value == null ? '' : value)\n    .replace(/\\\\/g, '\\\\textbackslash{}')\n    .replace(/([#$%&_{}])/g, '\\\\$1')\n    .replace(/~/g, '\\\\textasciitilde{}')\n    .replace(/\\^/g, '\\\\textasciicircum{}');\n}\n\nfunction sanitizeLatexContent(content) {\n  if (!content) return content;\n  let s = content;\n  s = s.replace(/(?<!\\\\)#(?!\\{)/g, '\\\\#');\n  s = s.replace(/(?<!\\\\)%/g, '\\\\%');\n  s = s.replace(/(?<!\\\\)&/g, '\\\\&');\n  s = s.replace(/(?<!\\\\)_(?![a-zA-Z]*\\})/g, '\\\\_');\n  s = s.replace(/\\\\begin\\{document\\}/g, '');\n  s = s.replace(/\\\\end\\{document\\}/g, '');\n  s = s.replace(/\\\\documentclass[^{]*\\{[^}]*\\}/g, '');\n  s = s.replace(/\\\\usepackage(\\[[^\\]]*\\])?\\{[^}]*\\}/g, '');\n  return s;\n}\n\nfunction firstNonEmpty(...values) {\n  return values.find((v) => String(v == null ? '' : v).trim().length > 0) ?? '';\n}\n\nfunction bulletItems(items) {\n  return (items || [])\n    .filter(Boolean)\n    .slice(0, 4)\n    .map((item) => '    \\\\resumeItem{' + escapeLatexText(item) + '}')\n    .join('\\n');\n}\n\n// Deterministic header from the parsed master resume (NOT the LLM).\nfunction buildHeaderFromPersonal(p) {\n  p = p || {};\n  const name = escapeLatexText(firstNonEmpty(p.name, 'Candidate'));\n  const parts = [];\n  const phone = firstNonEmpty(p.phone_display, p.phone);\n  if (phone) parts.push(escapeLatexText(phone));\n  if (p.email) parts.push('\\\\href{mailto:' + p.email + '}{\\\\underline{' + p.email + '}}');\n  if (p.linkedin) parts.push('\\\\href{' + p.linkedin + '}{\\\\underline{LinkedIn}}');\n  if (p.github) parts.push('\\\\href{' + p.github + '}{\\\\underline{GitHub}}');\n  if (p.portfolio) parts.push('\\\\href{' + p.portfolio + '}{\\\\underline{Portfolio}}');\n  if (p.show_location && p.location) parts.push(escapeLatexText(p.location));\n  const contact = parts.length ? '\\\\small ' + parts.join(' $|$ ') : '';\n  return '\\\\begin{center}\\n  \\\\textbf{\\\\Huge \\\\scshape ' + name + '} \\\\\\\\ \\\\vspace{4pt}\\n  ' + contact + '\\n\\\\end{center}';\n}\n\n// command-center buildFallbackSlots 1409-1455 (non-compact only; bot has no compact template)\nfunction buildFallbackSlots(pass1) {\n  const slots = {};\n  const itemEnd = '\\\\resumeItemListEnd';\n  const itemStart = '\\\\resumeItemListStart';\n  const subheading = '\\\\resumeSubheading';\n  slots.summary = pass1.summary ? escapeLatexText(pass1.summary) : '';\n\n  slots.experience = (pass1.companies || []).flatMap((company) =>\n    (company.positions || []).filter((pos) => pos.isSelected !== false).map((pos) => {\n      const bullets = bulletItems(pos.keyAchievements || []);\n      if (!bullets) return '';\n      return subheading + '{' + escapeLatexText(pos.title) + '}{' + escapeLatexText((pos.startDate || '') + ' -- ' + (pos.endDate || '')) + '}{' + escapeLatexText(company.company) + '}{' + escapeLatexText(pos.location) + '}\\n' + itemStart + '\\n' + bullets + '\\n' + itemEnd;\n    })\n  ).filter(Boolean).join('\\n');\n\n  slots.internships = (pass1.selectedInternships || []).map((intern) => {\n    const bullets = bulletItems(intern.keyAchievements || []);\n    if (!bullets) return '';\n    return subheading + '{' + escapeLatexText(intern.title) + '}{' + escapeLatexText((intern.startDate || '') + ' -- ' + (intern.endDate || '')) + '}{' + escapeLatexText(intern.company) + '}{' + escapeLatexText(intern.location) + '}\\n' + itemStart + '\\n' + bullets + '\\n' + itemEnd;\n  }).filter(Boolean).join('\\n');\n\n  slots.projects = (pass1.selectedProjects || []).map((project) => {\n    const bullets = bulletItems(project.descriptionPoints || []);\n    if (!bullets) return '';\n    return '\\\\resumeProjectHeading{\\\\textbf{' + escapeLatexText(project.name) + '} $|$ \\\\emph{' + escapeLatexText(project.techStack) + '}}{' + escapeLatexText(project.date) + '}\\n' + itemStart + '\\n' + bullets + '\\n' + itemEnd;\n  }).filter(Boolean).join('\\n');\n\n  slots.skills = (pass1.skillsCategories || []).map((cat) => {\n    const skills = Array.isArray(cat.skills) ? cat.skills.join(', ') : '';\n    return skills ? '\\\\textbf{' + escapeLatexText(cat.category) + ':} ' + escapeLatexText(skills) + ' \\\\\\\\' : '';\n  }).filter(Boolean).join('\\n');\n\n  slots.education = (pass1.education || []).slice(0, 2).map((edu) =>\n    '\\\\resumeSubheading{' + escapeLatexText([edu.degree, edu.major].filter(Boolean).join(' -- ')) + '}{' + escapeLatexText(edu.graduationDate) + '}{' + escapeLatexText(edu.institution) + '}{' + escapeLatexText(edu.gpa ? 'GPA: ' + edu.gpa : '') + '}'\n  ).join('\\n');\n\n  slots.certifications = (pass1.certifications || []).filter((cert) => cert.qualityTier !== 'completion_only').map((cert) =>\n    '\\\\resumeProjectHeading{\\\\textbf{' + escapeLatexText(cert.name) + '} $|$ \\\\emph{' + escapeLatexText(cert.issuer) + '}}{' + escapeLatexText(cert.date) + '}'\n  ).join('\\n');\n\n  slots.achievements = (pass1.selectedAchievements || []).map((a) => '\\\\resumeItem{' + escapeLatexText(firstNonEmpty(a.description, a.title)) + '}').join('\\n');\n\n  slots.activities = (pass1.activities || []).map((act) =>\n    '\\\\resumeProjectHeading{\\\\textbf{' + escapeLatexText(act.name) + '} $|$ \\\\emph{' + escapeLatexText(act.organization) + '}}{' + escapeLatexText(act.date) + '}\\n' + itemStart + '\\n    \\\\resumeItem{' + escapeLatexText(act.description) + '}\\n' + itemEnd\n  ).join('\\n');\n\n  return slots;\n}\n\nfunction normalizeLatexForPdflatex(input) {\n  if (!input) return input;\n  let s = input.replace(/\\r\\n/g, '\\n');\n  s = s.replace(/[“”]/g, '\"').replace(/[‘’]/g, \"'\")\n    .replace(/…/g, '...').replace(/[–—]/g, '--').replace(/ /g, ' ');\n  s = s.replace(/₹/g, 'INR ').replace(/€/g, 'EUR ').replace(/£/g, 'GBP ')\n    .replace(/(?<!\\\\)\\$/g, '\\\\$');\n  s = s.replace(/[^\\x09\\x0A\\x0D\\x20-\\x7E]/g, '');\n  return s;\n}\n\n// Defensive: parse LaTeX-heavy JSON if a raw string reached us (escapes literal\n// \\n\\r\\t inside string values only). Ported from index.ts 319-378.\nfunction parseJSON(content) {\n  if (content && typeof content === 'object') return content;\n  let cleaned = String(content || '').replace(/```json\\s*/gi, '').replace(/```\\s*/g, '').trim();\n  try { return JSON.parse(cleaned); } catch (e) {}\n  const firstBrace = cleaned.indexOf('{');\n  const lastBrace = cleaned.lastIndexOf('}');\n  if (firstBrace !== -1 && lastBrace > firstBrace) {\n    let extracted = cleaned.substring(firstBrace, lastBrace + 1);\n    try { return JSON.parse(extracted); } catch (e) {}\n    let fixed = '';\n    let inString = false;\n    let escape = false;\n    for (let i = 0; i < extracted.length; i++) {\n      const ch = extracted[i];\n      if (escape) { fixed += ch; escape = false; continue; }\n      if (ch === '\\\\' && inString) { fixed += ch; escape = true; continue; }\n      if (ch === '\"') { inString = !inString; fixed += ch; continue; }\n      if (inString) {\n        if (ch === '\\n') { fixed += '\\\\n'; continue; }\n        if (ch === '\\r') { fixed += '\\\\r'; continue; }\n        if (ch === '\\t') { fixed += '\\\\t'; continue; }\n      }\n      fixed += ch;\n    }\n    fixed = fixed.replace(/,\\s*}/g, '}').replace(/,\\s*]/g, ']');\n    try { return JSON.parse(fixed); } catch (e) {}\n  }\n  return {};\n}\n\nfunction derivePlainText(pass1) {\n  const L = [];\n  for (const comp of (pass1.companies || [])) {\n    for (const pos of (comp.positions || [])) {\n      if (pos.isSelected === false) continue;\n      L.push((pos.title || '') + ' at ' + (comp.company || '') + ' (' + (pos.startDate || '') + ' - ' + (pos.endDate || '') + ')');\n      for (const a of (pos.keyAchievements || [])) L.push('- ' + a);\n      L.push('');\n    }\n  }\n  for (const intern of (pass1.selectedInternships || [])) {\n    L.push((intern.title || '') + ' at ' + (intern.company || ''));\n    for (const a of (intern.keyAchievements || [])) L.push('- ' + a);\n    L.push('');\n  }\n  for (const proj of (pass1.selectedProjects || [])) {\n    L.push('Project: ' + (proj.name || '') + ' | ' + (proj.techStack || ''));\n    for (const d of (proj.descriptionPoints || [])) L.push('- ' + d);\n    L.push('');\n  }\n  if ((pass1.skillsCategories || []).length) {\n    L.push('Skills:');\n    for (const cat of pass1.skillsCategories) L.push((cat.category || '') + ': ' + ((cat.skills || []).join(', ')));\n    L.push('');\n  }\n  for (const edu of (pass1.education || [])) {\n    L.push((edu.degree || '') + ' in ' + (edu.major || '') + ' - ' + (edu.institution || '') + ' (' + (edu.graduationDate || '') + ')');\n  }\n  return L.join('\\n');\n}\n\n// ─── Main ───\nconst data = $input.first().json || {};\nconst pass1 = parseJSON(data.pass1 || {});\nconst pass2 = parseJSON(data.pass2 || {});\nconst ctx = $('Prepare Apply Context').first().json || {};\nconst personal = ctx.personal || {};\n\nconst sectionOrder = (Array.isArray(pass1.sectionOrder) && pass1.sectionOrder.length)\n  ? pass1.sectionOrder\n  : ['experience', 'projects', 'skills', 'education'];\n\nconst fallbackSlots = buildFallbackSlots(pass1);\n\nconst slotMap = {\n  summary: pass2.summary_content || fallbackSlots.summary || '',\n  experience: pass2.experience_entries || fallbackSlots.experience || '',\n  internships: pass2.internship_entries || fallbackSlots.internships || '',\n  projects: pass2.project_entries || fallbackSlots.projects || '',\n  skills: pass2.skills_content || fallbackSlots.skills || '',\n  education: pass2.education_entries || fallbackSlots.education || '',\n  certifications: pass2.certification_entries || fallbackSlots.certifications || '',\n  achievements: pass2.achievement_entries || fallbackSlots.achievements || '',\n  activities: pass2.activity_entries || fallbackSlots.activities || '',\n};\n\nconst contentSections = sectionOrder.map((section) => {\n  const tpl = SECTION_LATEX[section];\n  if (!tpl) return '';\n  const slotContent = slotMap[section];\n  if (slotContent === undefined || slotContent === '') return '';\n  // split/join (never String.replace — slot content carries $ and \\, which the\n  // replacement-string parser would mangle: the $-in-replace footgun)\n  return tpl.split(SLOT_MARKER[section]).join(sanitizeLatexContent(slotContent));\n}).filter(Boolean).join('\\n\\n');\n\nconst headerLatex = buildHeaderFromPersonal(personal);\n\nconst finalLatex = SKELETON\n  .split('%%% SLOT: header').join(headerLatex)\n  .split('%%% CONTENT_SECTIONS').join(contentSections);\n\n// normalize, then restore the intentional $|$ separators normalize over-escapes (s6a)\nlet normalized = normalizeLatexForPdflatex(finalLatex).split('\\\\$|\\\\$').join('$|$');\n// restore the skeleton's math-mode sub-bullet marker the escaper mangles (renders literal $$•$$ otherwise)\nnormalized = normalized.split('\\\\$\\\\vcenter{\\\\hbox{\\\\tiny\\\\$\\\\bullet\\\\$}}\\\\$').join('$\\\\vcenter{\\\\hbox{\\\\tiny$\\\\bullet$}}$');\n// LLM-emitted math arrows: post-escape they leave a bare \\rightarrow that forces TeX into math mode (eats spaces)\nnormalized = normalized.split('\\\\$\\\\rightarrow\\\\$').join('->').split('\\\\rightarrow').join('->').split('→').join('->');\n\n// never ship a blank resume — guard the assembled body\nconst body = (normalized.match(/\\\\begin\\{document\\}([\\s\\S]*?)\\\\end\\{document\\}/) || [])[1] || '';\nconst bodyClean = body.replace(/%.*$/gm, '').replace(/\\\\(begin|end)\\{center\\}/g, '').trim();\nif (!bodyClean || contentSections.trim().length === 0) {\n  throw new Error('Assemble Resume LaTeX produced an empty body (sections=' + sectionOrder.join(',') + '). Refusing to compile a blank resume.');\n}\n\nreturn [{\n  json: {\n    latex: normalized,\n    chat_id: ctx.chat_id,\n    job_title: ctx.job_title,\n    company: ctx.company,\n    resumePlainText: pass2.resumePlainText || derivePlainText(pass1),\n  },\n}];\n"
       },
       "id": "c7e18fcf-6d9a-4902-bbb3-12d5177e6bee",
       "name": "Assemble Resume LaTeX",
@@ -4692,8 +4692,8 @@
       ],
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -4750,8 +4750,8 @@
       ],
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -4822,8 +4822,8 @@
       ],
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -4858,8 +4858,8 @@
       ],
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       },
       "onError": "continueRegularOutput",
@@ -5003,8 +5003,8 @@
       ],
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -5039,8 +5039,8 @@
       ],
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       },
       "onError": "continueRegularOutput",
@@ -5099,8 +5099,8 @@
       ],
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -5239,8 +5239,8 @@
       ],
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -5259,7 +5259,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// Assemble Resume LaTeX — S6b-1 (node jsCode source of truth)\n// ═══════════════════════════════════════════════════════════════\n// Deterministic LaTeX assembly. Adopts the command-center slot mechanism\n// (SECTION_LATEX + buildFallbackSlots = the reliability net: renders a real\n// resume from Pass-1 VERBATIM data even if Pass-2 produced nothing) onto the\n// bot's proven Lato/ATS-parsable skeleton + macros.\n//\n// Ported from careerforge-command-center/supabase/functions/document-ai/index.ts:\n//   buildFallbackSlots 1409-1455, assembly loop 1457-1497, SECTION_LATEX 124-173,\n//   sanitizeLatexContent/escapeLatexText/firstNonEmpty 1368-1407.\n// Plus the bot's normalizeLatexForPdflatex + the s6a $|$ restore + empty-body throw.\n//\n// IMPORTANT: the upstream Pass-1/Pass-2 LLM nodes emit RAW text (no structured\n// output parser — that path failed on LaTeX-heavy JSON in S2b). Parse* Code nodes\n// run the ported parseJSON before this node. We still defensively parseJSON here\n// if a string slips through.\n//\n// Header is built DETERMINISTICALLY from ctx.personal (not the LLM) — this kills\n// the entire {{EMAIL}}/$|$ render-bug class at the source.\n//\n// In:  $input.first().json = { pass1, pass2 }   (pass2 optional; fallback covers it)\n//      $('Prepare Apply Context').first().json = { personal, chat_id, job_title, company, ... }\n// Out: [{ json: { latex, chat_id, job_title, company, resumePlainText } }]   (matches\n//      the old Build Resume LaTeX output shape so Compile/Send are untouched)\n\n// ─── ONE skeleton (bot preamble + macros, retrofitted to command-center slots) ───\n// The 3 seniority .tex skeletons were byte-identical except header placeholders\n// (now code-built) and section-order comments (now driven by pass1.sectionOrder),\n// so they collapse to one. Tier still drives selection/order via Pass-1, not here.\nconst SKELETON = String.raw`\\documentclass[letterpaper,11pt]{article}\n\n\\usepackage{latexsym}\n\\usepackage[empty]{fullpage}\n\\usepackage{titlesec}\n\\usepackage{marvosym}\n\\usepackage[usenames,dvipsnames]{color}\n\\usepackage{verbatim}\n\\usepackage{enumitem}\n\\usepackage[hidelinks]{hyperref}\n\\usepackage{fancyhdr}\n\\usepackage[english]{babel}\n\\usepackage{tabularx}\n\\input{glyphtounicode}\n\n\\usepackage[default]{lato}\n\\usepackage[T1]{fontenc}\n\n\\usepackage[top=0.45in, bottom=0.45in, left=0.55in, right=0.55in]{geometry}\n\n\\pagestyle{fancy}\n\\fancyhf{}\n\\fancyfoot{}\n\\renewcommand{\\headrulewidth}{0pt}\n\\renewcommand{\\footrulewidth}{0pt}\n\n\\urlstyle{same}\n\\raggedbottom\n\\raggedright\n\\setlength{\\tabcolsep}{0in}\n\n\\titleformat{\\section}{\n  \\vspace{-5pt}\\scshape\\raggedright\\large\n}{}{0em}{}[\\color{black}\\titlerule \\vspace{-4pt}]\n\n\\pdfgentounicode=1\n\n\\newcommand{\\resumeItem}[1]{\n  \\item\\small{\n    {#1}\n  }\n}\n\\newcommand{\\resumeSubheading}[4]{\n  \\vspace{-1pt}\\item\n    \\begin{tabular*}{0.97\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}\n      \\textbf{#1} & #2 \\\\\n      \\textit{\\small#3} & \\textit{\\small #4} \\\\\n    \\end{tabular*}\\vspace{-5pt}\n}\n\\newcommand{\\resumeSubSubheading}[2]{\n    \\item\n    \\begin{tabular*}{0.97\\textwidth}{l@{\\extracolsep{\\fill}}r}\n      \\textit{\\small#1} & \\textit{\\small #2} \\\\\n    \\end{tabular*}\\vspace{-5pt}\n}\n\\newcommand{\\resumeProjectHeading}[2]{\n    \\item\n    \\begin{tabular*}{0.97\\textwidth}{l@{\\extracolsep{\\fill}}r}\n      \\small#1 & #2 \\\\\n    \\end{tabular*}\\vspace{-5pt}\n}\n\\newcommand{\\resumeSubItem}[1]{\\resumeItem{#1}\\vspace{-4pt}}\n\\renewcommand\\labelitemi{\\textbullet}\n\\renewcommand\\labelitemii{$\\vcenter{\\hbox{\\tiny$\\bullet$}}$}\n\\newcommand{\\resumeSubHeadingListStart}{\\begin{itemize}[leftmargin=0.15in, label={}]}\n\\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}}\n\\newcommand{\\resumeItemListStart}{\\begin{itemize}[noitemsep, topsep=0pt, parsep=0pt, partopsep=0pt]}\n\\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-4pt}}\n\n\\begin{document}\n\n%%% SLOT: header\n\n%%% CONTENT_SECTIONS\n\n\\end{document}`;\n\n// ─── SECTION_LATEX (command-center 124-173; uses bot-compatible macros) ───\nconst SECTION_LATEX = {\n  summary: String.raw`\\section{Summary}\n\\resumeSubHeadingListStart\n  \\small{\\item{\n%%% SLOT: summary_content\n  }}\n\\resumeSubHeadingListEnd`,\n  experience: String.raw`\\section{Experience}\n\\resumeSubHeadingListStart\n%%% SLOT: experience_entries\n\\resumeSubHeadingListEnd`,\n  internships: String.raw`\\section{Internships}\n\\resumeSubHeadingListStart\n%%% SLOT: internship_entries\n\\resumeSubHeadingListEnd`,\n  projects: String.raw`\\section{Projects}\n\\resumeSubHeadingListStart\n%%% SLOT: project_entries\n\\resumeSubHeadingListEnd`,\n  skills: String.raw`\\section{Technical Skills}\n\\resumeSubHeadingListStart\n  \\small{\\item{\n%%% SLOT: skills_content\n  }}\n\\resumeSubHeadingListEnd`,\n  education: String.raw`\\section{Education}\n\\resumeSubHeadingListStart\n%%% SLOT: education_entries\n\\resumeSubHeadingListEnd`,\n  certifications: String.raw`\\section{Certifications}\n\\resumeSubHeadingListStart\n%%% SLOT: certification_entries\n\\resumeSubHeadingListEnd`,\n  achievements: String.raw`\\section{Achievements}\n\\resumeSubHeadingListStart\n%%% SLOT: achievement_entries\n\\resumeSubHeadingListEnd`,\n  activities: String.raw`\\section{Activities \\& Leadership}\n\\resumeSubHeadingListStart\n%%% SLOT: activity_entries\n\\resumeSubHeadingListEnd`,\n};\n\nconst SLOT_MARKER = {\n  summary: '%%% SLOT: summary_content',\n  experience: '%%% SLOT: experience_entries',\n  internships: '%%% SLOT: internship_entries',\n  projects: '%%% SLOT: project_entries',\n  skills: '%%% SLOT: skills_content',\n  education: '%%% SLOT: education_entries',\n  certifications: '%%% SLOT: certification_entries',\n  achievements: '%%% SLOT: achievement_entries',\n  activities: '%%% SLOT: activity_entries',\n};\n\n// ─── Helpers ───\nfunction escapeLatexText(value) {\n  return String(value == null ? '' : value)\n    .replace(/\\\\/g, '\\\\textbackslash{}')\n    .replace(/([#$%&_{}])/g, '\\\\$1')\n    .replace(/~/g, '\\\\textasciitilde{}')\n    .replace(/\\^/g, '\\\\textasciicircum{}');\n}\n\nfunction sanitizeLatexContent(content) {\n  if (!content) return content;\n  let s = content;\n  s = s.replace(/(?<!\\\\)#(?!\\{)/g, '\\\\#');\n  s = s.replace(/(?<!\\\\)%/g, '\\\\%');\n  s = s.replace(/(?<!\\\\)&/g, '\\\\&');\n  s = s.replace(/(?<!\\\\)_(?![a-zA-Z]*\\})/g, '\\\\_');\n  s = s.replace(/\\\\begin\\{document\\}/g, '');\n  s = s.replace(/\\\\end\\{document\\}/g, '');\n  s = s.replace(/\\\\documentclass[^{]*\\{[^}]*\\}/g, '');\n  s = s.replace(/\\\\usepackage(\\[[^\\]]*\\])?\\{[^}]*\\}/g, '');\n  return s;\n}\n\nfunction firstNonEmpty(...values) {\n  return values.find((v) => String(v == null ? '' : v).trim().length > 0) ?? '';\n}\n\nfunction bulletItems(items) {\n  return (items || [])\n    .filter(Boolean)\n    .slice(0, 4)\n    .map((item) => '    \\\\resumeItem{' + escapeLatexText(item) + '}')\n    .join('\\n');\n}\n\n// Deterministic header from the parsed master resume (NOT the LLM).\nfunction buildHeaderFromPersonal(p) {\n  p = p || {};\n  const name = escapeLatexText(firstNonEmpty(p.name, 'Candidate'));\n  const parts = [];\n  const phone = firstNonEmpty(p.phone_display, p.phone);\n  if (phone) parts.push(escapeLatexText(phone));\n  if (p.email) parts.push('\\\\href{mailto:' + p.email + '}{\\\\underline{' + p.email + '}}');\n  if (p.linkedin) parts.push('\\\\href{' + p.linkedin + '}{\\\\underline{LinkedIn}}');\n  if (p.github) parts.push('\\\\href{' + p.github + '}{\\\\underline{GitHub}}');\n  if (p.portfolio) parts.push('\\\\href{' + p.portfolio + '}{\\\\underline{Portfolio}}');\n  if (p.show_location && p.location) parts.push(escapeLatexText(p.location));\n  const contact = parts.length ? '\\\\small ' + parts.join(' $|$ ') : '';\n  return '\\\\begin{center}\\n  \\\\textbf{\\\\Huge \\\\scshape ' + name + '} \\\\\\\\ \\\\vspace{4pt}\\n  ' + contact + '\\n\\\\end{center}';\n}\n\n// command-center buildFallbackSlots 1409-1455 (non-compact only; bot has no compact template)\nfunction buildFallbackSlots(pass1) {\n  const slots = {};\n  const itemEnd = '\\\\resumeItemListEnd';\n  const itemStart = '\\\\resumeItemListStart';\n  const subheading = '\\\\resumeSubheading';\n  slots.summary = pass1.summary ? escapeLatexText(pass1.summary) : '';\n\n  slots.experience = (pass1.companies || []).flatMap((company) =>\n    (company.positions || []).filter((pos) => pos.isSelected !== false).map((pos) => {\n      const bullets = bulletItems(pos.keyAchievements || []);\n      if (!bullets) return '';\n      return subheading + '{' + escapeLatexText(pos.title) + '}{' + escapeLatexText((pos.startDate || '') + ' -- ' + (pos.endDate || '')) + '}{' + escapeLatexText(company.company) + '}{' + escapeLatexText(pos.location) + '}\\n' + itemStart + '\\n' + bullets + '\\n' + itemEnd;\n    })\n  ).filter(Boolean).join('\\n');\n\n  slots.internships = (pass1.selectedInternships || []).map((intern) => {\n    const bullets = bulletItems(intern.keyAchievements || []);\n    if (!bullets) return '';\n    return subheading + '{' + escapeLatexText(intern.title) + '}{' + escapeLatexText((intern.startDate || '') + ' -- ' + (intern.endDate || '')) + '}{' + escapeLatexText(intern.company) + '}{' + escapeLatexText(intern.location) + '}\\n' + itemStart + '\\n' + bullets + '\\n' + itemEnd;\n  }).filter(Boolean).join('\\n');\n\n  slots.projects = (pass1.selectedProjects || []).map((project) => {\n    const bullets = bulletItems(project.descriptionPoints || []);\n    if (!bullets) return '';\n    return '\\\\resumeProjectHeading{\\\\textbf{' + escapeLatexText(project.name) + '} $|$ \\\\emph{' + escapeLatexText(project.techStack) + '}}{' + escapeLatexText(project.date) + '}\\n' + itemStart + '\\n' + bullets + '\\n' + itemEnd;\n  }).filter(Boolean).join('\\n');\n\n  slots.skills = (pass1.skillsCategories || []).map((cat) => {\n    const skills = Array.isArray(cat.skills) ? cat.skills.join(', ') : '';\n    return skills ? '\\\\textbf{' + escapeLatexText(cat.category) + ':} ' + escapeLatexText(skills) + ' \\\\\\\\' : '';\n  }).filter(Boolean).join('\\n');\n\n  slots.education = (pass1.education || []).slice(0, 2).map((edu) =>\n    '\\\\resumeSubheading{' + escapeLatexText([edu.degree, edu.major].filter(Boolean).join(' -- ')) + '}{' + escapeLatexText(edu.graduationDate) + '}{' + escapeLatexText(edu.institution) + '}{' + escapeLatexText(edu.gpa ? 'GPA: ' + edu.gpa : '') + '}'\n  ).join('\\n');\n\n  slots.certifications = (pass1.certifications || []).filter((cert) => cert.qualityTier !== 'completion_only').map((cert) =>\n    '\\\\resumeProjectHeading{\\\\textbf{' + escapeLatexText(cert.name) + '} $|$ \\\\emph{' + escapeLatexText(cert.issuer) + '}}{' + escapeLatexText(cert.date) + '}'\n  ).join('\\n');\n\n  slots.achievements = (pass1.selectedAchievements || []).map((a) => '\\\\resumeItem{' + escapeLatexText(firstNonEmpty(a.description, a.title)) + '}').join('\\n');\n\n  slots.activities = (pass1.activities || []).map((act) =>\n    '\\\\resumeProjectHeading{\\\\textbf{' + escapeLatexText(act.name) + '} $|$ \\\\emph{' + escapeLatexText(act.organization) + '}}{' + escapeLatexText(act.date) + '}\\n' + itemStart + '\\n    \\\\resumeItem{' + escapeLatexText(act.description) + '}\\n' + itemEnd\n  ).join('\\n');\n\n  return slots;\n}\n\nfunction normalizeLatexForPdflatex(input) {\n  if (!input) return input;\n  let s = input.replace(/\\r\\n/g, '\\n');\n  s = s.replace(/[“”]/g, '\"').replace(/[‘’]/g, \"'\")\n    .replace(/…/g, '...').replace(/[–—]/g, '--').replace(/ /g, ' ');\n  s = s.replace(/₹/g, 'INR ').replace(/€/g, 'EUR ').replace(/£/g, 'GBP ')\n    .replace(/(?<!\\\\)\\$/g, '\\\\$');\n  s = s.replace(/[^\\x09\\x0A\\x0D\\x20-\\x7E]/g, '');\n  return s;\n}\n\n// Defensive: parse LaTeX-heavy JSON if a raw string reached us (escapes literal\n// \\n\\r\\t inside string values only). Ported from index.ts 319-378.\nfunction parseJSON(content) {\n  if (content && typeof content === 'object') return content;\n  let cleaned = String(content || '').replace(/```json\\s*/gi, '').replace(/```\\s*/g, '').trim();\n  try { return JSON.parse(cleaned); } catch (e) {}\n  const firstBrace = cleaned.indexOf('{');\n  const lastBrace = cleaned.lastIndexOf('}');\n  if (firstBrace !== -1 && lastBrace > firstBrace) {\n    let extracted = cleaned.substring(firstBrace, lastBrace + 1);\n    try { return JSON.parse(extracted); } catch (e) {}\n    let fixed = '';\n    let inString = false;\n    let escape = false;\n    for (let i = 0; i < extracted.length; i++) {\n      const ch = extracted[i];\n      if (escape) { fixed += ch; escape = false; continue; }\n      if (ch === '\\\\' && inString) { fixed += ch; escape = true; continue; }\n      if (ch === '\"') { inString = !inString; fixed += ch; continue; }\n      if (inString) {\n        if (ch === '\\n') { fixed += '\\\\n'; continue; }\n        if (ch === '\\r') { fixed += '\\\\r'; continue; }\n        if (ch === '\\t') { fixed += '\\\\t'; continue; }\n      }\n      fixed += ch;\n    }\n    fixed = fixed.replace(/,\\s*}/g, '}').replace(/,\\s*]/g, ']');\n    try { return JSON.parse(fixed); } catch (e) {}\n  }\n  return {};\n}\n\nfunction derivePlainText(pass1) {\n  const L = [];\n  for (const comp of (pass1.companies || [])) {\n    for (const pos of (comp.positions || [])) {\n      if (pos.isSelected === false) continue;\n      L.push((pos.title || '') + ' at ' + (comp.company || '') + ' (' + (pos.startDate || '') + ' - ' + (pos.endDate || '') + ')');\n      for (const a of (pos.keyAchievements || [])) L.push('- ' + a);\n      L.push('');\n    }\n  }\n  for (const intern of (pass1.selectedInternships || [])) {\n    L.push((intern.title || '') + ' at ' + (intern.company || ''));\n    for (const a of (intern.keyAchievements || [])) L.push('- ' + a);\n    L.push('');\n  }\n  for (const proj of (pass1.selectedProjects || [])) {\n    L.push('Project: ' + (proj.name || '') + ' | ' + (proj.techStack || ''));\n    for (const d of (proj.descriptionPoints || [])) L.push('- ' + d);\n    L.push('');\n  }\n  if ((pass1.skillsCategories || []).length) {\n    L.push('Skills:');\n    for (const cat of pass1.skillsCategories) L.push((cat.category || '') + ': ' + ((cat.skills || []).join(', ')));\n    L.push('');\n  }\n  for (const edu of (pass1.education || [])) {\n    L.push((edu.degree || '') + ' in ' + (edu.major || '') + ' - ' + (edu.institution || '') + ' (' + (edu.graduationDate || '') + ')');\n  }\n  return L.join('\\n');\n}\n\n// ─── Main ───\nconst data = $input.first().json || {};\nconst pass1 = parseJSON(data.pass1 || {});\nconst pass2 = parseJSON(data.pass2 || {});\nconst ctx = $('Prepare Apply Context').first().json || {};\nconst personal = ctx.personal || {};\n\nconst sectionOrder = (Array.isArray(pass1.sectionOrder) && pass1.sectionOrder.length)\n  ? pass1.sectionOrder\n  : ['experience', 'projects', 'skills', 'education'];\n\nconst fallbackSlots = buildFallbackSlots(pass1);\n\nconst slotMap = {\n  summary: pass2.summary_content || fallbackSlots.summary || '',\n  experience: pass2.experience_entries || fallbackSlots.experience || '',\n  internships: pass2.internship_entries || fallbackSlots.internships || '',\n  projects: pass2.project_entries || fallbackSlots.projects || '',\n  skills: pass2.skills_content || fallbackSlots.skills || '',\n  education: pass2.education_entries || fallbackSlots.education || '',\n  certifications: pass2.certification_entries || fallbackSlots.certifications || '',\n  achievements: pass2.achievement_entries || fallbackSlots.achievements || '',\n  activities: pass2.activity_entries || fallbackSlots.activities || '',\n};\n\nconst contentSections = sectionOrder.map((section) => {\n  const tpl = SECTION_LATEX[section];\n  if (!tpl) return '';\n  const slotContent = slotMap[section];\n  if (slotContent === undefined || slotContent === '') return '';\n  // split/join (never String.replace — slot content carries $ and \\, which the\n  // replacement-string parser would mangle: the $-in-replace footgun)\n  return tpl.split(SLOT_MARKER[section]).join(sanitizeLatexContent(slotContent));\n}).filter(Boolean).join('\\n\\n');\n\nconst headerLatex = buildHeaderFromPersonal(personal);\n\nconst finalLatex = SKELETON\n  .split('%%% SLOT: header').join(headerLatex)\n  .split('%%% CONTENT_SECTIONS').join(contentSections);\n\n// normalize, then restore the intentional $|$ separators normalize over-escapes (s6a)\nconst normalized = normalizeLatexForPdflatex(finalLatex).split('\\\\$|\\\\$').join('$|$');\n\n// never ship a blank resume — guard the assembled body\nconst body = (normalized.match(/\\\\begin\\{document\\}([\\s\\S]*?)\\\\end\\{document\\}/) || [])[1] || '';\nconst bodyClean = body.replace(/%.*$/gm, '').replace(/\\\\(begin|end)\\{center\\}/g, '').trim();\nif (!bodyClean || contentSections.trim().length === 0) {\n  throw new Error('Assemble Resume LaTeX produced an empty body (sections=' + sectionOrder.join(',') + '). Refusing to compile a blank resume.');\n}\n\nreturn [{\n  json: {\n    latex: normalized,\n    chat_id: ctx.chat_id,\n    job_title: ctx.job_title,\n    company: ctx.company,\n    resumePlainText: pass2.resumePlainText || derivePlainText(pass1),\n  },\n}];\n"
+        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// Assemble Resume LaTeX — S6b-1 (node jsCode source of truth)\n// ═══════════════════════════════════════════════════════════════\n// Deterministic LaTeX assembly. Adopts the command-center slot mechanism\n// (SECTION_LATEX + buildFallbackSlots = the reliability net: renders a real\n// resume from Pass-1 VERBATIM data even if Pass-2 produced nothing) onto the\n// bot's proven Lato/ATS-parsable skeleton + macros.\n//\n// Ported from careerforge-command-center/supabase/functions/document-ai/index.ts:\n//   buildFallbackSlots 1409-1455, assembly loop 1457-1497, SECTION_LATEX 124-173,\n//   sanitizeLatexContent/escapeLatexText/firstNonEmpty 1368-1407.\n// Plus the bot's normalizeLatexForPdflatex + the s6a $|$ restore + empty-body throw.\n//\n// IMPORTANT: the upstream Pass-1/Pass-2 LLM nodes emit RAW text (no structured\n// output parser — that path failed on LaTeX-heavy JSON in S2b). Parse* Code nodes\n// run the ported parseJSON before this node. We still defensively parseJSON here\n// if a string slips through.\n//\n// Header is built DETERMINISTICALLY from ctx.personal (not the LLM) — this kills\n// the entire {{EMAIL}}/$|$ render-bug class at the source.\n//\n// In:  $input.first().json = { pass1, pass2 }   (pass2 optional; fallback covers it)\n//      $('Prepare Apply Context').first().json = { personal, chat_id, job_title, company, ... }\n// Out: [{ json: { latex, chat_id, job_title, company, resumePlainText } }]   (matches\n//      the old Build Resume LaTeX output shape so Compile/Send are untouched)\n\n// ─── ONE skeleton (bot preamble + macros, retrofitted to command-center slots) ───\n// The 3 seniority .tex skeletons were byte-identical except header placeholders\n// (now code-built) and section-order comments (now driven by pass1.sectionOrder),\n// so they collapse to one. Tier still drives selection/order via Pass-1, not here.\nconst SKELETON = String.raw`\\documentclass[letterpaper,11pt]{article}\n\n\\usepackage{latexsym}\n\\usepackage[empty]{fullpage}\n\\usepackage{titlesec}\n\\usepackage{marvosym}\n\\usepackage[usenames,dvipsnames]{color}\n\\usepackage{verbatim}\n\\usepackage{enumitem}\n\\usepackage[hidelinks]{hyperref}\n\\usepackage{fancyhdr}\n\\usepackage[english]{babel}\n\\usepackage{tabularx}\n\\input{glyphtounicode}\n\n\\usepackage[default]{lato}\n\\usepackage[T1]{fontenc}\n\n\\usepackage[top=0.45in, bottom=0.45in, left=0.55in, right=0.55in]{geometry}\n\n\\pagestyle{fancy}\n\\fancyhf{}\n\\fancyfoot{}\n\\renewcommand{\\headrulewidth}{0pt}\n\\renewcommand{\\footrulewidth}{0pt}\n\n\\urlstyle{same}\n\\raggedbottom\n\\raggedright\n\\setlength{\\tabcolsep}{0in}\n\n\\titleformat{\\section}{\n  \\vspace{-5pt}\\scshape\\raggedright\\large\n}{}{0em}{}[\\color{black}\\titlerule \\vspace{-4pt}]\n\n\\pdfgentounicode=1\n\n\\newcommand{\\resumeItem}[1]{\n  \\item\\small{\n    {#1}\n  }\n}\n\\newcommand{\\resumeSubheading}[4]{\n  \\vspace{-1pt}\\item\n    \\begin{tabular*}{0.97\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}\n      \\textbf{#1} & #2 \\\\\n      \\textit{\\small#3} & \\textit{\\small #4} \\\\\n    \\end{tabular*}\\vspace{-5pt}\n}\n\\newcommand{\\resumeSubSubheading}[2]{\n    \\item\n    \\begin{tabular*}{0.97\\textwidth}{l@{\\extracolsep{\\fill}}r}\n      \\textit{\\small#1} & \\textit{\\small #2} \\\\\n    \\end{tabular*}\\vspace{-5pt}\n}\n\\newcommand{\\resumeProjectHeading}[2]{\n    \\item\n    \\begin{tabular*}{0.97\\textwidth}{l@{\\extracolsep{\\fill}}r}\n      \\small#1 & #2 \\\\\n    \\end{tabular*}\\vspace{-5pt}\n}\n\\newcommand{\\resumeSubItem}[1]{\\resumeItem{#1}\\vspace{-4pt}}\n\\renewcommand\\labelitemi{\\textbullet}\n\\renewcommand\\labelitemii{$\\vcenter{\\hbox{\\tiny$\\bullet$}}$}\n\\newcommand{\\resumeSubHeadingListStart}{\\begin{itemize}[leftmargin=0.15in, label={}]}\n\\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}}\n\\newcommand{\\resumeItemListStart}{\\begin{itemize}[noitemsep, topsep=0pt, parsep=0pt, partopsep=0pt]}\n\\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-4pt}}\n\n\\begin{document}\n\n%%% SLOT: header\n\n%%% CONTENT_SECTIONS\n\n\\end{document}`;\n\n// ─── SECTION_LATEX (command-center 124-173; uses bot-compatible macros) ───\nconst SECTION_LATEX = {\n  summary: String.raw`\\section{Summary}\n\\resumeSubHeadingListStart\n  \\small{\\item{\n%%% SLOT: summary_content\n  }}\n\\resumeSubHeadingListEnd`,\n  experience: String.raw`\\section{Experience}\n\\resumeSubHeadingListStart\n%%% SLOT: experience_entries\n\\resumeSubHeadingListEnd`,\n  internships: String.raw`\\section{Internships}\n\\resumeSubHeadingListStart\n%%% SLOT: internship_entries\n\\resumeSubHeadingListEnd`,\n  projects: String.raw`\\section{Projects}\n\\resumeSubHeadingListStart\n%%% SLOT: project_entries\n\\resumeSubHeadingListEnd`,\n  skills: String.raw`\\section{Technical Skills}\n\\resumeSubHeadingListStart\n  \\small{\\item{\n%%% SLOT: skills_content\n  }}\n\\resumeSubHeadingListEnd`,\n  education: String.raw`\\section{Education}\n\\resumeSubHeadingListStart\n%%% SLOT: education_entries\n\\resumeSubHeadingListEnd`,\n  certifications: String.raw`\\section{Certifications}\n\\resumeSubHeadingListStart\n%%% SLOT: certification_entries\n\\resumeSubHeadingListEnd`,\n  achievements: String.raw`\\section{Achievements}\n\\resumeSubHeadingListStart\n%%% SLOT: achievement_entries\n\\resumeSubHeadingListEnd`,\n  activities: String.raw`\\section{Activities \\& Leadership}\n\\resumeSubHeadingListStart\n%%% SLOT: activity_entries\n\\resumeSubHeadingListEnd`,\n};\n\nconst SLOT_MARKER = {\n  summary: '%%% SLOT: summary_content',\n  experience: '%%% SLOT: experience_entries',\n  internships: '%%% SLOT: internship_entries',\n  projects: '%%% SLOT: project_entries',\n  skills: '%%% SLOT: skills_content',\n  education: '%%% SLOT: education_entries',\n  certifications: '%%% SLOT: certification_entries',\n  achievements: '%%% SLOT: achievement_entries',\n  activities: '%%% SLOT: activity_entries',\n};\n\n// ─── Helpers ───\nfunction escapeLatexText(value) {\n  return String(value == null ? '' : value)\n    .replace(/\\\\/g, '\\\\textbackslash{}')\n    .replace(/([#$%&_{}])/g, '\\\\$1')\n    .replace(/~/g, '\\\\textasciitilde{}')\n    .replace(/\\^/g, '\\\\textasciicircum{}');\n}\n\nfunction sanitizeLatexContent(content) {\n  if (!content) return content;\n  let s = content;\n  s = s.replace(/(?<!\\\\)#(?!\\{)/g, '\\\\#');\n  s = s.replace(/(?<!\\\\)%/g, '\\\\%');\n  s = s.replace(/(?<!\\\\)&/g, '\\\\&');\n  s = s.replace(/(?<!\\\\)_(?![a-zA-Z]*\\})/g, '\\\\_');\n  s = s.replace(/\\\\begin\\{document\\}/g, '');\n  s = s.replace(/\\\\end\\{document\\}/g, '');\n  s = s.replace(/\\\\documentclass[^{]*\\{[^}]*\\}/g, '');\n  s = s.replace(/\\\\usepackage(\\[[^\\]]*\\])?\\{[^}]*\\}/g, '');\n  return s;\n}\n\nfunction firstNonEmpty(...values) {\n  return values.find((v) => String(v == null ? '' : v).trim().length > 0) ?? '';\n}\n\nfunction bulletItems(items) {\n  return (items || [])\n    .filter(Boolean)\n    .slice(0, 4)\n    .map((item) => '    \\\\resumeItem{' + escapeLatexText(item) + '}')\n    .join('\\n');\n}\n\n// Deterministic header from the parsed master resume (NOT the LLM).\nfunction buildHeaderFromPersonal(p) {\n  p = p || {};\n  const name = escapeLatexText(firstNonEmpty(p.name, 'Candidate'));\n  const parts = [];\n  const phone = firstNonEmpty(p.phone_display, p.phone);\n  if (phone) parts.push(escapeLatexText(phone));\n  if (p.email) parts.push('\\\\href{mailto:' + p.email + '}{\\\\underline{' + p.email + '}}');\n  if (p.linkedin) parts.push('\\\\href{' + p.linkedin + '}{\\\\underline{LinkedIn}}');\n  if (p.github) parts.push('\\\\href{' + p.github + '}{\\\\underline{GitHub}}');\n  if (p.portfolio) parts.push('\\\\href{' + p.portfolio + '}{\\\\underline{Portfolio}}');\n  if (p.show_location && p.location) parts.push(escapeLatexText(p.location));\n  const contact = parts.length ? '\\\\small ' + parts.join(' $|$ ') : '';\n  return '\\\\begin{center}\\n  \\\\textbf{\\\\Huge \\\\scshape ' + name + '} \\\\\\\\ \\\\vspace{4pt}\\n  ' + contact + '\\n\\\\end{center}';\n}\n\n// command-center buildFallbackSlots 1409-1455 (non-compact only; bot has no compact template)\nfunction buildFallbackSlots(pass1) {\n  const slots = {};\n  const itemEnd = '\\\\resumeItemListEnd';\n  const itemStart = '\\\\resumeItemListStart';\n  const subheading = '\\\\resumeSubheading';\n  slots.summary = pass1.summary ? escapeLatexText(pass1.summary) : '';\n\n  slots.experience = (pass1.companies || []).flatMap((company) =>\n    (company.positions || []).filter((pos) => pos.isSelected !== false).map((pos) => {\n      const bullets = bulletItems(pos.keyAchievements || []);\n      if (!bullets) return '';\n      return subheading + '{' + escapeLatexText(pos.title) + '}{' + escapeLatexText((pos.startDate || '') + ' -- ' + (pos.endDate || '')) + '}{' + escapeLatexText(company.company) + '}{' + escapeLatexText(pos.location) + '}\\n' + itemStart + '\\n' + bullets + '\\n' + itemEnd;\n    })\n  ).filter(Boolean).join('\\n');\n\n  slots.internships = (pass1.selectedInternships || []).map((intern) => {\n    const bullets = bulletItems(intern.keyAchievements || []);\n    if (!bullets) return '';\n    return subheading + '{' + escapeLatexText(intern.title) + '}{' + escapeLatexText((intern.startDate || '') + ' -- ' + (intern.endDate || '')) + '}{' + escapeLatexText(intern.company) + '}{' + escapeLatexText(intern.location) + '}\\n' + itemStart + '\\n' + bullets + '\\n' + itemEnd;\n  }).filter(Boolean).join('\\n');\n\n  slots.projects = (pass1.selectedProjects || []).map((project) => {\n    const bullets = bulletItems(project.descriptionPoints || []);\n    if (!bullets) return '';\n    return '\\\\resumeProjectHeading{\\\\textbf{' + escapeLatexText(project.name) + '} $|$ \\\\emph{' + escapeLatexText(project.techStack) + '}}{' + escapeLatexText(project.date) + '}\\n' + itemStart + '\\n' + bullets + '\\n' + itemEnd;\n  }).filter(Boolean).join('\\n');\n\n  slots.skills = (pass1.skillsCategories || []).map((cat) => {\n    const skills = Array.isArray(cat.skills) ? cat.skills.join(', ') : '';\n    return skills ? '\\\\textbf{' + escapeLatexText(cat.category) + ':} ' + escapeLatexText(skills) + ' \\\\\\\\' : '';\n  }).filter(Boolean).join('\\n');\n\n  slots.education = (pass1.education || []).slice(0, 2).map((edu) =>\n    '\\\\resumeSubheading{' + escapeLatexText([edu.degree, edu.major].filter(Boolean).join(' -- ')) + '}{' + escapeLatexText(edu.graduationDate) + '}{' + escapeLatexText(edu.institution) + '}{' + escapeLatexText(edu.gpa ? 'GPA: ' + edu.gpa : '') + '}'\n  ).join('\\n');\n\n  slots.certifications = (pass1.certifications || []).filter((cert) => cert.qualityTier !== 'completion_only').map((cert) =>\n    '\\\\resumeProjectHeading{\\\\textbf{' + escapeLatexText(cert.name) + '} $|$ \\\\emph{' + escapeLatexText(cert.issuer) + '}}{' + escapeLatexText(cert.date) + '}'\n  ).join('\\n');\n\n  slots.achievements = (pass1.selectedAchievements || []).map((a) => '\\\\resumeItem{' + escapeLatexText(firstNonEmpty(a.description, a.title)) + '}').join('\\n');\n\n  slots.activities = (pass1.activities || []).map((act) =>\n    '\\\\resumeProjectHeading{\\\\textbf{' + escapeLatexText(act.name) + '} $|$ \\\\emph{' + escapeLatexText(act.organization) + '}}{' + escapeLatexText(act.date) + '}\\n' + itemStart + '\\n    \\\\resumeItem{' + escapeLatexText(act.description) + '}\\n' + itemEnd\n  ).join('\\n');\n\n  return slots;\n}\n\nfunction normalizeLatexForPdflatex(input) {\n  if (!input) return input;\n  let s = input.replace(/\\r\\n/g, '\\n');\n  s = s.replace(/[“”]/g, '\"').replace(/[‘’]/g, \"'\")\n    .replace(/…/g, '...').replace(/[–—]/g, '--').replace(/ /g, ' ');\n  s = s.replace(/₹/g, 'INR ').replace(/€/g, 'EUR ').replace(/£/g, 'GBP ')\n    .replace(/(?<!\\\\)\\$/g, '\\\\$');\n  s = s.replace(/[^\\x09\\x0A\\x0D\\x20-\\x7E]/g, '');\n  return s;\n}\n\n// Defensive: parse LaTeX-heavy JSON if a raw string reached us (escapes literal\n// \\n\\r\\t inside string values only). Ported from index.ts 319-378.\nfunction parseJSON(content) {\n  if (content && typeof content === 'object') return content;\n  let cleaned = String(content || '').replace(/```json\\s*/gi, '').replace(/```\\s*/g, '').trim();\n  try { return JSON.parse(cleaned); } catch (e) {}\n  const firstBrace = cleaned.indexOf('{');\n  const lastBrace = cleaned.lastIndexOf('}');\n  if (firstBrace !== -1 && lastBrace > firstBrace) {\n    let extracted = cleaned.substring(firstBrace, lastBrace + 1);\n    try { return JSON.parse(extracted); } catch (e) {}\n    let fixed = '';\n    let inString = false;\n    let escape = false;\n    for (let i = 0; i < extracted.length; i++) {\n      const ch = extracted[i];\n      if (escape) { fixed += ch; escape = false; continue; }\n      if (ch === '\\\\' && inString) { fixed += ch; escape = true; continue; }\n      if (ch === '\"') { inString = !inString; fixed += ch; continue; }\n      if (inString) {\n        if (ch === '\\n') { fixed += '\\\\n'; continue; }\n        if (ch === '\\r') { fixed += '\\\\r'; continue; }\n        if (ch === '\\t') { fixed += '\\\\t'; continue; }\n      }\n      fixed += ch;\n    }\n    fixed = fixed.replace(/,\\s*}/g, '}').replace(/,\\s*]/g, ']');\n    try { return JSON.parse(fixed); } catch (e) {}\n  }\n  return {};\n}\n\nfunction derivePlainText(pass1) {\n  const L = [];\n  for (const comp of (pass1.companies || [])) {\n    for (const pos of (comp.positions || [])) {\n      if (pos.isSelected === false) continue;\n      L.push((pos.title || '') + ' at ' + (comp.company || '') + ' (' + (pos.startDate || '') + ' - ' + (pos.endDate || '') + ')');\n      for (const a of (pos.keyAchievements || [])) L.push('- ' + a);\n      L.push('');\n    }\n  }\n  for (const intern of (pass1.selectedInternships || [])) {\n    L.push((intern.title || '') + ' at ' + (intern.company || ''));\n    for (const a of (intern.keyAchievements || [])) L.push('- ' + a);\n    L.push('');\n  }\n  for (const proj of (pass1.selectedProjects || [])) {\n    L.push('Project: ' + (proj.name || '') + ' | ' + (proj.techStack || ''));\n    for (const d of (proj.descriptionPoints || [])) L.push('- ' + d);\n    L.push('');\n  }\n  if ((pass1.skillsCategories || []).length) {\n    L.push('Skills:');\n    for (const cat of pass1.skillsCategories) L.push((cat.category || '') + ': ' + ((cat.skills || []).join(', ')));\n    L.push('');\n  }\n  for (const edu of (pass1.education || [])) {\n    L.push((edu.degree || '') + ' in ' + (edu.major || '') + ' - ' + (edu.institution || '') + ' (' + (edu.graduationDate || '') + ')');\n  }\n  return L.join('\\n');\n}\n\n// ─── Main ───\nconst data = $input.first().json || {};\nconst pass1 = parseJSON(data.pass1 || {});\nconst pass2 = parseJSON(data.pass2 || {});\nconst ctx = $('Prepare Apply Context').first().json || {};\nconst personal = ctx.personal || {};\n\nconst sectionOrder = (Array.isArray(pass1.sectionOrder) && pass1.sectionOrder.length)\n  ? pass1.sectionOrder\n  : ['experience', 'projects', 'skills', 'education'];\n\nconst fallbackSlots = buildFallbackSlots(pass1);\n\nconst slotMap = {\n  summary: pass2.summary_content || fallbackSlots.summary || '',\n  experience: pass2.experience_entries || fallbackSlots.experience || '',\n  internships: pass2.internship_entries || fallbackSlots.internships || '',\n  projects: pass2.project_entries || fallbackSlots.projects || '',\n  skills: pass2.skills_content || fallbackSlots.skills || '',\n  education: pass2.education_entries || fallbackSlots.education || '',\n  certifications: pass2.certification_entries || fallbackSlots.certifications || '',\n  achievements: pass2.achievement_entries || fallbackSlots.achievements || '',\n  activities: pass2.activity_entries || fallbackSlots.activities || '',\n};\n\nconst contentSections = sectionOrder.map((section) => {\n  const tpl = SECTION_LATEX[section];\n  if (!tpl) return '';\n  const slotContent = slotMap[section];\n  if (slotContent === undefined || slotContent === '') return '';\n  // split/join (never String.replace — slot content carries $ and \\, which the\n  // replacement-string parser would mangle: the $-in-replace footgun)\n  return tpl.split(SLOT_MARKER[section]).join(sanitizeLatexContent(slotContent));\n}).filter(Boolean).join('\\n\\n');\n\nconst headerLatex = buildHeaderFromPersonal(personal);\n\nconst finalLatex = SKELETON\n  .split('%%% SLOT: header').join(headerLatex)\n  .split('%%% CONTENT_SECTIONS').join(contentSections);\n\n// normalize, then restore the intentional $|$ separators normalize over-escapes (s6a)\nlet normalized = normalizeLatexForPdflatex(finalLatex).split('\\\\$|\\\\$').join('$|$');\n// restore the skeleton's math-mode sub-bullet marker the escaper mangles (renders literal $$•$$ otherwise)\nnormalized = normalized.split('\\\\$\\\\vcenter{\\\\hbox{\\\\tiny\\\\$\\\\bullet\\\\$}}\\\\$').join('$\\\\vcenter{\\\\hbox{\\\\tiny$\\\\bullet$}}$');\n// LLM-emitted math arrows: post-escape they leave a bare \\rightarrow that forces TeX into math mode (eats spaces)\nnormalized = normalized.split('\\\\$\\\\rightarrow\\\\$').join('->').split('\\\\rightarrow').join('->').split('→').join('->');\n\n// never ship a blank resume — guard the assembled body\nconst body = (normalized.match(/\\\\begin\\{document\\}([\\s\\S]*?)\\\\end\\{document\\}/) || [])[1] || '';\nconst bodyClean = body.replace(/%.*$/gm, '').replace(/\\\\(begin|end)\\{center\\}/g, '').trim();\nif (!bodyClean || contentSections.trim().length === 0) {\n  throw new Error('Assemble Resume LaTeX produced an empty body (sections=' + sectionOrder.join(',') + '). Refusing to compile a blank resume.');\n}\n\nreturn [{\n  json: {\n    latex: normalized,\n    chat_id: ctx.chat_id,\n    job_title: ctx.job_title,\n    company: ctx.company,\n    resumePlainText: pass2.resumePlainText || derivePlainText(pass1),\n  },\n}];\n"
       },
       "id": "b198234a-6e02-435f-ac29-43a9ab25e18c",
       "name": "Assemble Regen",
@@ -5326,8 +5326,8 @@
       ],
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -5385,8 +5385,8 @@
       ],
       "credentials": {
         "openRouterApi": {
-          "id": "xZD1i4ZBmSxVDuIe",
-          "name": "OpenRouter account"
+          "id": "ypIVPJu8JYSWTkHT",
+          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -5485,8 +5485,8 @@
       ],
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       },
       "onError": "continueRegularOutput",
@@ -5573,7 +5573,13 @@
         48988
       ],
       "onError": "continueRegularOutput",
-      "alwaysOutputData": true
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "P2CM45hc8Rah4MB3",
+          "name": "CareerForge_Apollo"
+        }
+      }
     },
     {
       "parameters": {
@@ -5593,8 +5599,8 @@
       ],
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       },
       "onError": "continueRegularOutput",
@@ -5655,23 +5661,7 @@
     },
     {
       "parameters": {
-        "operation": "emailVerifier",
-        "email": "={{ ($('Build Enriched Contact').first().json.contact||{}).email || '' }}"
-      },
-      "id": "87cedeb4-058f-415e-9d3f-30d3924fd060",
-      "name": "Hunter Verify",
-      "type": "n8n-nodes-base.hunter",
-      "typeVersion": 1,
-      "position": [
-        30250,
-        48988
-      ],
-      "onError": "continueRegularOutput",
-      "alwaysOutputData": true
-    },
-    {
-      "parameters": {
-        "jsCode": "// Finalize Enriched Contact — S8. Converge after the Hunter gate. Attaches the\n// Hunter deliverability result (if Hunter ran) to the enriched contact, then hands\n// the Load-Draft-Contact-shaped object (+ enrichment) to the hook lane. Graceful:\n// if Hunter didn't run, email_verified stays null (\"unverified\"). $('<unrun>') caught.\nconst ctx = $('Build Enriched Contact').first().json || {};\nconst contact = ctx.contact || {};\n\nlet status = null, verified = null;\ntry {\n  const h = $('Hunter Verify').first().json || {};\n  status = h.status || h.result || (h.data && h.data.status) || null;\n  if (status) verified = ['valid', 'deliverable', 'accept_all', 'webmail'].indexOf(String(status).toLowerCase()) !== -1;\n} catch (e) { status = null; verified = null; }\n\nconst enrichedContact = Object.assign({}, contact, { email_status: status, email_verified: verified });\n\nreturn [{ json: Object.assign({}, ctx, {\n  contact: enrichedContact,\n  email_verified: verified,\n  enriched: !!(contact.apollo_enriched || status),\n}) }];\n"
+        "jsCode": "// Finalize Enriched Contact — S8. Converge after the Hunter gate. Attaches the\n// Hunter deliverability result (if Hunter ran) to the enriched contact, then hands\n// the Load-Draft-Contact-shaped object (+ enrichment) to the hook lane. Graceful:\n// if Hunter didn't run, email_verified stays null (\"unverified\"). $('<unrun>') caught.\nconst ctx = $('Build Enriched Contact').first().json || {};\nconst contact = ctx.contact || {};\n\nlet status = null, verified = null;\ntry {\n  const h = {}; // Hunter Verify removed from this deployment — email verification unavailable\n  status = h.status || h.result || (h.data && h.data.status) || null;\n  if (status) verified = ['valid', 'deliverable', 'accept_all', 'webmail'].indexOf(String(status).toLowerCase()) !== -1;\n} catch (e) { status = null; verified = null; }\n\nconst enrichedContact = Object.assign({}, contact, { email_status: status, email_verified: verified });\n\nreturn [{ json: Object.assign({}, ctx, {\n  contact: enrichedContact,\n  email_verified: verified,\n  enriched: !!(contact.apollo_enriched || status),\n}) }];\n"
       },
       "id": "cffe49ad-9b07-425b-ae61-fe29d5387a6f",
       "name": "Finalize Enriched Contact",
@@ -5698,8 +5688,8 @@
       ],
       "credentials": {
         "postgres": {
-          "id": "5pQq6UUmmGU7e04S",
-          "name": "CareerForge Postgres"
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
         }
       },
       "onError": "continueRegularOutput",
@@ -8674,22 +8664,11 @@
       "main": [
         [
           {
-            "node": "Hunter Verify",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
             "node": "Finalize Enriched Contact",
             "type": "main",
             "index": 0
           }
-        ]
-      ]
-    },
-    "Hunter Verify": {
-      "main": [
+        ],
         [
           {
             "node": "Finalize Enriched Contact",
