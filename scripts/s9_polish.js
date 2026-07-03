@@ -28,34 +28,35 @@ const TARGETS = [
 ];
 
 // ── Central model map (model-node name -> OpenRouter model id) ──
-// All ids verified on openrouter.ai, June 2026. To swap a model, edit here + re-run.
-// Preferred cheaper alternatives (user's model map) noted per line; opt in by changing
-// the value and re-running. JSON-critical roles work well + cheap on deepseek-v4-flash.
+// WS5 swap (2026-07-02): writers/selection -> Kimi K2.6 (best creative-per-dollar,
+// no LaTeX skill needed post-S16); JSON-utility lanes -> deepseek-v4-flash (cheap,
+// reliable, avoids gpt-5.4-mini's cost); JobScorer -> deepseek-v4-pro (the one
+// quality-critical scoring lane). Ids verified during this session's OpenRouter
+// research (moonshotai/kimi-k2.6, deepseek/deepseek-v4-flash, deepseek/deepseek-v4-pro)
+// and deepseek-v4-flash is already proven live (Step0/Extract ATS/CompanyIntel Apply).
 const MODEL_MAP = {
-  // --- generation (quality) ---
-  'Pass2 Model': 'anthropic/claude-sonnet-4.6',          // resume bullet generation
-  'Pass2 Regen Model': 'anthropic/claude-sonnet-4.6',    // ATS-retry regeneration
-  'OpenRouter Chat Model1': 'anthropic/claude-sonnet-4.6', // ReviseForge
-  'Pass1 Model': 'anthropic/claude-haiku-4.5',           // resume selection
-  'Cover Pass1 Model': 'anthropic/claude-haiku-4.5',     // cover selection
-  'Cover Pass2 Model': 'anthropic/claude-haiku-4.5',     // cover writing
-  // --- JSON-utility / structured (already cheap on deepseek) ---
+  // --- writers / selection (judgment + creative prose) ---
+  'Pass2 Model': 'moonshotai/kimi-k2.6',                 // resume bullet generation
+  'Pass2 Regen Model': 'moonshotai/kimi-k2.6',           // ATS-retry regeneration
+  'OpenRouter Chat Model1': 'moonshotai/kimi-k2.6',      // ReviseForge
+  'Pass1 Model': 'moonshotai/kimi-k2.6',                 // resume selection
+  'Cover Pass1 Model': 'moonshotai/kimi-k2.6',            // cover selection
+  'Cover Pass2 Model': 'moonshotai/kimi-k2.6',            // cover writing
+  'OpenRouter Chat Model8': 'moonshotai/kimi-k2.6',       // OutreachWriter
+  // --- JSON-utility / structured (cheap + reliable on deepseek-v4-flash) ---
   'Step0 Model': 'deepseek/deepseek-v4-flash',           // JD analysis
   'Extract ATS Model': 'deepseek/deepseek-v4-flash',     // ATS signal extraction
   'CompanyIntel Apply Model': 'deepseek/deepseek-v4-flash', // apply-time intel
-  // --- legacy roles (currently gpt-5.4-mini; preferred: deepseek-v4-flash for JSON,
-  //     haiku-4.5 for outreach). Kept as-is until the user opts in to avoid changing
-  //     the core scoring/intent paths right before testing. ---
-  'OpenRouter Chat Model2': 'openai/gpt-5.4-mini',       // Intent Router      (pref: deepseek/deepseek-v4-flash)
-  'OpenRouter Chat Model12': 'openai/gpt-5.4-mini',      // Expand Query       (pref: deepseek/deepseek-v4-flash)
-  'OpenRouter Chat Model3': 'openai/gpt-5.4-mini',       // JobScorer          (pref: deepseek/deepseek-v4-flash)
-  'OpenRouter Chat Model': 'openai/gpt-5.4-mini',        // ScoreOnly          (pref: deepseek/deepseek-v4-flash)
-  'OpenRouter Chat Model4': 'openai/gpt-5.4-mini',       // SeniorityDetector  (pref: deepseek/deepseek-v4-flash)
-  'OpenRouter Chat Model5': 'openai/gpt-5.4-mini',       // ForgeScore         (pref: deepseek/deepseek-v4-flash)
-  'OpenRouter Chat Model11': 'openai/gpt-5.4-mini',      // SalarySummarize    (pref: deepseek/deepseek-v4-flash)
-  'OpenRouter Chat Model9': 'openai/gpt-5.4-mini',       // CompanyIntel       (pref: deepseek/deepseek-v4-flash)
-  'OpenRouter Chat Model10': 'openai/gpt-5.4-mini',      // ContactFinder      (pref: deepseek/deepseek-v4-flash)
-  'OpenRouter Chat Model8': 'openai/gpt-5.4-mini',       // OutreachWriter     (pref: anthropic/claude-haiku-4.5)
+  'OpenRouter Chat Model2': 'deepseek/deepseek-v4-flash',  // Intent Router
+  'OpenRouter Chat Model12': 'deepseek/deepseek-v4-flash', // Expand Query
+  'OpenRouter Chat Model': 'deepseek/deepseek-v4-flash',   // ScoreOnly
+  'OpenRouter Chat Model4': 'deepseek/deepseek-v4-flash',  // SeniorityDetector
+  'OpenRouter Chat Model5': 'deepseek/deepseek-v4-flash',  // ForgeScore
+  'OpenRouter Chat Model11': 'deepseek/deepseek-v4-flash', // SalarySummarize
+  'OpenRouter Chat Model9': 'deepseek/deepseek-v4-flash',  // CompanyIntel
+  'OpenRouter Chat Model10': 'deepseek/deepseek-v4-flash', // ContactFinder
+  // --- the one quality-critical scoring lane ---
+  'OpenRouter Chat Model3': 'deepseek/deepseek-v4-pro',   // JobScorer
 };
 
 const DROP = new Set(['Validate Resume Sections', 'Build Resume LaTeX']);

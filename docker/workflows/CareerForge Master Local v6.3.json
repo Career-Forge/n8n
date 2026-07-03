@@ -1774,7 +1774,7 @@
     },
     {
       "parameters": {
-        "model": "openai/gpt-5.4-mini",
+        "model": "deepseek/deepseek-v4-flash",
         "options": {
           "maxTokens": 2048,
           "timeout": 60000
@@ -1797,7 +1797,7 @@
     },
     {
       "parameters": {
-        "model": "anthropic/claude-sonnet-4.6",
+        "model": "moonshotai/kimi-k2.6",
         "options": {
           "maxTokens": 8192,
           "temperature": 0.3,
@@ -1821,7 +1821,7 @@
     },
     {
       "parameters": {
-        "model": "openai/gpt-5.4-mini",
+        "model": "deepseek/deepseek-v4-flash",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
@@ -1855,7 +1855,7 @@
     },
     {
       "parameters": {
-        "model": "openai/gpt-5.4-mini",
+        "model": "deepseek/deepseek-v4-pro",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
@@ -1875,7 +1875,7 @@
     },
     {
       "parameters": {
-        "model": "openai/gpt-5.4-mini",
+        "model": "deepseek/deepseek-v4-flash",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
@@ -1895,7 +1895,7 @@
     },
     {
       "parameters": {
-        "model": "openai/gpt-5.4-mini",
+        "model": "deepseek/deepseek-v4-flash",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
@@ -1915,7 +1915,7 @@
     },
     {
       "parameters": {
-        "model": "openai/gpt-5.4-mini",
+        "model": "moonshotai/kimi-k2.6",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
@@ -1935,7 +1935,7 @@
     },
     {
       "parameters": {
-        "model": "openai/gpt-5.4-mini",
+        "model": "deepseek/deepseek-v4-flash",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
@@ -1955,7 +1955,7 @@
     },
     {
       "parameters": {
-        "model": "openai/gpt-5.4-mini",
+        "model": "deepseek/deepseek-v4-flash",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
@@ -1975,7 +1975,7 @@
     },
     {
       "parameters": {
-        "model": "openai/gpt-5.4-mini",
+        "model": "deepseek/deepseek-v4-flash",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
@@ -2099,7 +2099,7 @@
     },
     {
       "parameters": {
-        "model": "openai/gpt-5.4-mini",
+        "model": "deepseek/deepseek-v4-flash",
         "options": {
           "maxTokens": 1024,
           "timeout": 30000
@@ -4675,7 +4675,7 @@
     },
     {
       "parameters": {
-        "model": "anthropic/claude-haiku-4.5",
+        "model": "moonshotai/kimi-k2.6",
         "options": {
           "maxTokens": 8000,
           "temperature": 0.3,
@@ -4803,7 +4803,7 @@
     },
     {
       "parameters": {
-        "model": "anthropic/claude-sonnet-4.6",
+        "model": "moonshotai/kimi-k2.6",
         "options": {
           "maxTokens": 8000,
           "temperature": 0.3,
@@ -5224,7 +5224,7 @@
     },
     {
       "parameters": {
-        "model": "anthropic/claude-sonnet-4.6",
+        "model": "moonshotai/kimi-k2.6",
         "options": {
           "maxTokens": 8000,
           "temperature": 0.3,
@@ -5310,7 +5310,7 @@
     },
     {
       "parameters": {
-        "model": "anthropic/claude-haiku-4.5",
+        "model": "moonshotai/kimi-k2.6",
         "options": {
           "maxTokens": 6000,
           "temperature": 0.3,
@@ -5368,7 +5368,7 @@
     },
     {
       "parameters": {
-        "model": "anthropic/claude-haiku-4.5",
+        "model": "moonshotai/kimi-k2.6",
         "options": {
           "maxTokens": 4000,
           "temperature": 0.3,
