@@ -1,3 +1,6 @@
+// Auto-generated from the live workflow node "Read Uploaded File" via scripts/export_prompts.js.
+// Edits here don't get read back in -- the live node is the source of truth.
+
 // Read Uploaded File v1 — read an uploaded document's bytes as UTF-8 text (no fs).
 // For a .json resume this yields the JSON string; for PDF/DOCX it yields garbage that
 // Ingest Resume JSON will reject -> the user gets the JSON template instead.

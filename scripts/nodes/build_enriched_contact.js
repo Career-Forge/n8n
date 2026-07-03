@@ -1,3 +1,6 @@
+// Auto-generated from the live workflow node "Build Enriched Contact" via scripts/export_prompts.js.
+// Edits here don't get read back in -- the live node is the source of truth.
+
 // Build Enriched Contact — S8. Converge after the Apollo gate. Merges the Apollo
 // match (work email + title) into the contact when Apollo ran; otherwise passes the
 // free contact through unchanged. Carries hunter_enabled + has_email forward so the

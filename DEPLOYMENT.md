@@ -289,7 +289,7 @@ The Blueprint auto-generates `N8N_ENCRYPTION_KEY` for you.
 
 **4. Import the workflow**
 
-Open your Render n8n URL > Workflows > Import from file > select `workflows/01_careerforge.json`.
+Open your Render n8n URL > Workflows > Import from file > select each of `docker/workflows/CareerForge_Master_local.json`, `CareerForge_ATS_Poller.json`, and `CareerForge_Registry_Seeder.json`.
 
 **5. Set up UptimeRobot keep-alive**
 ```
@@ -357,7 +357,7 @@ n8n service > Settings > Domains > Generate Domain
 
 **6. Deploy** — Railway auto-builds and restarts.
 
-**7. Import workflow** — open your Railway n8n URL, import `workflows/01_careerforge.json`, set credentials, activate.
+**7. Import workflows** — open your Railway n8n URL, import each of `docker/workflows/CareerForge_Master_local.json`, `CareerForge_ATS_Poller.json`, and `CareerForge_Registry_Seeder.json`, set credentials, activate.
 
 ### Notes
 - Persistent PostgreSQL — no 30-day expiry
@@ -549,7 +549,7 @@ This runs daily via cron, keeps 14 days of compressed backups, and auto-prunes o
 
 ### Import and activate
 
-Open `https://n8n.yourdomain.com`, import `workflows/01_careerforge.json`, configure credentials, activate. You're live.
+Open `https://n8n.yourdomain.com`, import each of `docker/workflows/CareerForge_Master_local.json`, `CareerForge_ATS_Poller.json`, and `CareerForge_Registry_Seeder.json`, configure credentials, activate. You're live.
 
 ---
 
@@ -557,9 +557,11 @@ Open `https://n8n.yourdomain.com`, import `workflows/01_careerforge.json`, confi
 
 Zero ops. No Docker, no servers, no reverse proxies. You pay for convenience.
 
+> **Compatibility note:** the current bot depends on a local Ollama instance (`bge-m3` embeddings) and a pgvector-enabled Postgres for hybrid job-cache search — n8n Cloud doesn't run custom sidecar containers, so this tier needs those adapted to external hosted equivalents (e.g. a hosted embeddings API + a pgvector-enabled managed Postgres) before it's a straight import-and-go. Not yet re-verified against the current architecture — treat this tier as needing a review pass, not copy-paste ready.
+
 **1. Sign up at** [app.n8n.cloud](https://app.n8n.cloud) — 14-day free trial
 
-**2. Import workflow** — Settings > Import > upload `workflows/01_careerforge.json`
+**2. Import workflows** — Settings > Import > upload each of `docker/workflows/CareerForge_Master_local.json`, `CareerForge_ATS_Poller.json`, and `CareerForge_Registry_Seeder.json`
 
 **3. Add credentials:**
 - OpenRouter: type "OpenAI-compatible", base URL `https://openrouter.ai/api/v1`, paste your API key
@@ -587,14 +589,18 @@ After any deployment method:
 ```
 [ ] n8n UI accessible at your URL
 [ ] Login works with your credentials
-[ ] 01_careerforge.json imported and opened
+[ ] CareerForge_Master_local.json, CareerForge_ATS_Poller.json, and
+    CareerForge_Registry_Seeder.json all imported and opened
+[ ] Postgres reachable with the pgvector extension enabled, schema applied
+[ ] Ollama reachable with bge-m3 pulled
 [ ] Credentials configured:
     [ ] OpenRouter (OpenAI-compatible type, base URL: https://openrouter.ai/api/v1)
     [ ] Telegram bot token
-[ ] At least one search provider key set (Firecrawl, Serper, or You.com)
-[ ] master_resume.txt placed in user-data/ (or /data/user-data/ in container)
-[ ] Workflow toggled ACTIVE
+    [ ] Postgres
+[ ] At least one search provider key set (Firecrawl, Serper, or You.com) — see SETUP.md for which need a real n8n credential vs. a bare .env key
+[ ] All three workflows toggled ACTIVE
 [ ] Send "help" to your bot — it responds
+[ ] Send "find <role> jobs" — the bot walks you through résumé setup on first use (no manual file placement needed)
 [ ] Send "find ML engineer jobs" — job search works
 [ ] Pick a job number — PDF generation works
 ```

@@ -1,3 +1,5 @@
+> Auto-generated from the live workflow node `OutreachWriter` via `scripts/export_prompts.js`. Edits here don't get read back in -- see [docs/CUSTOMIZE_PROMPTS.md](docs/CUSTOMIZE_PROMPTS.md) for how to make a permanent change.
+
 # OutreachWriter
 
 ## Role

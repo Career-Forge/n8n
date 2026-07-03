@@ -1,66 +1,65 @@
 # Customize Prompts
 
-CareerForge's personality lives in 11 prompt files under `prompts/`. Each one controls how an LLM node behaves — what it outputs, what rules it follows, and how it writes.
+CareerForge's personality lives in the LLM nodes of the master workflow. `prompts/*.md` are readable **documentation** of those prompts, regenerated from the live workflow — not an editable source that gets pushed in. Getting this backwards is the #1 way to end up confused about what the bot is actually doing.
 
-## How prompts work
+## How prompts actually work
 
 ```
-prompts/*.md  →  transform scripts  →  embedded in workflow JSON  →  LLM reads at runtime
-   (source)       (build step)          (runtime truth)              (generates output)
+LLM node in workflows/CareerForge_Master_local.json  →  scripts/export_prompts.js  →  prompts/*.md
+              (runtime truth)                                  (extractor)              (read-only docs)
 ```
 
-The prompt `.md` files are the **source of truth for editing**. But the workflow JSON contains the **runtime copy** that n8n actually uses. If you edit a `.md` file, the workflow won't pick it up until you re-run the transform scripts.
+The workflow JSON is the runtime source of truth — n8n reads the prompt text straight out of each node. `prompts/*.md` files are generated *from* that JSON so you have something readable to grep/review without opening the n8n UI. Editing a `.md` file directly does nothing — nothing reads it back in.
 
-## Quick edits (the easy way)
-
-For one-off tweaks, edit the prompt directly in n8n:
+## Quick edits (for trying something out)
 
 1. Open the workflow in n8n
-2. Find the LLM chain node you want to change (e.g., "ResumeForge", "CoverForge")
-3. Click it → edit the **Prompt** field
+2. Find the LLM chain node you want to change (e.g., `Pass1 Selection`, `Cover Pass2`, `ForgeScore`)
+3. Click it → edit the **Prompt** / system message field
 4. Save the workflow
 
-Changes take effect immediately. No rebuild needed.
-
-**Downside:** Your edits live only in the workflow JSON. If you re-import the workflow or re-run transforms, they'll be overwritten. For permanent changes, edit the `.md` files instead.
+Changes take effect immediately, but only in the n8n UI's copy — they're not committed to the repo, and if you later redeploy from a patch script, they'll be overwritten.
 
 ## Permanent edits (the right way)
 
-1. Edit the prompt file in `prompts/` (e.g., `prompts/ResumeForge_v3.md`)
-2. Re-run the fix script to re-embed all prompts:
-   ```bash
-   node scripts/fix_prompts_and_models.js
-   ```
-3. Re-import the updated `workflows/01_careerforge.json` into n8n
+This repo's convention is patch scripts, not hand-editing the 600KB+ workflow JSON directly:
+
+1. Write or edit a `scripts/sN_*.js` patch script that anchors on the exact current node text and replaces it (see any `scripts/s2*.js`–`s22_*.js` file for the pattern — string-split anchors, a harness that proves the new logic works *before* touching any file).
+2. Run it inside the n8n container (repo staged under `/tmp`), which rewrites all 3 tracked master JSON copies.
+3. Deploy: `docker cp` the updated JSON in, `n8n import:workflow`, `n8n update:workflow --active=true`, `docker restart`, poll `/healthz`.
+4. Re-run `node scripts/export_prompts.js` to refresh `prompts/*.md` so the docs match what you just shipped — then `git diff prompts/` should show exactly your intended change and nothing else. If it shows anything unexpected, something else drifted.
+
+Full recipe and gotchas (WAL-mode SQLite verification, sandbox limits) are in [SETUP.md](../SETUP.md).
 
 ## What each prompt controls
 
-| File | Node | What it does |
+| File | Node(s) | What it does |
 |------|------|-------------|
-| `IntentRouter.md` | Route Intent | Classifies user messages into 10 intents |
-| `SeniorityDetector.md` | SeniorityDetector | Detects fresher/experienced/senior from resume |
-| `ForgeScore_v3.md` | ForgeScore, ScoreOnly | Scores resume vs job description (0-10) |
-| `ResumeForge_v3.md` | ResumeForge | Generates tailored resume JSON |
-| `CoverForge_v3.md` | CoverForge | Generates tailored cover letter JSON |
-| `ResumeRefine.md` | ReviseForge (resume mode) | Handles "make it shorter" style edits |
-| `CoverRefine.md` | ReviseForge (cover mode) | Handles cover letter revisions |
+| `IntentRouter.md` | Intent Router | Classifies user messages into intents (find_jobs, apply, revise, score, intel, outreach, salary, track, status, setup, prefs, and more) |
+| `SeniorityDetector.md` | SeniorityDetector | Detects fresher/junior/mid/senior from resume; also computes JD-fit strategy for the revise guardrail |
+| `Pass1_Resume.md` | Pass1 Selection | Selects which resume content to include and how to order sections, adaptive to career tier |
+| `Pass2_Resume.md` | Pass2 Generate, Pass2 Regen | Writes tailored, plain-text resume bullets from Pass1's selection |
+| `Cover_Pass1.md` | Cover Pass1 | Selects cover letter achievements + company research angle |
+| `Cover_Pass2.md` | Cover Pass2 | Writes the cover letter from Cover Pass1's selection |
+| `ForgeScore_v3.md` | ForgeScore, ScoreOnly | Scores resume vs job description |
 | `ContactFinder.md` | ContactFinder | Extracts contacts from search results |
 | `OutreachWriter.md` | OutreachWriter | Writes LinkedIn + email outreach drafts |
-| `CompanyIntel.md` | CompanyIntel | Analyzes company health from search results |
-| `JobScorer.md` | JobScorer | Ranks jobs from Greenhouse search |
+| `CompanyIntel.md` | CompanyIntel, CompanyIntel Apply | Analyzes company health, culture, and mission/vision from search results |
+| `JobScorer.md` | JobScorer | Ranks and location-matches jobs from search results |
+| `ATS_Extraction.md` | Extract ATS Signals | Extracts ATS-relevant signals from a generated resume for the auto-improve loop |
+| `Step0_JD.md` | Step0 JD Analysis | Extracts company/role/requirements from the job description |
+
+Run `node scripts/export_prompts.js` any time to regenerate this list against whatever's actually live, in case a node gets renamed or a new LLM node is added.
 
 ## Tuning tips
 
-**Make resumes more technical:** In `ResumeForge_v3.md`, find the "Keyword Alignment" section. Add a line like: "Prefer technical keywords over soft-skill keywords when both are applicable."
+Find the node in n8n (or read its current prompt via `prompts/*.md`), then follow the "Permanent edits" recipe above to ship the change:
 
-**Change cover letter tone:** In `CoverForge_v3.md`, find the "No Cliches" section. Add or remove phrases from the banned list. Adjust the "Word Count Target" if you want shorter/longer letters.
-
-**Adjust scoring thresholds:** In `ForgeScore_v3.md`, change the recommendation thresholds. Default: >= 6.0 Apply, >= 4.0 Caution, < 4.0 Skip. Lower the Apply threshold if you want to be less selective.
-
-**Add your own banned phrases:** Each writing prompt has a banned phrases list. Add domain-specific cliches you want to avoid.
+- **Make resumes more technical:** In `Pass1 Selection`'s prompt, adjust the JD-keyword-weighting guidance.
+- **Change cover letter tone:** In `Cover Pass2`'s prompt, adjust the tone/CTA rules.
+- **Adjust scoring thresholds:** In `ForgeScore`'s prompt, change the recommendation thresholds.
+- **Add banned phrases:** Each writing prompt (`Pass2_Resume.md`, `Cover_Pass2.md`, `OutreachWriter.md`) has a banned-cliche list — add domain-specific ones you want to avoid.
 
 ## Drift warning
 
-If you edit prompts in the `.md` files but forget to re-run the transform, your workflow will use stale prompts. If you edit prompts in n8n but forget to update the `.md` files, they'll be out of sync.
-
-Pick one source of truth and stick with it. For most users, editing directly in n8n is simplest.
+`prompts/*.md` can go stale if a node is edited directly in the n8n UI, or via a patch script, without re-running the extractor afterward. Make `node scripts/export_prompts.js && git diff prompts/` a habit after any prompt-touching deploy — a clean diff (or exactly the change you intended) means the docs are trustworthy; anything else means something drifted and needs investigating before you trust what's written here.

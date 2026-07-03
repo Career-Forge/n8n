@@ -50,10 +50,12 @@ All documented inline in `.env.example`. These are read directly in HTTP nodes v
 | **CareerForge Postgres** | Postgres | ✅ Required | All state + search. |
 | **Telegram** | Telegram API | ✅ Required | The bot. |
 | **OpenRouter account** | OpenRouter API | ✅ Required | All LLM roles. |
+| **CareerForge_Serper** | Header Auth — header `X-API-KEY`, value = your Serper key | ✅ Required for the Serper search lane | `Serper Job Search` node — one of the three main web-search lanes. |
+| **Firecrawl API** | Firecrawl API (native credential type) | ✅ Required for the Firecrawl search lane | `Firecrawl Search` node — one of the three main web-search lanes. |
 | **Hunter API** | Hunter API | ⬜ Optional (premium) | Email verification on `draft` (native Hunter node). |
 | **Apollo API** | Header Auth — header `X-Api-Key` | ⬜ Optional (premium) | Contact email/title enrichment on `draft` (HTTP node). |
 
-Serper / You.com / Firecrawl use `.env` keys (no credential needed).
+Only You.com genuinely skips n8n credentials — it reads `YOUCOM_API_KEY` straight from `.env` via `$env` in the HTTP node. Serper and Firecrawl both need a real n8n credential object (table above) even though their keys also live in `.env` — the `.env` copy alone is not enough for those two lanes to work.
 
 ---
 
@@ -63,7 +65,7 @@ Key-value config the workflow reads at runtime. Insert with SQL (`careerforge` D
 
 | key | value | purpose |
 |---|---|---|
-| `telegraph_token` | (auto-created on first run) | Telegraph long-list rendering. |
+| `telegraph_token` | your Telegraph access token (manual, one-time — see below) | Telegraph long-list rendering. |
 | `adzuna_app_id` / `adzuna_app_key` | your free Adzuna keys | Free structured job lane (real location + salary). [api.adzuna.com] |
 | `apollo_enabled` | `true` / `false` (default off) | Turn on Apollo contact enrichment. |
 | `hunter_enabled` | `true` / `false` (default off) | Turn on Hunter email verification. |
@@ -73,6 +75,19 @@ Key-value config the workflow reads at runtime. Insert with SQL (`careerforge` D
 INSERT INTO app_settings(key,value) VALUES ('adzuna_app_id','...'),('adzuna_app_key','...')
   ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value;
 ```
+
+**Telegraph token** — there is no auto-create step; `Load Telegraph Token` only reads this row, nothing ever writes it. Get one with a single call (no signup) and insert it yourself:
+
+```bash
+curl -s 'https://api.telegra.ph/createAccount?short_name=CareerForge' | python3 -c "import json,sys; print(json.load(sys.stdin)['result']['access_token'])"
+```
+
+```sql
+INSERT INTO app_settings(key,value) VALUES ('telegraph_token','<paste the token here>')
+  ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value;
+```
+
+Without this row, `find` still works but the long-result Telegraph page link is skipped — the top-3 Telegram message still sends.
 
 ---
 

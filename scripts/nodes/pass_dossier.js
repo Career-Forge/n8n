@@ -1,3 +1,6 @@
+// Auto-generated from the live workflow node "Pass Dossier" via scripts/export_prompts.js.
+// Edits here don't get read back in -- the live node is the source of truth.
+
 // Pass Dossier — S6b-3. Convergence node for the fresh-cache and cold-research
 // branches. Exactly one upstream branch executes per run, so this fires once.
 // n8n throws on $('<unrun node>') — caught — so we prefer the research result and

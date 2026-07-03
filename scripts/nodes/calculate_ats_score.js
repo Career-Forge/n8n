@@ -1,3 +1,6 @@
+// Auto-generated from the live workflow node "Calculate ATS Score" via scripts/export_prompts.js.
+// Edits here don't get read back in -- the live node is the source of truth.
+
 // Calculate ATS Score — S6b-4. Deterministic weighted scorer ported verbatim from
 // command-center calculateATSScore (index.ts 1021-1160; console + frontend-compat
 // fields dropped). 6 signals: semantic 35 / experience 30 / hard-req 15 / quant 10 /

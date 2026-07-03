@@ -1,3 +1,6 @@
+// Auto-generated from the live workflow node "Normalize Apply Research" via scripts/export_prompts.js.
+// Edits here don't get read back in -- the live node is the source of truth.
+
 // Normalize Apply Research — S6b-3. Flatten the Serper response into a compact
 // research_text blob for CompanyIntel Apply. Graceful on empty/failed search.
 const company = ($('Prepare Apply Research').first().json || {}).company || 'unknown';

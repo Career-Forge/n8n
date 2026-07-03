@@ -1,3 +1,6 @@
+// Auto-generated from the live workflow node "Build Pass1 Context" via scripts/export_prompts.js.
+// Edits here don't get read back in -- the live node is the source of truth.
+
 // ═══════════════════════════════════════════════════════════════
 // Build Pass1 Context — S6b-2
 // ═══════════════════════════════════════════════════════════════
@@ -30,7 +33,11 @@ function buildBiasRules(dossier) {
 }
 
 const c = $('Prepare Apply Context').first().json || {};
-const tierMap = { fresher: 'fresher', experienced: 'mid', senior: 'senior' };
+// F3: identity passthrough -- SeniorityDetector now outputs the same 4-bucket
+// taxonomy Pass1 uses. 'experienced' kept only as a fallback for pre-F3 static
+// data; the old map collapsed it into 'mid' unconditionally, making Pass1's
+// own 'junior' tier unreachable.
+const tierMap = { fresher: 'fresher', junior: 'junior', mid: 'mid', senior: 'senior', experienced: 'mid' };
 const tier = tierMap[c.seniority_mode] || 'mid';
 
 const masterResume = (c.resume_text && String(c.resume_text).trim())

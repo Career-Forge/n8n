@@ -1,3 +1,5 @@
+> Auto-generated from the live workflow node `Step0 JD Analysis` via `scripts/export_prompts.js`. Edits here don't get read back in -- see [docs/CUSTOMIZE_PROMPTS.md](docs/CUSTOMIZE_PROMPTS.md) for how to make a permanent change.
+
 Extract structured requirements from the job description. Return ONLY valid JSON (no markdown):
 {
   "clusters": [

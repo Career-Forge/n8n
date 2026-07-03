@@ -1,3 +1,6 @@
+// Auto-generated from the live workflow node "Normalize Hooks" via scripts/export_prompts.js.
+// Edits here don't get read back in -- the live node is the source of truth.
+
 // Normalize Hooks — S7. Flatten the Serper hook search into hook_sources and merge
 // with the draft context so OutreachWriter gets {contact, candidate_*, company,
 // relevant_achievement, candidate_role, contact_location, hook_sources}. Graceful

@@ -1,3 +1,6 @@
+// Auto-generated from the live workflow node "Finalize Enriched Contact" via scripts/export_prompts.js.
+// Edits here don't get read back in -- the live node is the source of truth.
+
 // Finalize Enriched Contact — S8. Converge after the Hunter gate. Attaches the
 // Hunter deliverability result (if Hunter ran) to the enriched contact, then hands
 // the Load-Draft-Contact-shaped object (+ enrichment) to the hook lane. Graceful:
@@ -7,7 +10,7 @@ const contact = ctx.contact || {};
 
 let status = null, verified = null;
 try {
-  const h = $('Hunter Verify').first().json || {};
+  const h = {}; // Hunter Verify removed from this deployment — email verification unavailable
   status = h.status || h.result || (h.data && h.data.status) || null;
   if (status) verified = ['valid', 'deliverable', 'accept_all', 'webmail'].indexOf(String(status).toLowerCase()) !== -1;
 } catch (e) { status = null; verified = null; }

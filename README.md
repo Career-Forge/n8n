@@ -126,7 +126,7 @@ ngrok http 5678
 
 ### 4. Import the workflow
 
-In n8n: **Workflows > Import from file** > select `workflows/01_careerforge.json`
+In n8n: **Workflows > Import from file** > select `docker/workflows/CareerForge_Master_local.json` (the master bot), then repeat for `docker/workflows/CareerForge_ATS_Poller.json` (background job-registry poller) and `docker/workflows/CareerForge_Registry_Seeder.json` (one-time registry seed). Activate all three. See [SETUP.md](SETUP.md) for the full recipe, including the Postgres schema and Ollama embedding model.
 
 ### 5. Set up credentials
 
@@ -164,28 +164,27 @@ careerforge-n8n/
 |   +-- diagrams/                      # Mermaid .mmd sources
 |
 |-- workflows/
-|   +-- 01_careerforge.json            # THE workflow (single file)
+|   |-- CareerForge_Master_local.json  # THE bot (master workflow)
+|   |-- CareerForge_ATS_Poller.json    # Background job-registry poller
+|   |-- CareerForge_Registry_Seeder.json # One-time registry seed
+|   +-- archive/                       # Historical snapshots -- do not import
 |
 |-- templates/
-|   |-- master_resume_template.txt     # Fill-in-the-blank master resume
-|   |-- master_resume_example.txt      # Worked example (fictional persona)
-|   |-- resume_skeleton_fresher.tex    # LaTeX skeleton: <2 yrs experience
-|   |-- resume_skeleton_experienced.tex # LaTeX skeleton: 2-10 yrs
-|   |-- resume_skeleton_senior.tex     # LaTeX skeleton: 10+ yrs
-|   +-- cover_skeleton.tex             # LaTeX skeleton: cover letter
+|   +-- cover_skeleton.tex             # LaTeX skeleton (resume uses one shared skeleton in code, no seniority variants)
 |
-|-- prompts/
+|-- prompts/                           # LLM prompts, regenerated from the live workflow (`node scripts/export_prompts.js`)
 |   |-- IntentRouter.md                # LLM intent classification
-|   |-- SeniorityDetector.md           # Auto-detect fresher/experienced/senior
-|   |-- ResumeForge_v3.md             # Tailored resume generation
-|   |-- CoverForge_v3.md              # Cover letter generation
-|   |-- ResumeRefine.md               # Iterative resume refinement
-|   |-- CoverRefine.md                # Iterative cover refinement
-|   |-- ForgeScore_v3.md              # Resume vs JD scoring (0-10)
-|   |-- JobScorer.md                   # Batch job ranking
+|   |-- SeniorityDetector.md           # Auto-detect fresher/junior/mid/senior
+|   |-- Pass1_Resume.md               # Resume content selection (adaptive to career tier)
+|   |-- Pass2_Resume.md               # Resume bullet writing
+|   |-- Cover_Pass1.md / Cover_Pass2.md # Cover letter selection + writing
+|   |-- ReviseForge.md                # "make it shorter" style resume revisions
+|   |-- ForgeScore_v3.md              # Resume vs JD scoring
+|   |-- JobScorer.md                   # Job ranking + location matching
 |   |-- ContactFinder.md              # Extract contacts from search results
 |   |-- OutreachWriter.md             # Multi-variant outreach generation
 |   +-- CompanyIntel.md               # Company health report
+|   (see docs/CUSTOMIZE_PROMPTS.md for the full, current list)
 |
 |-- services/
 |   +-- latex/

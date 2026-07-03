@@ -1,3 +1,6 @@
+// Auto-generated from the live workflow node "Ingest Resume JSON" via scripts/export_prompts.js.
+// Edits here don't get read back in -- the live node is the source of truth.
+
 // Ingest Resume JSON v1 — deterministic, no-LLM. Validates a user-provided resume JSON
 // (filled from the onboarding template) and assembles the resume_bubbles resume_doc.
 // On bad/absent JSON it returns { _needs_template:true } -> Send Resume Template.

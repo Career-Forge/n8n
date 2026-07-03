@@ -1,3 +1,6 @@
+// Auto-generated from the live workflow node "Build Hook Query" via scripts/export_prompts.js.
+// Edits here don't get read back in -- the live node is the source of truth.
+
 // Build Hook Query — S7 (S8: reads the enriched contact when present). Compact,
 // ToS-safe outreach-hook search query for the selected contact. PUBLIC sources only
 // — GitHub, conference talks, engineering blogs, papers, podcasts. NO LinkedIn

@@ -1,3 +1,6 @@
+// Auto-generated from the live workflow node "Build Pass2 Input" via scripts/export_prompts.js.
+// Edits here don't get read back in -- the live node is the source of truth.
+
 // ═══════════════════════════════════════════════════════════════
 // Build Pass2 Input — S6b-2
 // ═══════════════════════════════════════════════════════════════
@@ -18,7 +21,7 @@ const antiHalluc = '\n\nCRITICAL ANTI-HALLUCINATION RULES:\n'
   + '- Use ONLY the verbatim excerpts from Pass 1 decisions as source material — do NOT invent metrics, technologies, or achievements';
 
 const pass2Input = JSON.stringify({ decisions: pass1, jdRequirements: step0.clusters || [] });
-const pass2_user = 'Generate LaTeX content based on selection decisions. The decisions contain VERBATIM resume excerpts — use them as the SOLE source for STAR bullets.'
+const pass2_user = 'Generate plain-text resume content based on selection decisions. The decisions contain VERBATIM resume excerpts — use them as the SOLE source for STAR bullets.'
   + antiHalluc + '\n\n' + pass2Input;
 
 return [{ json: { pass2_user, pass1 } }];

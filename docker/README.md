@@ -19,20 +19,13 @@ open http://localhost:5678   # login: careerforge / demo1234
 ## Import the Workflow
 
 1. Open **http://localhost:5678**
-2. **Workflows** → **Import from file** → upload `workflows/01_careerforge.json`
-3. Open the imported workflow → set credentials (see below)
-4. Toggle the workflow **Active**
+2. **Workflows** → **Import from file** → upload `docker/workflows/CareerForge_Master_local.json`, then repeat for `CareerForge_ATS_Poller.json` and `CareerForge_Registry_Seeder.json`
+3. Open each imported workflow → set credentials (see below)
+4. Toggle each workflow **Active**
 
 ## Set Up Credentials
 
-In n8n: **Settings → Credentials → Add Credential**
-
-| Credential | Type | Notes |
-|:---|:---|:---|
-| OpenRouter API | OpenAI-compatible | Base URL: `https://openrouter.ai/api/v1`, API key: your `sk-or-v1-...` |
-| CareerForge Bot | Telegram API | Bot token from @BotFather |
-
-That's it. Search provider keys (Firecrawl, Serper, You.com) are read from environment variables — no n8n credentials needed for those.
+This compose file also brings up Postgres (pgvector) and Ollama (`bge-m3` embeddings), on top of n8n and the LaTeX service. See **[SETUP.md](../SETUP.md)** for the full credential list (Postgres, Telegram, OpenRouter, Serper, Firecrawl, optional Apollo/Hunter) and which ones need a real n8n credential object vs. a bare `.env` key.
 
 ## Useful Commands
 

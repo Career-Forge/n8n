@@ -1,3 +1,6 @@
+// Auto-generated from the live workflow node "Save Apply Context" via scripts/export_prompts.js.
+// Edits here don't get read back in -- the live node is the source of truth.
+
 // Save Apply Context — rewritten in S6c. Stores last-apply state for the "revise"
 // feature. The original referenced $('ResumeForge'), which S6b-2 deleted (this was a
 // latent crash on the cover path). Now reads the 2-phase pipeline output gracefully
@@ -12,7 +15,7 @@ try { resumeJson = ($('Parse Pass2').first().json || {}).pass2 || {}; } catch (e
 const seniorityOutput = getJson('SeniorityDetector').output || {};
 const forgeScoreOutput = getJson('ForgeScore').output || {};
 
-sd.last_resume_json = resumeJson;
+// last_resume_json now owned by Store Apply Context (merged plain-text content; runs after both apply branches complete)
 sd.last_jd = jdCtx.job_description || '';
 sd.last_fit_strategy = seniorityOutput.fit_strategy || 'perfect_fit';
 sd.last_keyword_gaps = forgeScoreOutput.keyword_gaps || [];

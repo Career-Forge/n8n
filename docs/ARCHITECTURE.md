@@ -219,14 +219,20 @@ See [DEPLOYMENT.md](../DEPLOYMENT.md) for step-by-step instructions for each tie
 ## File Map
 
 ```
-workflows/01_careerforge.json    ← THE workflow (111 nodes)
-prompts/*.md                     ← LLM prompt source files (11)
-templates/*.tex                  ← LaTeX skeletons (4) + resume template (2)
-services/latex/                  ← Flask PDF compiler
-user-data/master_resume.txt      ← Your resume (gitignored)
-docker/                          ← Docker configs for all tiers
-scripts/                         ← Build transforms + utilities
+workflows/CareerForge_Master_local.json   ← THE bot (275 nodes)
+workflows/CareerForge_ATS_Poller.json     ← Background job-registry poller
+workflows/CareerForge_Registry_Seeder.json ← One-time registry seed
+workflows/archive/                        ← Historical snapshots, do not import
+docker/workflows/                         ← Byte-identical copies, imported into Docker n8n
+prompts/*.md                              ← LLM prompt source files (regenerated from live via scripts/export_prompts.js)
+templates/cover_skeleton.tex              ← LaTeX skeleton (resume uses one shared skeleton, no seniority variants)
+services/latex/                           ← Flask PDF compiler
+db/schema.sql                             ← Postgres + pgvector schema
+docker/                                   ← Docker configs (n8n, postgres, ollama, latex)
+scripts/                                  ← Patch scripts (deploy history) + utilities
 ```
+
+> **Heads up:** the diagrams below (`system_overview.mmd`, `apply_pipeline.mmd`, `outreach_rrf.mmd`) describe an earlier iteration of the pipeline (single-phase ResumeForge/CoverForge, a standalone RRF-merge node) and have not been re-verified against the current 275-node local-Postgres/pgvector architecture. Treat them as historically informative, not as current ground truth, until they're regenerated.
 
 ## Diagram Sources
 

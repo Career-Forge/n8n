@@ -1,3 +1,6 @@
+// Auto-generated from the live workflow node "Format Costs" via scripts/export_prompts.js.
+// Edits here don't get read back in -- the live node is the source of truth.
+
 // Format Costs — S9b. Turns the Load Costs rows (per-provider spend, last 30 days)
 // into a Telegram message. Graceful when nothing is logged yet.
 const chatId = $('Extract Input').first().json.chat_id;

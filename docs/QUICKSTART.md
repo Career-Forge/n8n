@@ -34,22 +34,26 @@ FIRECRAWL_API_KEY=fc-your-key-here
 
 ```bash
 docker compose up -d
+docker exec -it careerforge_ollama ollama pull bge-m3   # one-time, ~1.2 GB
 ```
 
-Two services start: n8n (workflow engine) and latex (PDF compiler). Wait ~30 seconds for n8n to boot.
+Four services start: n8n (workflow engine), postgres (pgvector — jobs, search, app state), ollama (local embeddings), and latex (PDF compiler). Wait ~30 seconds for n8n to boot.
 
 Open **http://localhost:5678** — login is `careerforge` / `demo1234` (change in `.env`).
 
-## Step 3: Import the workflow
+Apply the DB schema if starting fresh: `psql -h localhost -U careerforge -d careerforge -f db/schema.sql` (or run it in whatever Postgres client you prefer).
+
+## Step 3: Import the workflows
 
 1. In n8n, click **Workflows** in the left sidebar
 2. Click the **+** button → **Import from file**
-3. Select `workflows/01_careerforge.json` from the repo
-4. Open the imported workflow
+3. Select `docker/workflows/CareerForge_Master_local.json` from the repo — this is the bot itself
+4. Repeat for `CareerForge_ATS_Poller.json` (background job-registry poller) and `CareerForge_Registry_Seeder.json` (one-time registry seed)
+5. Open each imported workflow
 
 ## Step 4: Set up credentials
 
-In the workflow, you'll see nodes with orange warning badges. These need credentials.
+In each workflow, you'll see nodes with orange warning badges. These need credentials.
 
 **OpenRouter** (used by all LLM nodes):
 1. Click any orange LLM node → click the credential dropdown → **Create new**
@@ -62,6 +66,8 @@ In the workflow, you'll see nodes with orange warning badges. These need credent
 1. Click the Telegram Trigger node → credential dropdown → **Create new**
 2. Paste your bot token
 3. Save. All Telegram nodes share this credential.
+
+**Postgres, Serper, Firecrawl, and the optional premium providers** each need their own credential too — see **[SETUP.md](../SETUP.md#4-n8n-credentials-credentials-tab)** for the complete list, including which ones use a real n8n credential object vs. a bare `.env` key.
 
 ## Step 5: Expose with ngrok
 
@@ -91,7 +97,7 @@ Restart: `docker compose down && docker compose up -d`
 
 ## Step 6: Activate and test
 
-1. In n8n, toggle the workflow **Active** (top-right switch)
+1. In n8n, toggle each of the three workflows **Active** (top-right switch)
 2. Open Telegram, find your bot
 3. Send: `help`
 
@@ -99,12 +105,13 @@ You should get back a help message listing all commands. If so, CareerForge is r
 
 ## Step 7: Set up your resume
 
-1. Copy `templates/master_resume_template.txt`
-2. Paste it into ChatGPT/Claude with your existing resume and say "fill this template"
-3. Save the result as `user-data/master_resume.txt`
-4. Restart: `docker compose restart n8n`
+The bot walks you through this itself the first time it needs your résumé — no manual file editing required. Just send `find ML engineer jobs in NYC` (or `apply`, `score`, anything that needs your résumé) and the bot will reply with:
 
-Now try: send `find ML engineer jobs in NYC` to your bot. Then reply with a job number to apply.
+1. A JSON résumé template to copy
+2. Instructions to paste it into ChatGPT/Claude along with your existing résumé and have it filled in
+3. A prompt to send the filled JSON back as a `.json` file (or pasted text) — this is a one-time setup, the bot reads résumés deterministically from this JSON, not from re-parsing a PDF/text file on every request
+
+Once that's saved, try `find ML engineer jobs in NYC` again. Then reply with a job number to apply.
 
 ## What's next
 

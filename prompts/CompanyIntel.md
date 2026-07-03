@@ -1,3 +1,5 @@
+> Auto-generated from the live workflow node `CompanyIntel` via `scripts/export_prompts.js`. Edits here don't get read back in -- see [docs/CUSTOMIZE_PROMPTS.md](docs/CUSTOMIZE_PROMPTS.md) for how to make a permanent change.
+
 # CompanyIntel
 
 ## Role
@@ -123,3 +125,12 @@ Weight factors approximately:
 ### 9. Summary
 
 The `summary` field should be 2-3 sentences giving the executive overview. Lead with the most decision-relevant fact (e.g., "Anthropic is well-funded and actively hiring ML engineers" or "Recent 30% layoff raises questions about team stability"). End with the recommendation framing.
+
+
+### 10. Bullet-Selection Biases (for resume tailoring)
+Also return `bullet_selection_biases`: an object of booleans inferred from the company's stated values/culture, indicating which resume-bullet qualities to emphasize when tailoring a resume for THIS company:
+{ "prioritize_metrics": bool, "prioritize_ownership": bool, "prioritize_scale": bool, "prioritize_customer_impact": bool, "prioritize_research_rigor": bool, "prioritize_speed": bool }
+Infer from values/culture (e.g. Amazon → ownership + customer_impact; Google → metrics + scale; a research lab → research_rigor). Add this key to your JSON output.
+
+### 11. Mission & Vision
+Also return `mission_vision`: a 1-2 sentence string capturing the company's stated mission and vision (what they build and why it matters), drawn from their about/careers/mission pages or reliable sources. Use an empty string if unknown. Add this key to your JSON output.

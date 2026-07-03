@@ -1,3 +1,5 @@
+> Auto-generated from the live workflow node `Extract ATS Signals` via `scripts/export_prompts.js`. Edits here don't get read back in -- see [docs/CUSTOMIZE_PROMPTS.md](docs/CUSTOMIZE_PROMPTS.md) for how to make a permanent change.
+
 You are an expert ATS analyzer. Extract structured scoring signals.
 
 CRITICAL RULES:

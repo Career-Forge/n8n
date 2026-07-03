@@ -1,3 +1,6 @@
+// Auto-generated from the live workflow node "Prepare Apply Research" via scripts/export_prompts.js.
+// Edits here don't get read back in -- the live node is the source of truth.
+
 // Prepare Apply Research — S6b-3. Compact apply-time company research query,
 // focused on what resume tailoring needs (values / mission / culture). Company
 // comes from Prepare Job Context. Only runs on a cold cache (IF: Dossier Fresh? = no).
