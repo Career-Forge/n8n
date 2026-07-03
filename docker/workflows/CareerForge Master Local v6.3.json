@@ -177,7 +177,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $('Extract Input').first().json.chat_id || $('Schedule Payload').first().json.chat_id }}",
+        "chatId": "={{ $('Extract Input').isExecuted ? $('Extract Input').first().json.chat_id : $('Schedule Payload').first().json.chat_id }}",
         "text": "👋 *CareerForge — Your AI Job Hunt Assistant*\n\nHere's what I can do:\n\n🔍 *Find Jobs* — \"find ML jobs in NYC\"\n📄 *Apply* — reply with a job number (e.g. \"3\") to generate a tailored resume + cover letter\n✏️ *Revise* — \"make it shorter\" / \"add more Python\"\n📊 *Score* — \"score my resume\" for a fit check\n🏢 *Company Intel* — \"tell me about Anthropic\"\n📧 *Outreach* — \"find recruiters at Scale AI\"\n💰 *Salary* — \"salary for ML Engineer at Google\"\n📋 *Track* — \"track this application\"\n📁 *Status* — \"show my applications\"\n\nJust type naturally — I'll figure out what you need!",
         "additionalFields": {
           "parse_mode": "Markdown"
@@ -282,7 +282,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $('Extract Input').first().json.chat_id || $('Schedule Payload').first().json.chat_id || $('Telegram Trigger').first().json.message.chat.id }}",
+        "chatId": "={{ $('Extract Input').isExecuted ? $('Extract Input').first().json.chat_id : ($('Schedule Payload').isExecuted ? $('Schedule Payload').first().json.chat_id : ($('Telegram Trigger').isExecuted ? $('Telegram Trigger').first().json.message.chat.id : null)) }}",
         "text": "={{ $json.message }}",
         "additionalFields": {
           "disable_web_page_preview": true,
@@ -307,7 +307,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $('Extract Input').first().json.chat_id || $('Schedule Payload').first().json.chat_id }}",
+        "chatId": "={{ $('Extract Input').isExecuted ? $('Extract Input').first().json.chat_id : $('Schedule Payload').first().json.chat_id }}",
         "text": "Sorry, I didn't understand that. Try /help to see what I can do!",
         "additionalFields": {}
       },
@@ -2083,7 +2083,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $('Extract Input').first().json.chat_id || $('Schedule Payload').first().json.chat_id }}",
+        "chatId": "={{ $('Extract Input').isExecuted ? $('Extract Input').first().json.chat_id : $('Schedule Payload').first().json.chat_id }}",
         "text": "🗂️ <b>I need your résumé as JSON (one-time setup)</b>\n\nI read résumés from a fixed JSON template — deterministic, private, and reliable (no AI guessing in the loop).\n\n<b>How:</b>\n1️⃣ Copy the block below.\n2️⃣ Paste it into ChatGPT / Claude, then paste your résumé under it.\n3️⃣ Send the filled JSON back to me — as a <b>.json file</b> (best for long résumés) or pasted text.\n\n<pre>You are filling a résumé JSON template. Copy facts VERBATIM from the résumé below — never invent, embellish, or drop anything. Keep every job, project, and bullet. Use \"YYYY-MM\" (or \"YYYY\") for dates and \"Present\" for current roles. Output ONLY the filled JSON.\n\nTEMPLATE:\n{\n  \"personal\": {\n    \"name\": \"\",\n    \"headline\": \"\",\n    \"emails\": [{ \"address\": \"\", \"primary\": true }],\n    \"phones\": [{ \"number\": \"\", \"primary\": true, \"region\": \"US\" }],\n    \"links\": { \"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\" },\n    \"location\": { \"city\": \"\", \"region\": \"\", \"country\": \"\", \"show_on_resume\": false },\n    \"work_authorization\": \"\"\n  },\n  \"summary_bullets\": [],\n  \"experience\": [\n    {\n      \"title\": \"\",\n      \"company\": \"\",\n      \"location\": \"\",\n      \"start_date\": \"YYYY-MM\",\n      \"end_date\": \"YYYY-MM or Present\",\n      \"is_current\": false,\n      \"bullets\": [],\n      \"skills\": [],\n      \"metrics\": []\n    }\n  ],\n  \"projects\": [\n    {\n      \"name\": \"\",\n      \"url\": \"\",\n      \"tech\": [],\n      \"bullets\": [],\n      \"metrics\": []\n    }\n  ],\n  \"education\": [\n    {\n      \"degree\": \"\",\n      \"field\": \"\",\n      \"institution\": \"\",\n      \"location\": \"\",\n      \"start_date\": \"YYYY-MM\",\n      \"end_date\": \"YYYY-MM\",\n      \"gpa\": \"\",\n      \"coursework\": []\n    }\n  ],\n  \"skills\": {\n    \"programming\": [],\n    \"ai_ml\": [],\n    \"data_mlops\": [],\n    \"cloud_devops\": [],\n    \"tools\": [],\n    \"other\": []\n  },\n  \"achievements\": []\n}\n\nRÉSUMÉ:\n(paste your résumé here)</pre>",
         "additionalFields": {
           "disable_web_page_preview": true,
@@ -2198,7 +2198,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $('Extract Input').first().json.chat_id || $('Schedule Payload').first().json.chat_id }}",
+        "chatId": "={{ $('Extract Input').isExecuted ? $('Extract Input').first().json.chat_id : $('Schedule Payload').first().json.chat_id }}",
         "text": "📄 Got your file — reading it now…",
         "additionalFields": {
           "parse_mode": "Markdown"
@@ -2727,7 +2727,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $('Extract Input').first().json.chat_id || $('Schedule Payload').first().json.chat_id }}",
+        "chatId": "={{ $('Extract Input').isExecuted ? $('Extract Input').first().json.chat_id : $('Schedule Payload').first().json.chat_id }}",
         "text": "={{ $json.setup_message }}",
         "additionalFields": {
           "parse_mode": "Markdown"
@@ -2783,7 +2783,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $('Extract Input').first().json.chat_id || $('Schedule Payload').first().json.chat_id }}",
+        "chatId": "={{ $('Extract Input').isExecuted ? $('Extract Input').first().json.chat_id : $('Schedule Payload').first().json.chat_id }}",
         "text": "={{ $json.error_message || '⚠️ Could not process your request. Please try a more specific query, e.g. \"find me ML Engineer jobs in NYC\".' }}",
         "additionalFields": {
           "parse_mode": "Markdown"
@@ -2839,7 +2839,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $('Extract Input').first().json.chat_id || $('Schedule Payload').first().json.chat_id }}",
+        "chatId": "={{ $('Extract Input').isExecuted ? $('Extract Input').first().json.chat_id : $('Schedule Payload').first().json.chat_id }}",
         "text": "={{ $json._verbose_message }}",
         "additionalFields": {
           "parse_mode": "Markdown"
@@ -2876,7 +2876,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $('Extract Input').first().json.chat_id || $('Schedule Payload').first().json.chat_id }}",
+        "chatId": "={{ $('Extract Input').isExecuted ? $('Extract Input').first().json.chat_id : $('Schedule Payload').first().json.chat_id }}",
         "text": "={{ $json.message }}",
         "additionalFields": {
           "parse_mode": "Markdown"
@@ -2913,7 +2913,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $('Extract Input').first().json.chat_id || $('Schedule Payload').first().json.chat_id }}",
+        "chatId": "={{ $('Extract Input').isExecuted ? $('Extract Input').first().json.chat_id : $('Schedule Payload').first().json.chat_id }}",
         "text": "={{ $json.message }}",
         "additionalFields": {
           "parse_mode": "Markdown"
@@ -2950,7 +2950,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $('Extract Input').first().json.chat_id || $('Schedule Payload').first().json.chat_id }}",
+        "chatId": "={{ $('Extract Input').isExecuted ? $('Extract Input').first().json.chat_id : $('Schedule Payload').first().json.chat_id }}",
         "text": "={{ $json.message }}",
         "additionalFields": {
           "parse_mode": "Markdown"
@@ -2987,7 +2987,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $('Extract Input').first().json.chat_id || $('Schedule Payload').first().json.chat_id }}",
+        "chatId": "={{ $('Extract Input').isExecuted ? $('Extract Input').first().json.chat_id : $('Schedule Payload').first().json.chat_id }}",
         "text": "={{ $json.message }}",
         "additionalFields": {
           "parse_mode": "Markdown"
@@ -3700,7 +3700,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $('Extract Input').first().json.chat_id || $('Schedule Payload').first().json.chat_id }}",
+        "chatId": "={{ $('Extract Input').isExecuted ? $('Extract Input').first().json.chat_id : $('Schedule Payload').first().json.chat_id }}",
         "text": "🗂️ <b>I need your résumé as JSON (one-time setup)</b>\n\nI read résumés from a fixed JSON template — deterministic, private, and reliable (no AI guessing in the loop).\n\n<b>How:</b>\n1️⃣ Copy the block below.\n2️⃣ Paste it into ChatGPT / Claude, then paste your résumé under it.\n3️⃣ Send the filled JSON back to me — as a <b>.json file</b> (best for long résumés) or pasted text.\n\n<pre>You are filling a résumé JSON template. Copy facts VERBATIM from the résumé below — never invent, embellish, or drop anything. Keep every job, project, and bullet. Use \"YYYY-MM\" (or \"YYYY\") for dates and \"Present\" for current roles. Output ONLY the filled JSON.\n\nTEMPLATE:\n{\n  \"personal\": {\n    \"name\": \"\",\n    \"headline\": \"\",\n    \"emails\": [{ \"address\": \"\", \"primary\": true }],\n    \"phones\": [{ \"number\": \"\", \"primary\": true, \"region\": \"US\" }],\n    \"links\": { \"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\" },\n    \"location\": { \"city\": \"\", \"region\": \"\", \"country\": \"\", \"show_on_resume\": false },\n    \"work_authorization\": \"\"\n  },\n  \"summary_bullets\": [],\n  \"experience\": [\n    {\n      \"title\": \"\",\n      \"company\": \"\",\n      \"location\": \"\",\n      \"start_date\": \"YYYY-MM\",\n      \"end_date\": \"YYYY-MM or Present\",\n      \"is_current\": false,\n      \"bullets\": [],\n      \"skills\": [],\n      \"metrics\": []\n    }\n  ],\n  \"projects\": [\n    {\n      \"name\": \"\",\n      \"url\": \"\",\n      \"tech\": [],\n      \"bullets\": [],\n      \"metrics\": []\n    }\n  ],\n  \"education\": [\n    {\n      \"degree\": \"\",\n      \"field\": \"\",\n      \"institution\": \"\",\n      \"location\": \"\",\n      \"start_date\": \"YYYY-MM\",\n      \"end_date\": \"YYYY-MM\",\n      \"gpa\": \"\",\n      \"coursework\": []\n    }\n  ],\n  \"skills\": {\n    \"programming\": [],\n    \"ai_ml\": [],\n    \"data_mlops\": [],\n    \"cloud_devops\": [],\n    \"tools\": [],\n    \"other\": []\n  },\n  \"achievements\": []\n}\n\nRÉSUMÉ:\n(paste your résumé here)</pre>",
         "additionalFields": {
           "disable_web_page_preview": true,
@@ -4371,7 +4371,7 @@
         "operation": "executeQuery",
         "query": "INSERT INTO matches (user_id, job_id, score) SELECT $1::bigint, (regexp_replace(s->>'job_id','^cache_',''))::bigint, (COALESCE((s->>'score100')::real, (s->>'fit_score')::real*10))/100.0 FROM jsonb_array_elements($2::jsonb) s WHERE s->>'job_id' ~ '^cache_[0-9]+$' ON CONFLICT (user_id, job_id) DO UPDATE SET score = EXCLUDED.score, created_at = now()",
         "options": {
-          "queryReplacement": "={{ [ $('Extract Input').first().json.chat_id || $('Schedule Payload').first().json.chat_id || $('Telegram Trigger').first().json.message.chat.id, JSON.stringify($json.scored || []) ] }}"
+          "queryReplacement": "={{ [ $('Extract Input').isExecuted ? $('Extract Input').first().json.chat_id : ($('Schedule Payload').isExecuted ? $('Schedule Payload').first().json.chat_id : ($('Telegram Trigger').isExecuted ? $('Telegram Trigger').first().json.message.chat.id : null)), JSON.stringify($json.scored || []) ] }}"
         }
       },
       "id": "7d487cc1-25c4-43ad-ab6f-a0c8c3abcce2",
