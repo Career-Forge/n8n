@@ -236,6 +236,9 @@ TITLE RULES
   Examples: "Associate Software Development Engineer - Platform" → "Software Engineer"
             "Junior Full-Stack Web Application Developer" → "Software Developer"
 - You MAY slightly adjust titles to better align with JD, but NEVER change to an unrelated field.
+- Teaching Assistant / Research Assistant / Grader roles are an exception to the rule above:
+  keep these titles VERBATIM. NEVER retitle or reframe an academic role as an industry
+  engineering/analyst title -- that misrepresents the candidate's actual experience.
 
 ═══════════════════════════════════════════════════════════════
 SKILLS REORDERING
