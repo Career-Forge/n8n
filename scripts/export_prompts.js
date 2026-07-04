@@ -73,6 +73,7 @@ const SCRIPT_NODE_MAP = {
   'Assemble Resume LaTeX':     'assemble_resume_latex.js',
   'Build Enriched Contact':    'build_enriched_contact.js',
   'Build Hook Query':          'build_hook_query.js',
+  'Build Telegraph Body':      'build_telegraph_body.js',
   'Build Pass1 Context':       'build_pass1_context.js',
   'Build Pass2 Input':         'build_pass2_input.js',
   'Build Pass2 Regen Input':   'build_pass2_regen_input.js',
