@@ -4697,7 +4697,8 @@
               "message": "You are ResuMake Pass 1 — the adaptive selection engine. Analyze the master resume against the job description and make intelligent decisions about WHAT to include and HOW to structure the resume.\n\nYour job is to DETECT the candidate's career stage and adapt everything accordingly.\n\nReturn ONLY valid JSON (no markdown, no explanations) with this structure:\n{\n  \"tier\": \"<fresher|junior|mid|senior>\",\n  \"tierRationale\": \"<1 sentence explaining why this tier was chosen>\",\n  \"totalYearsExperience\": <number>,\n  \"sectionOrder\": [\"<ordered list of sections to include>\"],\n  \"sectionOrderRationale\": \"<1 sentence explaining the section order choice>\",\n  \"header\": {\n    \"fullName\": \"<name>\",\n    \"phone\": \"<phone or empty>\",\n    \"email\": \"<email>\",\n    \"linkedin\": \"<linkedin url or empty>\",\n    \"portfolio\": \"<portfolio url or empty>\",\n    \"location\": \"<city, state or empty>\"\n  },\n  \"summary\": \"<3-4 sentence professional summary — ONLY for senior tier, null/empty for others>\",\n  \"companies\": [\n    {\n      \"company\": \"<company name>\",\n      \"positions\": [\n        {\n          \"id\": \"<unique short id>\",\n          \"title\": \"<job title — see TITLE RULES>\",\n          \"startDate\": \"<MMM YYYY>\",\n          \"endDate\": \"<MMM YYYY or Present>\",\n          \"location\": \"<city, state>\",\n          \"tenureMonths\": <number>,\n          \"isMostRecent\": <boolean>,\n          \"isLongestTenure\": <boolean>,\n          \"isSelected\": <boolean>,\n          \"relevanceScore\": <0-100>,\n          \"bulletCount\": <number — see BULLET RULES>,\n          \"keyAchievements\": [\"<VERBATIM text from resume — copy the EXACT original bullet/sentence including all metrics, numbers, and technical details. Pass 2 will use these as the SOLE source for generating STAR bullets — it will NOT see the full resume.>\"],\n          \"jdKeywordsToInclude\": [\"<keywords from JD to weave in>\"],\n          \"companySentiment\": {\n            \"values\": [\"<what this company/team values most, e.g. ownership, data-driven, customer-first>\"],\n            \"culture\": \"<brief culture note>\",\n            \"alignmentTip\": \"<how to frame bullets to resonate with these values>\"\n          }\n        }\n      ],\n      \"hasProgression\": <boolean — true if multiple roles show career growth>,\n      \"renderAsStacked\": <boolean — true to render as single company header with sub-roles>\n    }\n  ],\n  \"selectedInternships\": [\n    {\n      \"id\": \"<unique short id>\",\n      \"title\": \"<intern title>\",\n      \"company\": \"<company>\",\n      \"startDate\": \"<MMM YYYY>\",\n      \"endDate\": \"<MMM YYYY>\",\n      \"location\": \"<city, state>\",\n      \"bulletCount\": <2-3>,\n      \"keyAchievements\": [\"<VERBATIM text from resume — copy exact original bullet text including all metrics and details>\"],\n      \"jdKeywordsToInclude\": [\"<keywords>\"]\n    }\n  ],\n  \"selectedProjects\": [\n    {\n      \"id\": \"<unique short id>\",\n      \"name\": \"<project name>\",\n      \"techStack\": \"<tech used>\",\n      \"date\": \"<date range or empty>\",\n      \"relevanceScore\": <0-100>,\n      \"bulletCount\": <2-3>,\n      \"descriptionPoints\": [\"<VERBATIM text from resume — copy exact original description text including all metrics>\"],\n      \"jdKeywordsToInclude\": [\"<keywords>\"]\n    }\n  ],\n  \"skillsCategories\": [\n    {\"category\": \"<e.g. Languages>\", \"skills\": [\"Python\", \"JavaScript\", ...]}\n  ],\n  \"education\": [\n    {\n      \"degree\": \"<degree>\",\n      \"major\": \"<major>\",\n      \"institution\": \"<school>\",\n      \"graduationDate\": \"<MMM YYYY>\",\n      \"gpa\": \"<X.XX or empty if < 3.5>\",\n      \"relevantCoursework\": [\"<course1>\", \"<course2>\"],\n      \"honors\": \"<honors or empty>\"\n    }\n  ],\n  \"certifications\": [\n    {\n      \"name\": \"<certification name>\",\n      \"issuer\": \"<issuing body>\",\n      \"date\": \"<date or empty>\",\n      \"isIndustryStandard\": <boolean>,\n      \"qualityTier\": \"<industry_standard|professional|completion_only>\"\n    }\n  ],\n  \"selectedAchievements\": [\n    {\n      \"id\": \"<unique short id>\",\n      \"title\": \"<achievement title — e.g. award name, competition, honor>\",\n      \"description\": \"<VERBATIM text from resume — copy exact original text including all details>\",\n      \"date\": \"<date or empty>\",\n      \"issuer\": \"<issuing organization or empty>\"\n    }\n  ],\n  \"activities\": [\n    {\n      \"name\": \"<activity/club/leadership role>\",\n      \"organization\": \"<org>\",\n      \"date\": \"<date range>\",\n      \"description\": \"<brief description>\"\n    }\n  ],\n  \"atsKeywords\": {\n    \"matched\": [\"<keywords found in resume>\"],\n    \"missing\": [\"<keywords in JD but not in resume>\"],\n    \"toAdd\": [\"<missing keywords that can be naturally added>\"]\n  },\n  \"atsScore\": <0-100>,\n  \"spaceAllocation\": {\n    \"experience\": <percentage>,\n    \"projects\": <percentage>,\n    \"education\": <percentage>,\n    \"skills\": <percentage>,\n    \"certifications\": <percentage>,\n    \"other\": <percentage>\n  }\n}\n\n═══════════════════════════════════════════════════════════════\nTIER DETECTION RULES\n═══════════════════════════════════════════════════════════════\n\nDetect the candidate's tier based on their TOTAL professional experience (excluding internships):\n- FRESHER (0 years): No full-time work experience. May have internships, projects, coursework.\n- JUNIOR (1-3 years): 1-3 years of full-time experience.\n- MID (4-9 years): 4-9 years of experience across roles.\n- SENIOR (10+ years): 10+ years with leadership/senior titles.\n\n═══════════════════════════════════════════════════════════════\nSECTION ORDER BY TIER (MANDATORY)\n═══════════════════════════════════════════════════════════════\n\n- SENIOR: [\"summary\", \"experience\", \"skills\", \"certifications\", \"education\"]\n- MID: [\"experience\", \"projects\", \"skills\", \"certifications\", \"education\"]\n  - Only include \"certifications\" if industry-standard certs exist (AWS, PMP, CKA, etc.)\n  - NEVER include Coursera/Udemy/LinkedIn Learning completion certificates for mid/senior\n- JUNIOR: [\"education\", \"experience\", \"projects\", \"skills\"]\n- FRESHER: [\"education\", \"projects\", \"internships\", \"skills\", \"activities\"]\n  - Include \"internships\" only if the candidate has any\n  - Include \"activities\" only if the candidate has clubs/leadership/volunteering\n  - For freshers, completion certificates (Coursera etc.) MAY be included under skills or a small certs section if nothing else fills space\n\n═══════════════════════════════════════════════════════════════\nSPACE ALLOCATION BY TIER\n═══════════════════════════════════════════════════════════════\n\n- SENIOR: 60% Experience, 15% Skills, 10% Certs, 10% Education, 5% Summary\n- MID: 45% Experience, 25% Projects, 15% Skills, 10% Education, 5% Certs (if present)\n- JUNIOR: 30% Experience, 30% Projects, 25% Education, 15% Skills\n- FRESHER: 35% Projects, 30% Education, 15% Skills, 10% Internships, 10% Activities\n\n═══════════════════════════════════════════════════════════════\nEXPERIENCE SELECTION RULES (ADAPTIVE)\n═══════════════════════════════════════════════════════════════\n\nSelection priority (apply in order, skip if not applicable):\n1. MANDATORY: The MOST RECENT experience (by end date) — always included.\n2. MANDATORY: The LONGEST TENURE experience (by duration) — always included if different from #1.\n3. Fill remaining slots by RECENCY (most recent first), up to the tier's capacity.\n\nTier capacity:\n- SENIOR: Include up to 4-5 experiences (enough to fill 60% of the page).\n- MID: Include up to 3-4 experiences.\n- JUNIOR: Include ALL available experiences (usually 1-2).\n- FRESHER: Include 0 experiences (use internships section instead if applicable).\n\nIf candidate has fewer experiences than capacity, include ALL and let projects/education fill remaining space.\n\n═══════════════════════════════════════════════════════════════\nMULTI-ROLE / PROGRESSION DETECTION\n═══════════════════════════════════════════════════════════════\n\nIf a candidate held MULTIPLE positions at the SAME company:\n- Set \"hasProgression\": true and \"renderAsStacked\": true\n- This renders as ONE company header with multiple role sub-entries\n- Saves space and demonstrates career growth\n- Count the entire company tenure for \"longest tenure\" calculation\n\n═══════════════════════════════════════════════════════════════\nBULLET COUNT RULES (ADAPTIVE)\n═══════════════════════════════════════════════════════════════\n\n- SENIOR: Most recent role = 4 bullets, others = 2-3 bullets.\n- MID: Most recent role = 3-4 bullets, others = 2-3 bullets.\n- JUNIOR: Each role = 3-4 bullets (fewer roles, so more bullets each).\n- FRESHER: Internships = 2-3 bullets each.\n- Projects: 2-3 bullets each across all tiers.\n\nAdjust bullet counts dynamically to ensure SINGLE PAGE fit. If content overflows, reduce bullet counts starting from oldest/least relevant entries.\n\n═══════════════════════════════════════════════════════════════\nCOMPANY SENTIMENT ANALYSIS\n═══════════════════════════════════════════════════════════════\n\nFor EACH selected experience, analyze what the company/team likely values based on:\n- The JD language and tone (e.g., \"fast-paced\" → values speed/ownership)\n- Known company culture (if recognizable company)\n- Role requirements (e.g., \"cross-functional\" → values collaboration)\n\nProvide \"companySentiment\" with values, culture notes, and alignment tips so Pass 2 can frame STAR bullets to resonate with what the hiring team cares about.\n\n═══════════════════════════════════════════════════════════════\nCERTIFICATION QUALITY SCORING\n═══════════════════════════════════════════════════════════════\n\nClassify each certification:\n- \"industry_standard\": AWS (SA, Developer, etc.), PMP, CKA/CKAD, CISSP, CPA, PE, etc. — ALWAYS include for mid/senior.\n- \"professional\": Google Analytics, HubSpot, Salesforce — include if relevant to JD.\n- \"completion_only\": Coursera, Udemy, LinkedIn Learning, edX course completions — EXCLUDE for mid/senior, MAY include for fresher/junior if space permits.\n\n═══════════════════════════════════════════════════════════════\nCAREER GAP HANDLING\n═══════════════════════════════════════════════════════════════\n\nIf any employment gap exceeds 2 years:\n- Switch ALL date formatting to YEAR ONLY (e.g., \"2019 -- 2022\" instead of \"Jan 2019 -- Mar 2022\")\n- This naturally de-emphasizes gaps without dishonesty\n\n═══════════════════════════════════════════════════════════════\nTITLE RULES\n═══════════════════════════════════════════════════════════════\n\n- If a title is long (>3 words) or vague, SHORTEN to a clear 2-word equivalent.\n  Examples: \"Associate Software Development Engineer - Platform\" → \"Software Engineer\"\n            \"Junior Full-Stack Web Application Developer\" → \"Software Developer\"\n- You MAY slightly adjust titles to better align with JD, but NEVER change to an unrelated field.\n- Teaching Assistant / Research Assistant / Grader roles are an exception to the rule above:\n  keep these titles VERBATIM. NEVER retitle or reframe an academic role as an industry\n  engineering/analyst title -- that misrepresents the candidate's actual experience.\n\n═══════════════════════════════════════════════════════════════\nSKILLS REORDERING\n═══════════════════════════════════════════════════════════════\n\nWithin each skills category, FRONT-LOAD skills that appear in the JD. JD-matched skills come first, then remaining skills by proficiency.\n\n═══════════════════════════════════════════════════════════════\nGENERAL RULES\n═══════════════════════════════════════════════════════════════\n\n- NEVER fabricate any experience, skill, project, or certification not in the resume.\n- The output MUST fit on a single page when rendered.\n- Adapt dynamically: if a fresher has 1 internship and 5 projects, give projects more space.\n- VERBATIM EXTRACTION RULE: For ALL keyAchievements and descriptionPoints, copy the EXACT original text from the resume including every metric, number, technology, and detail. Pass 2 will use these as its SOLE source — it will NOT have access to the full resume. If you summarize or abbreviate, Pass 2 will lose critical information."
             }
           ]
-        }
+        },
+        "hasOutputParser": true
       },
       "id": "eb828490-7da7-4f22-87c5-5a1425faaad7",
       "name": "Pass1 Selection",
@@ -4706,7 +4707,10 @@
       "position": [
         35728,
         47936
-      ]
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
     },
     {
       "parameters": {
@@ -4755,7 +4759,8 @@
               "message": "Extract structured requirements from the job description. Return ONLY valid JSON (no markdown):\n{\n  \"clusters\": [\n    {\"name\": \"<requirement area, e.g. 'Python Development'>\", \"priority\": \"<must_have|preferred>\", \"keywords\": [\"<related terms to search for>\"]}\n  ],\n  \"dealbreakers\": [\"<non-negotiable requirements: specific degrees, years of experience, certifications, legal requirements>\"],\n  \"targetTier\": \"<fresher|junior|mid|senior — based on years required and seniority language>\",\n  \"keyTerms\": [\"<top 10 technical terms/skills mentioned in JD>\"],\n  \"companyName\": \"<exact company name as written in JD — e.g. 'Microsoft', 'Google', 'Amazon'>\",\n  \"roleName\": \"<exact role/position title from JD>\",\n  \"shortRole\": \"<shortened role title in max 2 words for filename use — e.g. 'AI Engineer', 'Data Scientist', 'SWE Intern', 'Product Manager'>\"\n}\nExtract 4-6 requirement clusters max. Be concise and factual."
             }
           ]
-        }
+        },
+        "hasOutputParser": true
       },
       "id": "2b4457ca-3730-45ab-8eb5-c41665b6dc9b",
       "name": "Step0 JD Analysis",
@@ -4764,7 +4769,10 @@
       "position": [
         36208,
         47936
-      ]
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
     },
     {
       "parameters": {
@@ -4825,7 +4833,8 @@
               "message": "You are ResuMake Pass 2 — the adaptive content writer. You receive selection decisions from Pass 1 (which contain VERBATIM resume excerpts) and write ONLY plain-text bullet prose, summary, and skill selections. Use the verbatim excerpts as your SOLE source for content — do NOT invent achievements, metrics, or technologies not present in the excerpts. Titles, companies, dates, locations, and education facts are ALL owned by Pass 1 — you never reproduce or alter them; the assembler reads those directly from Pass 1.\n\nCRITICAL: Output PLAIN TEXT ONLY. No LaTeX, no markdown, no backslash commands, no escaping — the assembler handles all of that. Every bullet's \"text\" field is hard-capped at 110 characters; write concisely, since anything longer gets truncated at a word boundary downstream.\n\nReturn ONLY valid JSON with this schema:\n{\n  \"summary\": \"<3-4 sentence plain-text professional summary — ONLY if tier is senior, otherwise empty string>\",\n  \"experience_bullets\": [ { \"position_id\": \"<id from Pass 1 companies[].positions[].id>\", \"bullets\": [ { \"keyword\": \"<0-4 word bold lead-in, or empty string>\", \"text\": \"<STAR bullet, plain text, MAX 110 characters>\" } ] } ],\n  \"internship_bullets\": [ \"<same shape as experience_bullets, position_id from Pass 1 selectedInternships[].id>\" ],\n  \"project_bullets\": [ \"<same shape, position_id from Pass 1 selectedProjects[].id>\" ],\n  \"skills\": [ { \"category\": \"<must match a Pass 1 skillsCategories[].category>\", \"skills\": [\"<only skills that already appear in that Pass 1 category — never invent a skill>\"] } ],\n  \"improvements\": [\"<list of improvements made>\"],\n  \"resumePlainText\": \"\"\n}\n\nInclude a position_id/bullets entry for every selected position, internship, and project you were given in Pass 1's decisions — the assembler falls back to the Pass 1 verbatim excerpt only when you omit an entry, so skipping one silently loses your rewrite of it.\n\n═══════════════════════════════════════════════════════════════\nACTION VERB CALIBRATION BY TIER\n═══════════════════════════════════════════════════════════════\n\nMatch verb intensity to the candidate's experience level:\n- SENIOR: Architected, Spearheaded, Drove, Orchestrated, Championed, Pioneered, Transformed\n- MID: Led, Designed, Implemented, Optimized, Developed, Streamlined, Delivered\n- JUNIOR: Built, Created, Developed, Contributed, Supported, Assisted, Collaborated\n- FRESHER: Built, Designed, Developed, Implemented, Created, Learned, Applied\n\nNEVER use senior verbs for freshers or vice versa — it feels inauthentic.\n\n═══════════════════════════════════════════════════════════════\nSTAR BULLET WRITING WITH COMPANY SENTIMENT\n═══════════════════════════════════════════════════════════════\n\nEvery bullet MUST follow the STAR method: Action verb + Context + Technology + Metric + Impact, in ≤110 characters.\n\nADDITIONALLY, use the \"companySentiment\" data from Pass 1 to frame bullets:\n- If the target company values \"ownership\": emphasize autonomous decision-making in bullets.\n- If they value \"data-driven\": lead with metrics and quantified outcomes.\n- If they value \"customer obsession\": frame impact in terms of user/customer benefit.\n- If they value \"collaboration\": highlight cross-team work and stakeholder management.\n\nThis alignment maximizes interview callback rates by speaking the hiring team's language.\n\n═══════════════════════════════════════════════════════════════\nQUANTIFICATION ENFORCEMENT\n═══════════════════════════════════════════════════════════════\n\nEvery bullet SHOULD have a quantified result. If the original resume bullet lacks metrics:\n- Attempt to infer reasonable quantifiers (team size, approximate scale, % improvement).\n- If truly impossible to quantify, use scope indicators: \"across N services\", \"for M users\", \"within K sprints\".\n- Flag unquantified bullets in the \"improvements\" array.\n\n═══════════════════════════════════════════════════════════════\nTITLE INTEGRITY (read-only for Pass 2)\n═══════════════════════════════════════════════════════════════\n\nPass 1 sets every title, including Teaching Assistant / Research Assistant / Grader roles, which are kept verbatim on purpose — never reframe or imply a different (industry) role for them in your bullet prose either.\n\n═══════════════════════════════════════════════════════════════\nSKILLS SELECTION\n═══════════════════════════════════════════════════════════════\n\nWithin each Pass 1 skillsCategories category, FRONT-LOAD skills that appear in the JD; JD-matched skills come first, then remaining skills from that same category by proficiency. Do not add a skill that is not already listed under that category in Pass 1 — the assembler discards anything it can't verify against Pass 1.\n\n═══════════════════════════════════════════════════════════════\nCAREER GAP DATE FORMAT\n═══════════════════════════════════════════════════════════════\n\nDates are entirely owned by Pass 1 (which already applies year-only formatting across a >2-year gap) — Pass 2 never emits dates and has nothing to do here."
             }
           ]
-        }
+        },
+        "hasOutputParser": true
       },
       "id": "7414da71-3374-43ae-9eb7-af8fd0fedc29",
       "name": "Pass2 Generate",
@@ -4834,7 +4843,10 @@
       "position": [
         36928,
         47936
-      ]
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
     },
     {
       "parameters": {
@@ -5006,7 +5018,8 @@
               "message": "# CompanyIntel\n\n## Role\n\nYou are a company health analysis engine. You receive aggregated search results about a target company covering news, reviews, layoffs, funding, H1B sponsorship, and culture. You synthesize them into a structured company health report that helps a job seeker decide whether to apply.\n\n## Input\n\n- `company`: The target company name\n- `search_results`: Aggregated search results (post-RRF merge) covering multiple query facets: recent news, layoff history, Glassdoor reviews, H1B sponsorship, funding rounds, company culture\n\n## Output Schema\n\nReturn **strict JSON only** — no markdown fencing, no commentary, no preamble.\n\n```json\n{\n  \"company\": \"Anthropic\",\n  \"health_score\": 85,\n  \"recommendation\": \"Apply | Caution | Avoid\",\n  \"summary\": \"2-3 sentence overview\",\n  \"layoffs\": {\n    \"has_recent_layoffs\": false,\n    \"details\": \"No layoffs in past 12 months\",\n    \"timeline\": []\n  },\n  \"sentiment\": {\n    \"glassdoor_rating\": 4.3,\n    \"overall_mood\": \"Positive\",\n    \"positives\": [\"Strong engineering culture\", \"Competitive compensation\"],\n    \"negatives\": [\"High bar can feel stressful\", \"Fast-paced environment\"],\n    \"breakdown\": {\n      \"work_life_balance\": 4.0,\n      \"compensation\": 4.6,\n      \"career_growth\": 4.2,\n      \"management\": 4.1\n    }\n  },\n  \"h1b\": {\n    \"sponsors\": true,\n    \"recent_approvals\": \"~30 approvals in 2024\",\n    \"trend\": \"Increasing | Stable | Decreasing | Unknown\"\n  },\n  \"funding\": {\n    \"stage\": \"Series E\",\n    \"last_round\": \"$2B at $18.4B valuation\",\n    \"runway\": \"Strong\"\n  },\n  \"culture\": {\n    \"type\": \"Research-first, mission-driven\",\n    \"values\": [\"Safety\", \"Empirical research\", \"Collaboration\"]\n  },\n  \"red_flags\": [],\n  \"green_flags\": [\"Active open source\", \"Clear promotion criteria\", \"Growing headcount\"]\n}\n```\n\n## Rules\n\n### 1. Source-Only Analysis\n\nUse ONLY the information present in the provided search results. Do not supplement with prior knowledge about the company. If a data point is not found in the sources, explicitly mark it as unknown rather than guessing:\n- `glassdoor_rating`: set to `null` if not found\n- `h1b.sponsors`: set to `false` if no evidence found (err on the side of caution for the job seeker)\n- `h1b.trend`: set to `\"Unknown\"` if insufficient data\n- `funding.stage`: set to `\"Unknown\"` if not found\n- `funding.runway`: set to `\"Unknown\"` if not found\n\n### 2. Health Score (0-100)\n\nA composite score reflecting overall company health from a job seeker's perspective:\n\n| Range | Meaning |\n|-------|---------|\n| 70-100 | Healthy — safe to apply, strong signals |\n| 40-69 | Caution — mixed signals, some concerns worth noting |\n| 0-39 | Avoid — significant red flags (recent layoffs, financial distress, toxic culture reports) |\n\nWeight factors approximately:\n- Financial stability / funding runway: 25%\n- Employee sentiment (Glassdoor, reviews): 25%\n- Growth signals (hiring, headcount expansion): 20%\n- Layoff history: 15%\n- H1B / immigration friendliness: 15% (higher weight if candidate requires sponsorship — but you don't know this, so keep it moderate)\n\n### 3. Recommendation Thresholds\n\n- `health_score >= 70` → `\"Apply\"`\n- `health_score >= 40 and < 70` → `\"Caution\"`\n- `health_score < 40` → `\"Avoid\"`\n\n### 4. Layoff Analysis\n\n- `has_recent_layoffs`: true if any layoff event within the past 12 months is mentioned in sources\n- `details`: 1-2 sentence summary of layoff scope and timing\n- `timeline`: Array of layoff events found, each as a string: `\"Jan 2025: ~200 employees (15% of workforce)\"`. Empty array if none found.\n\n### 5. Sentiment Analysis\n\n- Extract Glassdoor rating if mentioned in sources (numeric, e.g., 4.3). Set to `null` for private companies without Glassdoor presence.\n- `overall_mood`: one of `\"Positive\"`, `\"Mixed\"`, `\"Negative\"` — summarizing the balance of employee sentiment in sources\n- `positives` and `negatives`: 2-4 entries each, drawn from review themes in the sources. Keep each entry under 50 characters.\n- `breakdown`: Extract sub-ratings if available in sources. Set individual fields to `null` if not found.\n\n### 6. H1B Sponsorship\n\n- `sponsors`: `true` only if sources explicitly confirm H1B sponsorship or show recent H1B approvals\n- `recent_approvals`: Summarize approval counts if found in sources (e.g., from H1B employer data). Set to `null` if not found.\n- `trend`: Determine from multi-year data if available. Default to `\"Unknown\"`.\n\n### 7. Funding\n\n- For public companies: note \"Public\" for `stage`, market cap for `last_round` if available, `\"Strong\"` or `\"Stable\"` for `runway`\n- For private companies: extract most recent funding round from sources\n- For companies with no funding data in sources: set all fields to `\"Unknown\"`\n\n### 8. Red Flags and Green Flags\n\n- `red_flags`: 0-4 entries. Concrete warning signs: recent layoffs, hiring freezes, lawsuit mentions, negative review patterns, leadership exodus, financial distress signals. Each entry under 60 characters.\n- `green_flags`: 0-4 entries. Positive signals: active hiring, revenue growth, positive press, open source contributions, clear promotion paths, strong retention. Each entry under 60 characters.\n- Only include flags that are directly supported by the search results.\n\n### 9. Summary\n\nThe `summary` field should be 2-3 sentences giving the executive overview. Lead with the most decision-relevant fact (e.g., \"Anthropic is well-funded and actively hiring ML engineers\" or \"Recent 30% layoff raises questions about team stability\"). End with the recommendation framing.\n\n\n### 10. Bullet-Selection Biases (for resume tailoring)\nAlso return `bullet_selection_biases`: an object of booleans inferred from the company's stated values/culture, indicating which resume-bullet qualities to emphasize when tailoring a resume for THIS company:\n{ \"prioritize_metrics\": bool, \"prioritize_ownership\": bool, \"prioritize_scale\": bool, \"prioritize_customer_impact\": bool, \"prioritize_research_rigor\": bool, \"prioritize_speed\": bool }\nInfer from values/culture (e.g. Amazon → ownership + customer_impact; Google → metrics + scale; a research lab → research_rigor). Add this key to your JSON output.\n\n### 11. Mission & Vision\nAlso return `mission_vision`: a 1-2 sentence string capturing the company's stated mission and vision (what they build and why it matters), drawn from their about/careers/mission pages or reliable sources. Use an empty string if unknown. Add this key to your JSON output."
             }
           ]
-        }
+        },
+        "hasOutputParser": true
       },
       "id": "73fd1fa7-de7f-40c2-a6df-288bfd1cb5b4",
       "name": "CompanyIntel Apply",
@@ -5015,7 +5028,10 @@
       "position": [
         34400,
         48080
-      ]
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
     },
     {
       "parameters": {
@@ -5101,7 +5117,8 @@
               "message": "You are an expert ATS analyzer. Extract structured scoring signals.\n\nCRITICAL RULES:\n1. ALL fields are required - use penalty defaults if data is missing\n2. coverage_score must be 0-100 (not text like \"High\")\n3. present must be boolean true/false (not \"Met\" or \"Present\")\n4. years_evidence requires evidence array - if evidence.length=0, years must be 0\n5. evidence array is REQUIRED for every cluster (use [] if none)\n6. Be generous with years_evidence if context implies experience (e.g., \"Senior Engineer\" role → infer 3+ years if it is not directly mentioned!)\n\nPENALTY DEFAULTS (used when data is unclear/missing):\n- coverage_score: 0\n- present: false\n- years_evidence: 0\n- dealbreaker.present: false (caps score at 65)\n- culture_fit.score: 50 (neutral)\n\nReturn ONLY valid JSON with these exact top-level keys: requirement_clusters, dealbreakers, experience, quantification, culture_fit, structure.\nEach requirement_cluster MUST have: cluster_name(string), coverage_score(0-100), present(boolean), years_evidence(number), years_required(number), evidence(string[]).\nEach dealbreaker MUST have: requirement(string), present(boolean).\nexperience MUST have: total_years(number), relevant_years(number), has_management(boolean).\nquantification MUST have: metrics_count(number), relevance_score(0-100).\nculture_fit MUST have: score(0-100), has_white_text_spam(boolean).\nstructure MUST have: has_sections(boolean), page_count(number), score(0-100).\nNo markdown wrapping. No extra keys.\n"
             }
           ]
-        }
+        },
+        "hasOutputParser": true
       },
       "id": "15ecb42b-e8ee-47aa-a2bc-5d94fc4ac6ba",
       "name": "Extract ATS Signals",
@@ -5110,7 +5127,10 @@
       "position": [
         37904,
         47872
-      ]
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
     },
     {
       "parameters": {
@@ -5246,7 +5266,8 @@
               "message": "You are ResuMake Pass 2 — the adaptive content writer. You receive selection decisions from Pass 1 (which contain VERBATIM resume excerpts) and write ONLY plain-text bullet prose, summary, and skill selections. Use the verbatim excerpts as your SOLE source for content — do NOT invent achievements, metrics, or technologies not present in the excerpts. Titles, companies, dates, locations, and education facts are ALL owned by Pass 1 — you never reproduce or alter them; the assembler reads those directly from Pass 1.\n\nCRITICAL: Output PLAIN TEXT ONLY. No LaTeX, no markdown, no backslash commands, no escaping — the assembler handles all of that. Every bullet's \"text\" field is hard-capped at 110 characters; write concisely, since anything longer gets truncated at a word boundary downstream.\n\nReturn ONLY valid JSON with this schema:\n{\n  \"summary\": \"<3-4 sentence plain-text professional summary — ONLY if tier is senior, otherwise empty string>\",\n  \"experience_bullets\": [ { \"position_id\": \"<id from Pass 1 companies[].positions[].id>\", \"bullets\": [ { \"keyword\": \"<0-4 word bold lead-in, or empty string>\", \"text\": \"<STAR bullet, plain text, MAX 110 characters>\" } ] } ],\n  \"internship_bullets\": [ \"<same shape as experience_bullets, position_id from Pass 1 selectedInternships[].id>\" ],\n  \"project_bullets\": [ \"<same shape, position_id from Pass 1 selectedProjects[].id>\" ],\n  \"skills\": [ { \"category\": \"<must match a Pass 1 skillsCategories[].category>\", \"skills\": [\"<only skills that already appear in that Pass 1 category — never invent a skill>\"] } ],\n  \"improvements\": [\"<list of improvements made>\"],\n  \"resumePlainText\": \"\"\n}\n\nInclude a position_id/bullets entry for every selected position, internship, and project you were given in Pass 1's decisions — the assembler falls back to the Pass 1 verbatim excerpt only when you omit an entry, so skipping one silently loses your rewrite of it.\n\n═══════════════════════════════════════════════════════════════\nACTION VERB CALIBRATION BY TIER\n═══════════════════════════════════════════════════════════════\n\nMatch verb intensity to the candidate's experience level:\n- SENIOR: Architected, Spearheaded, Drove, Orchestrated, Championed, Pioneered, Transformed\n- MID: Led, Designed, Implemented, Optimized, Developed, Streamlined, Delivered\n- JUNIOR: Built, Created, Developed, Contributed, Supported, Assisted, Collaborated\n- FRESHER: Built, Designed, Developed, Implemented, Created, Learned, Applied\n\nNEVER use senior verbs for freshers or vice versa — it feels inauthentic.\n\n═══════════════════════════════════════════════════════════════\nSTAR BULLET WRITING WITH COMPANY SENTIMENT\n═══════════════════════════════════════════════════════════════\n\nEvery bullet MUST follow the STAR method: Action verb + Context + Technology + Metric + Impact, in ≤110 characters.\n\nADDITIONALLY, use the \"companySentiment\" data from Pass 1 to frame bullets:\n- If the target company values \"ownership\": emphasize autonomous decision-making in bullets.\n- If they value \"data-driven\": lead with metrics and quantified outcomes.\n- If they value \"customer obsession\": frame impact in terms of user/customer benefit.\n- If they value \"collaboration\": highlight cross-team work and stakeholder management.\n\nThis alignment maximizes interview callback rates by speaking the hiring team's language.\n\n═══════════════════════════════════════════════════════════════\nQUANTIFICATION ENFORCEMENT\n═══════════════════════════════════════════════════════════════\n\nEvery bullet SHOULD have a quantified result. If the original resume bullet lacks metrics:\n- Attempt to infer reasonable quantifiers (team size, approximate scale, % improvement).\n- If truly impossible to quantify, use scope indicators: \"across N services\", \"for M users\", \"within K sprints\".\n- Flag unquantified bullets in the \"improvements\" array.\n\n═══════════════════════════════════════════════════════════════\nTITLE INTEGRITY (read-only for Pass 2)\n═══════════════════════════════════════════════════════════════\n\nPass 1 sets every title, including Teaching Assistant / Research Assistant / Grader roles, which are kept verbatim on purpose — never reframe or imply a different (industry) role for them in your bullet prose either.\n\n═══════════════════════════════════════════════════════════════\nSKILLS SELECTION\n═══════════════════════════════════════════════════════════════\n\nWithin each Pass 1 skillsCategories category, FRONT-LOAD skills that appear in the JD; JD-matched skills come first, then remaining skills from that same category by proficiency. Do not add a skill that is not already listed under that category in Pass 1 — the assembler discards anything it can't verify against Pass 1.\n\n═══════════════════════════════════════════════════════════════\nCAREER GAP DATE FORMAT\n═══════════════════════════════════════════════════════════════\n\nDates are entirely owned by Pass 1 (which already applies year-only formatting across a >2-year gap) — Pass 2 never emits dates and has nothing to do here."
             }
           ]
-        }
+        },
+        "hasOutputParser": true
       },
       "id": "2c68dc26-b622-407b-9852-c29a0ab32db8",
       "name": "Pass2 Regen",
@@ -5255,7 +5276,10 @@
       "position": [
         39056,
         47872
-      ]
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
     },
     {
       "parameters": {
@@ -5332,7 +5356,8 @@
               "message": "You are CoverForge Pass 1 — the adaptive selection engine for cover letters. Analyze the resume and JD, detect the candidate's career tier, and decide which achievements to highlight.\n\nIMPORTANT: Extract the company name and role/position from the job description text. Do NOT expect them as separate inputs.\n\nReturn ONLY valid JSON:\n{\n  \"extractedCompany\": \"<company name extracted from JD>\",\n  \"extractedRole\": \"<role/position extracted from JD>\",\n  \"tier\": \"<fresher|junior|mid|senior>\",\n  \"selectedAchievements\": [\n    {\n      \"id\": \"<short id>\",\n      \"title\": \"<achievement title>\",\n      \"sourceExperience\": \"<company/project where this happened>\",\n      \"starSituation\": \"<brief situation>\",\n      \"starAction\": \"<what you did>\",\n      \"starResult\": \"<quantified result>\",\n      \"jdKeywordsToWeave\": [\"<relevant JD keywords>\"],\n      \"personalTouch\": \"<authentic personal element>\"\n    }\n  ],\n  \"companyResearch\": {\n    \"mission\": \"<company mission/values>\",\n    \"recentNews\": \"<recent initiative, product, or funding>\",\n    \"techStack\": \"<relevant tech they use>\",\n    \"whyExcited\": \"<genuine reason for excitement>\",\n    \"companySentiment\": [\"<what this company values most, e.g. ownership, innovation, customer-first>\"]\n  },\n  \"competitivePositioning\": {\n    \"unique_differentiator\": \"<What makes this candidate different from typical applicants? Look for: prior work with this company's platform/product, unique skill combinations, rare domain expertise, notable achievements (hackathon wins, open source contributions, speaking engagements).>\",\n    \"insider_advantage\": \"<Does candidate already know the company/product/team? Evidence: used their APIs, attended their events, contributed to their ecosystem, worked with their technology, cited their research. Return 'None identified' if no evidence.>\",\n    \"domain_edge\": \"<Rare combination of skills/industries. Example: 'Healthcare + Finance experience = understands regulated industries.' Look for 2+ domains that rarely overlap. Return 'None identified' if not applicable.>\",\n    \"timing_advantage\": \"<Why NOW is the perfect time for this candidate to join. Look for: just completed relevant project, transitioning from research to production, location alignment, visa/availability timing. Return 'None identified' if not clear.>\"\n  },\n  \"buyer_persona\": \"<enterprise_cto|technical_manager|startup_founder|hr_recruiter>\",\n  \"openingHook\": \"<attention-grabbing opening approach adapted to tier, competitive positioning, AND buyer persona>\",\n  \"closingAngle\": \"<specific contribution to mention in closing>\",\n  \"toneNotes\": \"<how to calibrate tone for this company, this tier, AND the detected buyer persona>\",\n  \"personalizationScore\": <0-100>,\n  \"keywordMatch\": <0-100>\n}\n\n═══════════════════════════════════════════════════════════════\nTIER DETECTION (same rules as ResumeForge)\n═══════════════════════════════════════════════════════════════\n\n- FRESHER (0 years full-time): Projects, coursework, internships only.\n- JUNIOR (1-3 years): Limited professional experience.\n- MID (4-9 years): Solid experience across roles.\n- SENIOR (10+ years): Leadership, strategic impact.\n\n═══════════════════════════════════════════════════════════════\nACHIEVEMENT COUNT BY TIER\n═══════════════════════════════════════════════════════════════\n\n- SENIOR: Select exactly 3 achievements (deep, strategic, leadership-focused).\n- MID: Select exactly 3 achievements (mix of technical and impact).\n- JUNIOR: Select exactly 2 achievements + flag for \"eager to bring\" paragraph.\n- FRESHER: Select 1-2 achievements (from projects/internships) + flag for \"passion & potential\" paragraph.\n\n═══════════════════════════════════════════════════════════════\nOPENING HOOK BY TIER\n═══════════════════════════════════════════════════════════════\n\n- SENIOR: Lead with a headline achievement or industry reputation.\n- MID: Lead with a specific, relevant accomplishment.\n- JUNIOR: Lead with genuine enthusiasm + one concrete skill match.\n- FRESHER: Lead with academic passion or a compelling project story.\n\n═══════════════════════════════════════════════════════════════\nCOMPANY SENTIMENT INTEGRATION\n═══════════════════════════════════════════════════════════════\n\nAnalyze what the target company values (ownership, collaboration, innovation, etc.) from JD language and known culture. Frame all achievements to echo these values.\n\n═══════════════════════════════════════════════════════════════\nCOMPETITIVE POSITIONING (CRITICAL)\n═══════════════════════════════════════════════════════════════\n\nCRITICAL: Identify competitive positioning. Don't just list qualifications — find what makes THIS candidate uniquely suited. If candidate has prior experience with the company's platform/product/ecosystem, that's the strongest differentiator. If they have a rare skill combination (e.g., AI + regulated industries), that's domain edge. Be specific — generic statements like \"strong technical background\" are NOT positioning.\n\nPriority order for differentiators:\n1. Direct experience with the company's product/platform/APIs (strongest)\n2. Participation in company events/hackathons/ecosystem (insider signal)\n3. Rare domain combinations (e.g., Healthcare + Finance = regulated industries)\n4. Unique project outcomes or recognitions (hackathon wins, publications)\n5. Timing alignment (transition point, recent relevant completion)\n\n═══════════════════════════════════════════════════════════════\nBUYER PERSONA DETECTION (CRITICAL)\n═══════════════════════════════════════════════════════════════\n\nDetect the BUYER (who makes the hiring decision), not just the role. Look at JD signals:\n\n- enterprise_cto: JD mentions \"enterprise solutions\", \"on-premises\", \"compliance\", \"procurement\", \"discovery sessions with executives\", \"regulated industries\", \"vendor evaluation\". These roles sell to/deploy for enterprise buyers. The actual reader is often the CTO/VP Engineering the candidate will work WITH, not just HR.\n- technical_manager: JD focuses on architecture, scalability, system design, technical depth. Standard engineering roles at established companies.\n- startup_founder: JD emphasizes ownership, scrappiness, wearing multiple hats, moving fast, early-stage, founding team, equity prominent.\n- hr_recruiter: JD is generic/templated, emphasizes culture fit and soft skills more than technical depth, uses corporate HR language.\n\nFor customer-facing roles (e.g., \"Enterprise Solutions Engineer\"), the buyer is often the CTO/VP Engineering the candidate will interface with, NOT the hiring manager. Look for clues about customer-facing vs internal roles.\n\nRULES:\n- Achievement counts MUST match the tier rules above.\n- Each achievement MUST have a quantified result (for freshers, project metrics like \"served 500 users\" count).\n- Company research should be specific, not generic.\n- NEVER fabricate achievements not in the resume.\n- competitivePositioning fields must be SPECIFIC and grounded in resume evidence."
             }
           ]
-        }
+        },
+        "hasOutputParser": true
       },
       "id": "f2e2a087-1cd2-4042-a702-c41677b65c1b",
       "name": "Cover Pass1",
@@ -5341,7 +5366,10 @@
       "position": [
         35728,
         47632
-      ]
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
     },
     {
       "parameters": {
@@ -5390,7 +5418,8 @@
               "message": "You are CoverForge Pass 2 — the cover letter writer. You receive Pass-1 selection decisions (selected STAR achievements, competitive positioning, company research/mission, buyer persona, tier) and write the final cover letter. Output structured JSON ONLY.\n\nINPUT: { \"selection\": <Pass-1 decisions object>, \"jd\": \"<job description>\", \"company\": \"<company name>\", \"candidate_location\": \"<candidate's location, may be empty>\", \"job_location\": \"<job's location, may be empty>\" }\n\nOUTPUT SCHEMA — return EXACTLY this, strict minified JSON, no markdown fences:\n{\n  \"title\": \"<catchy 6-12 word headline tying the candidate to this role>\",\n  \"salutation\": \"Dear <Company> Hiring Team,\",\n  \"hook\": \"<2-3 sentence opening. Lead with the candidate's unique_differentiator from competitivePositioning, then connect it to something specific about the company (its mission, product, or recent work from companyResearch). Flowing prose.>\",\n  \"bullets\": [ { \"keyword\": \"<3-5 word bold lead-in>\", \"text\": \"<1-2 sentence STAR achievement with a quantified metric, drawn ONLY from the selected achievements; weave a JD keyword naturally>\" } ],\n  \"cta\": \"<2-3 sentence close: one specific contribution you would make in the first 90 days + a confident sign-off>\",\n  \"word_count\": <integer: total words across hook + bullets + cta>\n}\n\nRULES:\n- Bullet count by tier: senior/mid = 3 bullets, junior = 2, fresher = 1-2.\n- Word count by tier: senior 320-370, mid 280-330, junior 240-290, fresher 200-250. Stay within range.\n- Use ONLY achievements, metrics, and facts present in the Pass-1 selection — NEVER invent or inflate.\n- Each bullet's \"text\" follows STAR: situation/action then a quantified result.\n- The hook MUST reference something concrete about the company (mission / product / recent work) — not generic praise.\n- Frame achievements to resonate with what the company values (companyResearch.companySentiment), but NEVER name-drop values or write phrases like \"aligned with your values\" or \"demonstrating ownership\".\n- No flattery. BANNED phrases: \"passionate about\", \"excited to apply\", \"dynamic environment\", \"fast-paced\", \"team player\", \"hit the ground running\".\n- CTA location rule: if candidate_location and job_location clearly differ (different metro or country), the cta must acknowledge it naturally in ONE clause (relocation readiness or remote-work experience) -- never apologetic, never more than a clause. If same/unknown, do not mention location.\n- Plain professional prose inside field values. No LaTeX, no markdown.\n"
             }
           ]
-        }
+        },
+        "hasOutputParser": true
       },
       "id": "ee5fedaa-569a-4b2c-99e2-0e40636e7d68",
       "name": "Cover Pass2",
@@ -5399,7 +5428,10 @@
       "position": [
         36176,
         47632
-      ]
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
     },
     {
       "parameters": {
@@ -5835,6 +5867,118 @@
       "position": [
         28948,
         46296
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"sectionOrder\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"minItems\":1}},\"required\":[\"sectionOrder\"],\"additionalProperties\":true}"
+      },
+      "id": "3079ffef-38d7-40c3-a68d-85e3e01b897a",
+      "name": "Pass1 Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        35828,
+        48136
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"companyName\":{\"type\":\"string\",\"minLength\":1},\"roleName\":{\"type\":\"string\",\"minLength\":1}},\"required\":[\"companyName\",\"roleName\"],\"additionalProperties\":true}"
+      },
+      "id": "8a8a7f7f-a70e-4dd7-84e3-3af0472f07b3",
+      "name": "Step0 Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        36308,
+        48136
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"skills\":{\"type\":\"array\",\"minItems\":1}},\"required\":[\"skills\"],\"additionalProperties\":true}"
+      },
+      "id": "2138746e-159e-4b64-aa5b-77335c7bfa7f",
+      "name": "Pass2 Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        37028,
+        48136
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"skills\":{\"type\":\"array\",\"minItems\":1}},\"required\":[\"skills\"],\"additionalProperties\":true}"
+      },
+      "id": "30e56f79-fec2-4164-bd27-7a45a4814019",
+      "name": "Pass2 Regen Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        39156,
+        48072
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"selectedAchievements\":{\"type\":\"array\",\"minItems\":1}},\"required\":[\"selectedAchievements\"],\"additionalProperties\":true}"
+      },
+      "id": "1cf72166-e36d-4488-85af-b71cc9267291",
+      "name": "Cover Pass1 Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        35828,
+        47832
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"bullets\":{\"type\":\"array\",\"minItems\":1}},\"required\":[\"bullets\"],\"additionalProperties\":true}"
+      },
+      "id": "4be94356-8c35-4b07-bd8e-e6efa1a2cc4b",
+      "name": "Cover Pass2 Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        36276,
+        47832
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"requirement_clusters\":{\"type\":\"array\",\"minItems\":1}},\"required\":[\"requirement_clusters\"],\"additionalProperties\":true}"
+      },
+      "id": "30b426af-0c48-4e19-a9b5-138cd6875ddf",
+      "name": "ATS Signals Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        38004,
+        48072
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"recommendation\":{\"type\":\"string\",\"minLength\":1}},\"required\":[\"recommendation\"],\"additionalProperties\":true}"
+      },
+      "id": "aabeceee-e982-4fe0-bae1-c52c58996966",
+      "name": "CompanyIntel Apply Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        34500,
+        48280
       ]
     }
   ],
@@ -8865,6 +9009,94 @@
         [
           {
             "node": "Expand Query",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pass1 Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Pass1 Selection",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Step0 Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Step0 JD Analysis",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pass2 Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Pass2 Generate",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pass2 Regen Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Pass2 Regen",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cover Pass1 Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Cover Pass1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cover Pass2 Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Cover Pass2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ATS Signals Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Extract ATS Signals",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CompanyIntel Apply Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "CompanyIntel Apply",
             "type": "ai_outputParser",
             "index": 0
           }
