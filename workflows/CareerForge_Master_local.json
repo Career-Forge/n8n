@@ -144,7 +144,8 @@
       ],
       "retryOnFail": true,
       "maxTries": 3,
-      "waitBetweenTries": 1000
+      "waitBetweenTries": 1000,
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -1851,7 +1852,7 @@
     },
     {
       "parameters": {
-        "model": "deepseek/deepseek-v4-flash",
+        "model": "openai/gpt-5.4-mini",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
@@ -5804,6 +5805,19 @@
         46320
       ],
       "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Intent Router Fallback -- Structured Output Parser exhausted all retries (S19)\n// without the model ever invoking the required format_final_json_response tool.\n// Rather than crash the whole execution (Intent Router is the entry point for\n// EVERY message -- the worst possible place for a hard failure), default to\n// 'help' so the user gets a response instead of silence. Shape matches exactly\n// what Route Intent's switch expects from a successful classification.\nreturn [{ json: { output: {\n  intent: 'help',\n  entities: { company: null, role: null, location: null, job_number: null, changes: null },\n  confidence: 'low',\n  reasoning: 'Could not classify this message due to a model error -- showing help.'\n} } }];"
+      },
+      "id": "61823909-c346-4991-aca8-b48c7c9e4f86",
+      "name": "Intent Router Fallback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        26182,
+        50072
+      ]
     }
   ],
   "pinData": {},
@@ -5835,6 +5849,13 @@
         [
           {
             "node": "Route Intent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Intent Router Fallback",
             "type": "main",
             "index": 0
           }
@@ -8804,6 +8825,17 @@
         [
           {
             "node": "Experience Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intent Router Fallback": {
+      "main": [
+        [
+          {
+            "node": "Route Intent",
             "type": "main",
             "index": 0
           }

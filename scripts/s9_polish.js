@@ -47,7 +47,17 @@ const MODEL_MAP = {
   'Step0 Model': 'deepseek/deepseek-v4-flash',           // JD analysis
   'Extract ATS Model': 'deepseek/deepseek-v4-flash',     // ATS signal extraction
   'CompanyIntel Apply Model': 'deepseek/deepseek-v4-flash', // apply-time intel
-  'OpenRouter Chat Model2': 'deepseek/deepseek-v4-flash',  // Intent Router
+  // Intent Router is the ONE exception to the JSON-lane default: it's the only
+  // @n8n/n8n-nodes-langchain.agent (Tools Agent) node in the workflow, which
+  // requires native tool-calling for structured output -- a different and less
+  // forgiving reliability bar than chainLlm's plain-JSON-in-text parsing. S26
+  // (2026-07-04) found deepseek-v4-flash consistently answered as plain text
+  // instead of invoking the required tool, surviving all 3 of S19's retries.
+  // Reverted to gpt-5.4-mini (single-vendor-hosted, no OpenRouter multi-provider
+  // routing variance, strong native tool-calling) for this node specifically --
+  // do not move it back to a cheap JSON-lane model without re-verifying tool-call
+  // compliance in an Agent context, not just plain JSON output.
+  'OpenRouter Chat Model2': 'openai/gpt-5.4-mini',        // Intent Router
   'OpenRouter Chat Model12': 'deepseek/deepseek-v4-flash', // Expand Query
   'OpenRouter Chat Model': 'deepseek/deepseek-v4-flash',   // ScoreOnly
   'OpenRouter Chat Model4': 'deepseek/deepseek-v4-flash',  // SeniorityDetector
