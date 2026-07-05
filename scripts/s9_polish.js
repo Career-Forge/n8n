@@ -28,21 +28,25 @@ const TARGETS = [
 ];
 
 // ── Central model map (model-node name -> OpenRouter model id) ──
-// WS5 swap (2026-07-02): writers/selection -> Kimi K2.6 (best creative-per-dollar,
-// no LaTeX skill needed post-S16); JSON-utility lanes -> deepseek-v4-flash (cheap,
-// reliable, avoids gpt-5.4-mini's cost); JobScorer -> deepseek-v4-pro (the one
-// quality-critical scoring lane). Ids verified during this session's OpenRouter
-// research (moonshotai/kimi-k2.6, deepseek/deepseek-v4-flash, deepseek/deepseek-v4-pro)
-// and deepseek-v4-flash is already proven live (Step0/Extract ATS/CompanyIntel Apply).
+// WS5 swap (2026-07-02) put writers on Kimi K2.6 for creative-per-dollar; S31
+// (2026-07-05) reverted the whole writer lane to claude-sonnet-4-6 after real
+// execution data showed K2.6's mandatory hidden reasoning burning 6-15k tokens
+// per call (uncappable via OpenRouter, known open bug), causing 120s timeouts and
+// "success" responses with the ENTIRE completion budget consumed and zero visible
+// text (execs 174/181). Post-S29 apply success rate was 1/3. The hidden-token burn
+// also erased the cost advantage. Do NOT put the writer lane back on a
+// reasoning/thinking model without verifying reasoning tokens can be capped
+// separately from the visible answer. JSON-utility lanes stay deepseek-v4-flash;
+// JobScorer stays deepseek-v4-pro.
 const MODEL_MAP = {
   // --- writers / selection (judgment + creative prose) ---
-  'Pass2 Model': 'moonshotai/kimi-k2.6',                 // resume bullet generation
-  'Pass2 Regen Model': 'moonshotai/kimi-k2.6',           // ATS-retry regeneration
-  'OpenRouter Chat Model1': 'moonshotai/kimi-k2.6',      // ReviseForge
-  'Pass1 Model': 'moonshotai/kimi-k2.6',                 // resume selection
-  'Cover Pass1 Model': 'moonshotai/kimi-k2.6',            // cover selection
-  'Cover Pass2 Model': 'moonshotai/kimi-k2.6',            // cover writing
-  'OpenRouter Chat Model8': 'moonshotai/kimi-k2.6',       // OutreachWriter
+  'Pass2 Model': 'anthropic/claude-sonnet-4-6',           // resume bullet generation
+  'Pass2 Regen Model': 'anthropic/claude-sonnet-4-6',     // ATS-retry regeneration
+  'OpenRouter Chat Model1': 'anthropic/claude-sonnet-4-6', // ReviseForge
+  'Pass1 Model': 'anthropic/claude-sonnet-4-6',           // resume selection
+  'Cover Pass1 Model': 'anthropic/claude-sonnet-4-6',      // cover selection
+  'Cover Pass2 Model': 'anthropic/claude-sonnet-4-6',      // cover writing
+  'OpenRouter Chat Model8': 'anthropic/claude-sonnet-4-6', // OutreachWriter
   // --- JSON-utility / structured (cheap + reliable on deepseek-v4-flash) ---
   'Step0 Model': 'deepseek/deepseek-v4-flash',           // JD analysis
   'Extract ATS Model': 'deepseek/deepseek-v4-flash',     // ATS signal extraction
