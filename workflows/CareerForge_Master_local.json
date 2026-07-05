@@ -1830,7 +1830,7 @@
       "parameters": {
         "model": "moonshotai/kimi-k2.6",
         "options": {
-          "maxTokens": 8192,
+          "maxTokens": 16000,
           "temperature": 0.3,
           "timeout": 120000
         }
@@ -1947,7 +1947,9 @@
     {
       "parameters": {
         "model": "moonshotai/kimi-k2.6",
-        "options": {}
+        "options": {
+          "maxTokens": 16000
+        }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
       "typeVersion": 1,
@@ -4716,7 +4718,7 @@
       "parameters": {
         "model": "moonshotai/kimi-k2.6",
         "options": {
-          "maxTokens": 8000,
+          "maxTokens": 16000,
           "temperature": 0.3,
           "timeout": 120000
         }
@@ -4852,7 +4854,7 @@
       "parameters": {
         "model": "moonshotai/kimi-k2.6",
         "options": {
-          "maxTokens": 8000,
+          "maxTokens": 16000,
           "temperature": 0.3,
           "timeout": 120000
         }
@@ -5285,7 +5287,7 @@
       "parameters": {
         "model": "moonshotai/kimi-k2.6",
         "options": {
-          "maxTokens": 8000,
+          "maxTokens": 16000,
           "temperature": 0.3,
           "timeout": 120000
         }
@@ -5375,7 +5377,7 @@
       "parameters": {
         "model": "moonshotai/kimi-k2.6",
         "options": {
-          "maxTokens": 6000,
+          "maxTokens": 16000,
           "temperature": 0.3,
           "timeout": 120000
         }
@@ -5437,7 +5439,7 @@
       "parameters": {
         "model": "moonshotai/kimi-k2.6",
         "options": {
-          "maxTokens": 4000,
+          "maxTokens": 16000,
           "temperature": 0.3,
           "timeout": 120000
         }
@@ -5846,7 +5848,7 @@
       "parameters": {
         "jsCode": "// Intent Router Fallback -- Structured Output Parser exhausted all retries (S19)\n// without the model ever invoking the required format_final_json_response tool.\n// Rather than crash the whole execution (Intent Router is the entry point for\n// EVERY message -- the worst possible place for a hard failure), default to\n// 'help' so the user gets a response instead of silence. Shape matches exactly\n// what Route Intent's switch expects from a successful classification.\nreturn [{ json: { output: {\n  intent: 'help',\n  entities: { company: null, role: null, location: null, job_number: null, changes: null },\n  confidence: 'low',\n  reasoning: 'Could not classify this message due to a model error -- showing help.'\n} } }];"
       },
-      "id": "61823909-c346-4991-aca8-b48c7c9e4f86",
+      "id": "29d789e3-d57e-4ac5-b3c1-0b288658706d",
       "name": "Intent Router Fallback",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -5860,7 +5862,7 @@
         "schemaType": "manual",
         "inputSchema": "{\"type\":\"object\",\"properties\":{\"role_families\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"minItems\":1},\"excluded_roles\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"company_cohort\":{\"type\":[\"string\",\"null\"]},\"target_companies\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"firecrawl_queries\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"youcom_queries\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"serper_queries\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"location_canonical\":{\"type\":[\"string\",\"null\"]},\"country\":{\"type\":\"string\"},\"remote_preference\":{\"type\":\"string\"},\"freshness\":{\"type\":\"string\"},\"seniority\":{\"type\":\"string\"},\"max_yoe\":{\"type\":[\"integer\",\"number\",\"null\"]},\"industry_signals\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"visa_signals\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"salary_signals\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"scoring_priorities\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"verbose\":{\"type\":\"boolean\"},\"salary_min\":{\"type\":[\"number\",\"null\"]},\"equity\":{\"type\":\"boolean\"},\"sponsorship_required\":{\"type\":\"boolean\"},\"f1_opt_constraint\":{\"type\":\"string\"},\"exclude_recent_layoffs\":{\"type\":\"boolean\"},\"min_funding_stage\":{\"type\":[\"string\",\"null\"]},\"culture_constraints\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"required\":[\"role_families\"],\"additionalProperties\":true}"
       },
-      "id": "7a511821-fa1c-41b9-bcf9-b4ccde3ea87b",
+      "id": "3d7bfc09-419d-43a8-ba11-c7d1256a971a",
       "name": "Expand Query Output Parser",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.2,
@@ -5874,7 +5876,7 @@
         "schemaType": "manual",
         "inputSchema": "{\"type\":\"object\",\"properties\":{\"sectionOrder\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"minItems\":1}},\"required\":[\"sectionOrder\"],\"additionalProperties\":true}"
       },
-      "id": "55b60d91-4deb-41ab-8199-49593e8e2239",
+      "id": "3079ffef-38d7-40c3-a68d-85e3e01b897a",
       "name": "Pass1 Output Parser",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.2,
@@ -5888,7 +5890,7 @@
         "schemaType": "manual",
         "inputSchema": "{\"type\":\"object\",\"properties\":{\"companyName\":{\"type\":\"string\",\"minLength\":1},\"roleName\":{\"type\":\"string\",\"minLength\":1}},\"required\":[\"companyName\",\"roleName\"],\"additionalProperties\":true}"
       },
-      "id": "fb29a37f-18b7-4417-9079-aab433b0d67c",
+      "id": "8a8a7f7f-a70e-4dd7-84e3-3af0472f07b3",
       "name": "Step0 Output Parser",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.2,
@@ -5902,7 +5904,7 @@
         "schemaType": "manual",
         "inputSchema": "{\"type\":\"object\",\"properties\":{\"skills\":{\"type\":\"array\",\"minItems\":1}},\"required\":[\"skills\"],\"additionalProperties\":true}"
       },
-      "id": "85a6e3be-54ba-4ce4-80b9-eadf620e0f54",
+      "id": "2138746e-159e-4b64-aa5b-77335c7bfa7f",
       "name": "Pass2 Output Parser",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.2,
@@ -5916,7 +5918,7 @@
         "schemaType": "manual",
         "inputSchema": "{\"type\":\"object\",\"properties\":{\"skills\":{\"type\":\"array\",\"minItems\":1}},\"required\":[\"skills\"],\"additionalProperties\":true}"
       },
-      "id": "14ca0909-d543-4c27-a06b-4c3dd4a9b33b",
+      "id": "30e56f79-fec2-4164-bd27-7a45a4814019",
       "name": "Pass2 Regen Output Parser",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.2,
@@ -5930,7 +5932,7 @@
         "schemaType": "manual",
         "inputSchema": "{\"type\":\"object\",\"properties\":{\"selectedAchievements\":{\"type\":\"array\",\"minItems\":1}},\"required\":[\"selectedAchievements\"],\"additionalProperties\":true}"
       },
-      "id": "1431d85b-519d-4161-b505-79af0cc1017d",
+      "id": "1cf72166-e36d-4488-85af-b71cc9267291",
       "name": "Cover Pass1 Output Parser",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.2,
@@ -5944,7 +5946,7 @@
         "schemaType": "manual",
         "inputSchema": "{\"type\":\"object\",\"properties\":{\"bullets\":{\"type\":\"array\",\"minItems\":1}},\"required\":[\"bullets\"],\"additionalProperties\":true}"
       },
-      "id": "81f84e71-5e7c-41ed-8bb3-e8f40c2e9a98",
+      "id": "4be94356-8c35-4b07-bd8e-e6efa1a2cc4b",
       "name": "Cover Pass2 Output Parser",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.2,
@@ -5958,7 +5960,7 @@
         "schemaType": "manual",
         "inputSchema": "{\"type\":\"object\",\"properties\":{\"requirement_clusters\":{\"type\":\"array\",\"minItems\":1}},\"required\":[\"requirement_clusters\"],\"additionalProperties\":true}"
       },
-      "id": "6b0b3e8c-a45f-4488-af24-d0a296c2dd6f",
+      "id": "30b426af-0c48-4e19-a9b5-138cd6875ddf",
       "name": "ATS Signals Output Parser",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.2,
@@ -5972,7 +5974,7 @@
         "schemaType": "manual",
         "inputSchema": "{\"type\":\"object\",\"properties\":{\"recommendation\":{\"type\":\"string\",\"minLength\":1}},\"required\":[\"recommendation\"],\"additionalProperties\":true}"
       },
-      "id": "007884f1-5020-43fe-81f6-ffa353c313b6",
+      "id": "aabeceee-e982-4fe0-bae1-c52c58996966",
       "name": "CompanyIntel Apply Output Parser",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.2,

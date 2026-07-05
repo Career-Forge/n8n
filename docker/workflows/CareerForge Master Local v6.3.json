@@ -1830,7 +1830,7 @@
       "parameters": {
         "model": "moonshotai/kimi-k2.6",
         "options": {
-          "maxTokens": 8192,
+          "maxTokens": 16000,
           "temperature": 0.3,
           "timeout": 120000
         }
@@ -1947,7 +1947,9 @@
     {
       "parameters": {
         "model": "moonshotai/kimi-k2.6",
-        "options": {}
+        "options": {
+          "maxTokens": 16000
+        }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
       "typeVersion": 1,
@@ -4716,7 +4718,7 @@
       "parameters": {
         "model": "moonshotai/kimi-k2.6",
         "options": {
-          "maxTokens": 8000,
+          "maxTokens": 16000,
           "temperature": 0.3,
           "timeout": 120000
         }
@@ -4852,7 +4854,7 @@
       "parameters": {
         "model": "moonshotai/kimi-k2.6",
         "options": {
-          "maxTokens": 8000,
+          "maxTokens": 16000,
           "temperature": 0.3,
           "timeout": 120000
         }
@@ -5285,7 +5287,7 @@
       "parameters": {
         "model": "moonshotai/kimi-k2.6",
         "options": {
-          "maxTokens": 8000,
+          "maxTokens": 16000,
           "temperature": 0.3,
           "timeout": 120000
         }
@@ -5375,7 +5377,7 @@
       "parameters": {
         "model": "moonshotai/kimi-k2.6",
         "options": {
-          "maxTokens": 6000,
+          "maxTokens": 16000,
           "temperature": 0.3,
           "timeout": 120000
         }
@@ -5437,7 +5439,7 @@
       "parameters": {
         "model": "moonshotai/kimi-k2.6",
         "options": {
-          "maxTokens": 4000,
+          "maxTokens": 16000,
           "temperature": 0.3,
           "timeout": 120000
         }
