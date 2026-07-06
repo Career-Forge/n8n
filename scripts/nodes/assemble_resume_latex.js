@@ -376,7 +376,7 @@ function truncateBullet(t) {
 }
 function bulletRenderV2(bullets, isCompact) {
   const cmd = isCompact ? '\\resumeItemCompact' : '\\resumeItem';
-  return (bullets || []).slice(0, isCompact ? 3 : 4).map((b) => {
+  return (bullets || []).slice(0, isCompact ? 4 : 6).map((b) => {
     const text = truncateBullet(b.text);
     const kwText = (b.keyword || '').replace(/[:;,.]+\s*$/, '');
     const kw = kwText ? '\\textbf{' + escapeLatexTextV2(kwText) + ':} ' : '';
@@ -406,18 +406,21 @@ function mergeContent(pass1, pass2) {
   for (const comp of (pass1.companies || [])) {
     for (const pos of (comp.positions || [])) {
       if (pos.isSelected === false) continue;
-      const bullets = resolveBulletsV2(p2exp[pos.id], pos.keyAchievements);
+      const expCap = (typeof pos.bulletCount === 'number' && pos.bulletCount >= 0) ? pos.bulletCount : Infinity;
+      const bullets = resolveBulletsV2(p2exp[pos.id], pos.keyAchievements).slice(0, expCap);
       if (!bullets.length) continue;
       experience.push({ title: pos.title || '', company: comp.company || '', startDate: pos.startDate || '', endDate: pos.endDate || '', location: pos.location || '', bullets });
     }
   }
   const internships = (pass1.selectedInternships || []).map((intern) => {
-    const bullets = resolveBulletsV2(p2int[intern.id], intern.keyAchievements);
+    const intCap = (typeof intern.bulletCount === 'number' && intern.bulletCount >= 0) ? intern.bulletCount : Infinity;
+    const bullets = resolveBulletsV2(p2int[intern.id], intern.keyAchievements).slice(0, intCap);
     if (!bullets.length) return null;
     return { title: intern.title || '', company: intern.company || '', startDate: intern.startDate || '', endDate: intern.endDate || '', location: intern.location || '', bullets };
   }).filter(Boolean);
   const projects = (pass1.selectedProjects || []).map((proj) => {
-    const bullets = resolveBulletsV2(p2proj[proj.id], proj.descriptionPoints);
+    const projCap = (typeof proj.bulletCount === 'number' && proj.bulletCount >= 0) ? proj.bulletCount : Infinity;
+    const bullets = resolveBulletsV2(p2proj[proj.id], proj.descriptionPoints).slice(0, projCap);
     if (!bullets.length) return null;
     return { name: proj.name || '', techStack: proj.techStack || '', date: proj.date || '', bullets };
   }).filter(Boolean);
@@ -443,9 +446,10 @@ function mergeContent(pass1, pass2) {
     experience, internships, projects, skills,
     education: pass1.education || [],
     certifications: pass1.certifications || [],
-    achievements: pass1.selectedAchievements || [],
+    achievements: (pass1.selectedAchievements || []).slice(0, ((pass1._contentPlan || {}).achievementsMax) || 3),
     activities: pass1.activities || [],
     sectionOrder,
+    _budget: pass1._contentPlan ? { tier: pass1._contentPlan.tier, maxBulletsPerEntry: pass1._contentPlan.maxBulletsPerEntry, linesPerBullet: pass1._contentPlan.linesPerBullet } : null,
   };
 }
 function derivePlainTextFromContent(content) {
