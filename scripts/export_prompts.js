@@ -116,7 +116,7 @@ const LATEX_HELPER_BLOCKS = [
   { block: 'firstNonEmpty',           start: 'function firstNonEmpty(...values) {',           end: '\n}' },
   { block: 'buildHeaderFromPersonal', start: 'function buildHeaderFromPersonal(p) {',         end: '\n}' },
   { block: 'escapeLatexTextV2',       start: 'function escapeLatexTextV2(value) {',           end: '\n  return s;\n}' },
-  { block: 'truncate110',             start: 'function truncate110(t) {',                     end: '\n}' },
+  { block: 'truncateBullet',          start: 'function truncateBullet(t) {',                  end: '\n}' },
   { block: 'bulletRenderV2',          start: 'function bulletRenderV2(bullets, isCompact) {',  end: '\n}' },
   { block: 'renderResume',            start: 'function renderResume(content, personal, isCompact) {', end: '\n}\n' },
 ];

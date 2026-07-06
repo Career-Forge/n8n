@@ -365,18 +365,21 @@ function escapeLatexTextV2(value) {
        .replace(/[^\x09\x0A\x0D\x20-\x7E]/g, '');
   return s;
 }
-function truncate110(t) {
+function truncateBullet(t) {
   t = String(t == null ? '' : t).trim();
-  if (t.length <= 110) return t;
-  const cut = t.slice(0, 110);
+  const MAX = 240;
+  if (t.length <= MAX) return t;
+  const cut = t.slice(0, MAX);
   const sp = cut.lastIndexOf(' ');
-  return (sp > 80 ? cut.slice(0, sp) : cut).replace(/[,;:.\s]+$/, '');
+  const base = (sp > MAX - 30 ? cut.slice(0, sp) : cut).replace(/[,;:.\s]+$/, '');
+  return base + '...';
 }
 function bulletRenderV2(bullets, isCompact) {
   const cmd = isCompact ? '\\resumeItemCompact' : '\\resumeItem';
   return (bullets || []).slice(0, isCompact ? 3 : 4).map((b) => {
-    const text = truncate110(b.text);
-    const kw = b.keyword ? '\\textbf{' + escapeLatexTextV2(b.keyword) + ':} ' : '';
+    const text = truncateBullet(b.text);
+    const kwText = (b.keyword || '').replace(/[:;,.]+\s*$/, '');
+    const kw = kwText ? '\\textbf{' + escapeLatexTextV2(kwText) + ':} ' : '';
     return '    ' + cmd + '{' + kw + escapeLatexTextV2(text) + '}';
   }).join('\n');
 }
