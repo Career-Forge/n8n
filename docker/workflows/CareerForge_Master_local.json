@@ -1780,7 +1780,7 @@
         48720
       ],
       "id": "9a33cf51-b399-49db-b353-d972af91c18e",
-      "name": "OpenRouter Chat Model1",
+      "name": "ReviseForge Model",
       "credentials": {
         "openRouterApi": {
           "id": "ypIVPJu8JYSWTkHT",
@@ -1800,7 +1800,7 @@
         50160
       ],
       "id": "dce13759-e7ea-414b-a9c7-2c36f1428b8d",
-      "name": "OpenRouter Chat Model2",
+      "name": "Intent Router Model",
       "credentials": {
         "openRouterApi": {
           "id": "ypIVPJu8JYSWTkHT",
@@ -1834,7 +1834,7 @@
         46320
       ],
       "id": "7639d1c7-8543-435d-abad-63eb7efab703",
-      "name": "OpenRouter Chat Model3",
+      "name": "JobScorer Model",
       "credentials": {
         "openRouterApi": {
           "id": "ypIVPJu8JYSWTkHT",
@@ -1854,7 +1854,7 @@
         48224
       ],
       "id": "c1156680-2aae-4e68-a30b-64ae685cae41",
-      "name": "OpenRouter Chat Model4",
+      "name": "SeniorityDetector Model",
       "credentials": {
         "openRouterApi": {
           "id": "ypIVPJu8JYSWTkHT",
@@ -1874,7 +1874,7 @@
         48224
       ],
       "id": "0de4d159-ae29-4900-b13b-901024c448db",
-      "name": "OpenRouter Chat Model5",
+      "name": "ForgeScore Model",
       "credentials": {
         "openRouterApi": {
           "id": "ypIVPJu8JYSWTkHT",
@@ -1896,7 +1896,7 @@
         49488
       ],
       "id": "ed53f46a-9ac6-466d-9efd-6e40b68b7284",
-      "name": "OpenRouter Chat Model8",
+      "name": "OutreachWriter Model",
       "credentials": {
         "openRouterApi": {
           "id": "ypIVPJu8JYSWTkHT",
@@ -1916,7 +1916,7 @@
         49952
       ],
       "id": "6943d67c-8b0c-40a4-b172-324651d4b2ec",
-      "name": "OpenRouter Chat Model9",
+      "name": "CompanyIntel Model",
       "credentials": {
         "openRouterApi": {
           "id": "ypIVPJu8JYSWTkHT",
@@ -1936,7 +1936,7 @@
         50368
       ],
       "id": "88f6c9d8-1c6a-45b4-8329-e732df5b567f",
-      "name": "OpenRouter Chat Model10",
+      "name": "ContactFinder Model",
       "credentials": {
         "openRouterApi": {
           "id": "ypIVPJu8JYSWTkHT",
@@ -1956,7 +1956,7 @@
         50432
       ],
       "id": "fe5bd543-e9df-4d80-9c54-a128b8fed683",
-      "name": "OpenRouter Chat Model11",
+      "name": "SalarySummarize Model",
       "credentials": {
         "openRouterApi": {
           "id": "ypIVPJu8JYSWTkHT",
@@ -2087,7 +2087,7 @@
         46288
       ],
       "id": "d918052c-a67e-48b4-ad8c-1e1720b54e88",
-      "name": "OpenRouter Chat Model12",
+      "name": "Expand Query Model",
       "credentials": {
         "openRouterApi": {
           "id": "ypIVPJu8JYSWTkHT",
@@ -2471,7 +2471,7 @@
         46208
       ],
       "id": "a1e29bfe-6191-4449-99ce-46823aebd699",
-      "name": "Code in JavaScript"
+      "name": "Empty Serper Stub"
     },
     {
       "parameters": {},
@@ -6828,28 +6828,6 @@
         ]
       ]
     },
-    "OpenRouter Chat Model1": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "ReviseForge",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenRouter Chat Model2": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Intent Router",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Simple Memory": {
       "ai_memory": [
         [
@@ -6872,45 +6850,12 @@
         ]
       ]
     },
-    "OpenRouter Chat Model3": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "JobScorer",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Seniority Output Parser": {
       "ai_outputParser": [
         [
           {
             "node": "SeniorityDetector",
             "type": "ai_outputParser",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenRouter Chat Model4": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "SeniorityDetector",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenRouter Chat Model5": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "ForgeScore",
-            "type": "ai_languageModel",
             "index": 0
           }
         ]
@@ -6938,34 +6883,12 @@
         ]
       ]
     },
-    "OpenRouter Chat Model8": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "OutreachWriter",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Outreach Output Parser": {
       "ai_outputParser": [
         [
           {
             "node": "OutreachWriter",
             "type": "ai_outputParser",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenRouter Chat Model9": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "CompanyIntel",
-            "type": "ai_languageModel",
             "index": 0
           }
         ]
@@ -6988,28 +6911,6 @@
           {
             "node": "ContactFinder",
             "type": "ai_outputParser",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenRouter Chat Model10": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "ContactFinder",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenRouter Chat Model11": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "SalarySummarize",
-            "type": "ai_languageModel",
             "index": 0
           }
         ]
@@ -7088,17 +6989,6 @@
           {
             "node": "Parse Expand Query",
             "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenRouter Chat Model12": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Expand Query",
-            "type": "ai_languageModel",
             "index": 0
           }
         ]
@@ -7258,17 +7148,6 @@
             "node": "MergeSerper",
             "type": "main",
             "index": 1
-          }
-        ]
-      ]
-    },
-    "Code in JavaScript": {
-      "main": [
-        [
-          {
-            "node": "MergeSerper",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -7634,7 +7513,7 @@
       "main": [
         [
           {
-            "node": "Code in JavaScript",
+            "node": "Empty Serper Stub",
             "type": "main",
             "index": 0
           }
@@ -9147,6 +9026,127 @@
         [
           {
             "node": "Send Intel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReviseForge Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "ReviseForge",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intent Router Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Intent Router",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JobScorer Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "JobScorer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SeniorityDetector Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "SeniorityDetector",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ForgeScore Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "ForgeScore",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OutreachWriter Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "OutreachWriter",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CompanyIntel Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "CompanyIntel",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ContactFinder Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "ContactFinder",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SalarySummarize Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "SalarySummarize",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expand Query Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Expand Query",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Empty Serper Stub": {
+      "main": [
+        [
+          {
+            "node": "MergeSerper",
             "type": "main",
             "index": 0
           }
