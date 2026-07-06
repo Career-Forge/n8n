@@ -1,3 +1,6 @@
+// Auto-generated from the live workflow node "Build Telegraph Body" via scripts/export_prompts.js.
+// Edits here don't get read back in -- the live node is the source of truth.
+
 // Build Telegraph Body v5 — Phase 4.1 cache-first two-stage scoring: appendix of
 // cache/search-ranked (not LLM-scored) candidates beyond the top-30 that actually
 // got sent to JobScorer, now that Aggregate Jobs surfaces up to 150 candidates
@@ -15,7 +18,10 @@
 // live just now) -- these aren't the same guarantee and shouldn't share a badge.
 const sd = $getWorkflowStaticData('global');
 const scored = $('Parse Scorer Output').first().json.scored || [];
-const aggregateOut = $('Aggregate Jobs').first().json;
+// S31: read the POST-verification list (Experience Filter = after liveness check
+// + S30 location correction + experience filter), not Aggregate Jobs -- reading
+// the pre-verification list resurrected every removed job in the appendix.
+const aggregateOut = $('Experience Filter').first().json;
 const allJobs = aggregateOut.jobs || [];
 const intent = sd.last_search_intent || {};
 
@@ -57,7 +63,8 @@ const rankedJobs = scored
   })
   .slice(0, 40);
 
-// Phase 4.1: everything Aggregate Jobs surfaced (up to 150) that did NOT make the
+// Phase 4.1 (source corrected in S31): everything that survived verification and
+// filtering (up to 150) but did NOT make the
 // cut into the LLM-scored batch (capped at 30 in Build Scorer Input) -- ranked by
 // the cache's own relevance score where available (rrf_score, from bge-m3 cosine +
 // tsvector RRF), falling back to tier/recency for jobs with no cache score at all.

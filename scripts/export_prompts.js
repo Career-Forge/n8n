@@ -61,7 +61,8 @@ const PROMPT_MAP = {
   'Pass1 Selection':       { file: 'Pass1_Resume.md',       extract: getChainLlmMessage },
   'Pass2 Generate':        { file: 'Pass2_Resume.md',       extract: getChainLlmMessage },
   // Previously undocumented live nodes -- adding coverage, not just fixing drift.
-  'ScoreOnly':             { file: 'ScoreOnly.md',          extract: getChainLlmMessage },
+  // (ScoreOnly was here until R2 dropped the node -- score now formats ForgeScore's
+  // already-stored output instead of a second LLM call; see scripts/s32_r2_llm_consolidation.js.)
   'ReviseForge':           { file: 'ReviseForge.md',        extract: getChainLlmMessage },
   'Expand Query':          { file: 'ExpandQuery.md',        extract: getChainLlmMessage },
   'SalarySummarize':       { file: 'SalarySummarize.md',    extract: getChainLlmMessage },
@@ -80,6 +81,7 @@ const SCRIPT_NODE_MAP = {
   'Calculate ATS Score':       'calculate_ats_score.js',
   'Finalize Enriched Contact': 'finalize_enriched_contact.js',
   'Format Costs':              'format_costs.js',
+  'Format Intel Report (Cached)': 'format_intel_report_cached.js',
   'Ingest Resume JSON':        'ingest_resume_json.js',
   'Normalize Apply Research':  'normalize_apply_research.js',
   'Normalize Hooks':           'normalize_hooks.js',
@@ -106,6 +108,8 @@ const DEAD_FILES = [
   'prompts/CoverRefine.md',
   'prompts/ResumeForge_v3.md',
   'prompts/ResumeRefine.md',
+  // ScoreOnly node deleted in R2 (score now formats ForgeScore's stored output instead)
+  'prompts/ScoreOnly.md',
   // dead-architecture root scripts (never wired into the live graph as designed)
   'scripts/_build_resume_latex.js',
   'scripts/_rrf_merge.js',

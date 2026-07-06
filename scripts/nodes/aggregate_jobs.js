@@ -190,7 +190,7 @@ for (const j of filtered) {
   else if (t === 3) tierCounts[3]++;
 }
 
-const top = filtered.slice(0, 50);
+const top = filtered.slice(0, 150);
 return [{ json: {
   jobs: top, count: top.length, total_raw: allJobs.length,
   sources: sourceCounts, tier_counts: tierCounts,

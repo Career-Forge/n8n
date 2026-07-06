@@ -63,7 +63,15 @@ const tierHint = '\n\n== UPSTREAM CLASSIFIER ==\nDetected tier: ' + tier
   + ' (candidate YOE ~' + (c.candidate_yoe != null ? c.candidate_yoe : '?')
   + '). Use this tier unless the resume clearly contradicts it.';
 
-const pass1_user = 'Master Resume:\n' + masterResume + '\n\nJob Description:\n' + jd + tierHint + bias + feedback;
+const _prefs = $getWorkflowStaticData('global').user_prefs || {};
+let sectionOverride = '';
+if (Array.isArray(_prefs.section_order) && _prefs.section_order.length) {
+  sectionOverride = '\n\n== USER SECTION ORDER OVERRIDE (HIGHEST PRIORITY) ==\nThe user has explicitly chosen the EXACT section order. You MUST set sectionOrder to EXACTLY: ' + JSON.stringify(_prefs.section_order) + '. Do NOT reorder, add, or remove any sections. This order is FINAL.';
+} else if (Array.isArray(_prefs.enabled_sections) && _prefs.enabled_sections.length) {
+  sectionOverride = '\n\n== USER SECTION OVERRIDE (HIGHEST PRIORITY) ==\nThe user has explicitly selected which sections to include. You MUST use ONLY these sections in sectionOrder (in the best order for the tier): ' + _prefs.enabled_sections.join(', ') + '. Do NOT include any section not in this list, regardless of tier rules.';
+}
+
+const pass1_user = 'Master Resume:\n' + masterResume + '\n\nJob Description:\n' + jd + tierHint + bias + feedback + sectionOverride;
 const step0_user = 'Job Description:\n' + jd;
 
 return [{ json: { pass1_user, step0_user, tier } }];
