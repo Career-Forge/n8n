@@ -99,6 +99,39 @@ const ROOT_SCRIPT_MAP = {
   'Build Revised LaTeX': '_build_revised_latex.js',
 };
 
+// ── R3-4: shared LaTeX render-helper blocks -- Code nodes can't import a shared
+// module, so these are hand-copied across the resume-render nodes. They are
+// meant to stay byte-identical; drift here means one node got a rendering
+// bugfix the other(s) didn't, and it fails silently (a specific user's resume
+// or cover letter breaks) until someone traces it by hand -- exactly what
+// happened to buildHeaderFromPersonal's escapeLatexText/V2 call (found via
+// this same investigation, fixed in scripts/s35_r3_header_escape_fix.js).
+// Anchors extract each named block from a node's jsCode via
+// indexOf(start)..indexOf(end).
+const LATEX_HELPER_NODES = ['Assemble Resume LaTeX', 'Assemble Regen', 'Build Revised LaTeX'];
+const LATEX_HELPER_BLOCKS = [
+  { block: 'SKELETON',                start: 'const SKELETON = String.raw`',                end: '\\end{document}`;' },
+  { block: 'SECTION_LATEX',           start: 'const SECTION_LATEX = {',                      end: '\n};' },
+  { block: 'SLOT_MARKER',             start: 'const SLOT_MARKER = {',                        end: '\n};' },
+  { block: 'firstNonEmpty',           start: 'function firstNonEmpty(...values) {',           end: '\n}' },
+  { block: 'buildHeaderFromPersonal', start: 'function buildHeaderFromPersonal(p) {',         end: '\n}' },
+  { block: 'escapeLatexTextV2',       start: 'function escapeLatexTextV2(value) {',           end: '\n  return s;\n}' },
+  { block: 'truncate110',             start: 'function truncate110(t) {',                     end: '\n}' },
+  { block: 'bulletRenderV2',          start: 'function bulletRenderV2(bullets) {',             end: '\n}' },
+  { block: 'renderResume',            start: 'function renderResume(content, personal) {',    end: '\n}\n' },
+];
+
+function extractLatexBlock(code, start, end) {
+  const si = code.indexOf(start);
+  if (si === -1) return null;
+  const ei = code.indexOf(end, si + start.length);
+  if (ei === -1) return null;
+  return code.slice(si, ei + end.length);
+}
+function shortHash(s) {
+  return require('crypto').createHash('sha256').update(s).digest('hex').slice(0, 12);
+}
+
 // Confirmed orphaned/dead-architecture files with zero live node to regenerate
 // from -- deleted outright (git preserves history). Evidence: duplication
 // audit this session, cross-checked by name against the live 275-node graph.
@@ -186,6 +219,47 @@ function run() {
   const ciApply = getChainLlmMessage(N['CompanyIntel Apply'] || {});
   if (ci && ciApply && ci !== ciApply) {
     console.warn('WARN: "CompanyIntel" and "CompanyIntel Apply" were previously identical siblings and are no longer -- check if this divergence is intentional.');
+  }
+
+  // Assemble Regen is supposed to be a byte-identical clone of Assemble Resume
+  // LaTeX (see Pick Resume LaTeX's convergence comment) -- check the WHOLE file,
+  // not just the shared blocks below, since it also carries Assemble-only logic
+  // (mergeContent, buildFallbackSlots, etc.) that isn't in Build Revised LaTeX at all.
+  const arWhole = getJsCode(N['Assemble Resume LaTeX'] || {});
+  const agWhole = getJsCode(N['Assemble Regen'] || {});
+  if (arWhole && agWhole && arWhole !== agWhole) {
+    console.warn('WARN: "Assemble Resume LaTeX" and "Assemble Regen" are supposed to be byte-identical clones and have diverged -- diff them directly, not just the shared-block hashes below.');
+  }
+
+  // Shared LaTeX-render-helper blocks -- must be byte-identical across the 3 nodes.
+  let latexDrift = false;
+  for (const { block, start, end } of LATEX_HELPER_BLOCKS) {
+    const extracted = {};
+    for (const nodeName of LATEX_HELPER_NODES) {
+      const n = N[nodeName];
+      if (!n) { console.error(`FAIL: LaTeX-helper node "${nodeName}" not found live (mapping stale?)`); process.exit(1); }
+      const code = getJsCode(n);
+      const b = code && extractLatexBlock(code, start, end);
+      if (!b) { console.error(`FAIL: could not locate block "${block}" in "${nodeName}" -- anchor stale or node rewritten. Fix LATEX_HELPER_BLOCKS before trusting any other output.`); process.exit(1); }
+      extracted[nodeName] = b;
+    }
+    const hashes = Object.fromEntries(Object.entries(extracted).map(([k, v]) => [k, shortHash(v)]));
+    if (new Set(Object.values(hashes)).size > 1) {
+      latexDrift = true;
+      console.warn(`\nWARN: LaTeX helper block "${block}" has DRIFTED:`);
+      for (const nodeName of LATEX_HELPER_NODES) console.warn(`  ${hashes[nodeName]}  ${nodeName}`);
+      const [ref, ...rest] = LATEX_HELPER_NODES;
+      for (const nodeName of rest) {
+        if (hashes[nodeName] === hashes[ref]) continue;
+        const a = extracted[ref].split('\n'), b = extracted[nodeName].split('\n');
+        for (let i = 0; i < Math.max(a.length, b.length); i++) {
+          if (a[i] !== b[i]) console.warn(`    L${i + 1}  ${ref}: ${a[i] ?? '<missing>'}\n    L${i + 1}  ${nodeName}: ${b[i] ?? '<missing>'}`);
+        }
+      }
+    }
+  }
+  if (latexDrift) {
+    console.warn('\n^^ LaTeX render-helper drift detected above -- this is the shared escaping/section logic behind every resume + cover PDF. A mismatch means one node got a rendering fix the other(s) didn\'t. Investigate before the next deploy.');
   }
 
   for (const rel of DEAD_FILES) {

@@ -202,15 +202,15 @@ function bulletItems(items) {
 // Deterministic header from the parsed master resume (NOT the LLM).
 function buildHeaderFromPersonal(p) {
   p = p || {};
-  const name = escapeLatexText(firstNonEmpty(p.name, 'Candidate'));
+  const name = escapeLatexTextV2(firstNonEmpty(p.name, 'Candidate'));
   const parts = [];
   const phone = firstNonEmpty(p.phone_display, p.phone);
-  if (phone) parts.push(escapeLatexText(phone));
+  if (phone) parts.push(escapeLatexTextV2(phone));
   if (p.email) parts.push('\\href{mailto:' + p.email + '}{\\underline{' + p.email + '}}');
   if (p.linkedin) parts.push('\\href{' + p.linkedin + '}{\\underline{LinkedIn}}');
   if (p.github) parts.push('\\href{' + p.github + '}{\\underline{GitHub}}');
   if (p.portfolio) parts.push('\\href{' + p.portfolio + '}{\\underline{Portfolio}}');
-  if (p.show_location && p.location) parts.push(escapeLatexText(p.location));
+  if (p.show_location && p.location) parts.push(escapeLatexTextV2(p.location));
   const contact = parts.length ? '\\small ' + parts.join(' $|$ ') : '';
   return '\\begin{center}\n  \\textbf{\\Huge \\scshape ' + name + '} \\\\ \\vspace{4pt}\n  ' + contact + '\n\\end{center}';
 }
