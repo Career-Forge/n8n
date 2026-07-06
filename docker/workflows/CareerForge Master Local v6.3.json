@@ -1507,7 +1507,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const r = $input.first().json.output || {};\nconst ctx = $('Normalize Research Results').first().json;\nconst recIcon = r.recommendation === 'Apply' ? '\\u2705' : r.recommendation === 'Caution' ? '\\u26A0\\uFE0F' : '\\u{1F6D1}';\nconst sections = [\n  recIcon + ' *' + (r.company || ctx.company) + ' \\u2014 Health Score: ' + (r.health_score || '?') + '/100*',\n  '_' + (r.summary || 'No summary available.') + '_', '',\n  '\\u{1F4CA} *Sentiment:* ' + (r.sentiment && r.sentiment.overall_mood || 'Unknown') + (r.sentiment && r.sentiment.glassdoor_rating ? ' (Glassdoor: ' + r.sentiment.glassdoor_rating + ')' : ''),\n];\nif (r.sentiment && r.sentiment.positives && r.sentiment.positives.length) sections.push(r.sentiment.positives.map(p => '  \\u2705 ' + p).join('\\n'));\nif (r.sentiment && r.sentiment.negatives && r.sentiment.negatives.length) sections.push(r.sentiment.negatives.map(p => '  \\u274C ' + p).join('\\n'));\nsections.push('');\nsections.push('\\u{1F534} *Layoffs:* ' + (r.layoffs && r.layoffs.has_recent_layoffs ? 'Yes \\u2014 ' + r.layoffs.details : 'None recent'));\nsections.push('\\u{1F4B0} *Funding:* ' + (r.funding && r.funding.stage || 'Unknown') + (r.funding && r.funding.last_round ? ' (' + r.funding.last_round + ')' : ''));\nsections.push('\\u{1F6C2} *H1B:* ' + (r.h1b && r.h1b.sponsors ? 'Yes' : 'Unknown'));\nsections.push('');\nif (r.green_flags && r.green_flags.length) sections.push('\\u{1F7E2} *Green Flags:*\\n' + r.green_flags.map(f => '\\u2022 ' + f).join('\\n'));\nif (r.red_flags && r.red_flags.length) sections.push('\\u{1F534} *Red Flags:*\\n' + r.red_flags.map(f => '\\u2022 ' + f).join('\\n'));\nreturn [{ json: { chat_id: ctx.chat_id, message: sections.filter(Boolean).join('\\n') } }];"
+        "jsCode": "// R2 bugfix: this node's direct upstream (Save Writing Profile) is a Postgres\n// INSERT with no RETURNING + alwaysOutputData:true, so on the (normal) zero-row\n// case it passes through ITS OWN input (Build Writing Guidance's\n// {company_key,guidance,_has_guidance}) -- which has no .output field. $input\n// here was silently resolving to {} on every run. Read CompanyIntel directly\n// instead, the same pattern Build Writing Guidance already uses for this data.\nconst r = ($('CompanyIntel').first().json || {}).output || {};\nconst ctx = $('Normalize Research Results').first().json;\nconst recIcon = r.recommendation === 'Apply' ? '\\u2705' : r.recommendation === 'Caution' ? '\\u26A0\\uFE0F' : '\\u{1F6D1}';\nconst sections = [\n  recIcon + ' *' + (r.company || ctx.company) + ' \\u2014 Health Score: ' + (r.health_score || '?') + '/100*',\n  '_' + (r.summary || 'No summary available.') + '_', '',\n  '\\u{1F4CA} *Sentiment:* ' + (r.sentiment && r.sentiment.overall_mood || 'Unknown') + (r.sentiment && r.sentiment.glassdoor_rating ? ' (Glassdoor: ' + r.sentiment.glassdoor_rating + ')' : ''),\n];\nif (r.sentiment && r.sentiment.positives && r.sentiment.positives.length) sections.push(r.sentiment.positives.map(p => '  \\u2705 ' + p).join('\\n'));\nif (r.sentiment && r.sentiment.negatives && r.sentiment.negatives.length) sections.push(r.sentiment.negatives.map(p => '  \\u274C ' + p).join('\\n'));\nsections.push('');\nsections.push('\\u{1F534} *Layoffs:* ' + (r.layoffs && r.layoffs.has_recent_layoffs ? 'Yes \\u2014 ' + r.layoffs.details : 'None recent'));\nsections.push('\\u{1F4B0} *Funding:* ' + (r.funding && r.funding.stage || 'Unknown') + (r.funding && r.funding.last_round ? ' (' + r.funding.last_round + ')' : ''));\nsections.push('\\u{1F6C2} *H1B:* ' + (r.h1b && r.h1b.sponsors ? 'Yes' : 'Unknown'));\nsections.push('');\nif (r.green_flags && r.green_flags.length) sections.push('\\u{1F7E2} *Green Flags:*\\n' + r.green_flags.map(f => '\\u2022 ' + f).join('\\n'));\nif (r.red_flags && r.red_flags.length) sections.push('\\u{1F534} *Red Flags:*\\n' + r.red_flags.map(f => '\\u2022 ' + f).join('\\n'));\nreturn [{ json: { chat_id: ctx.chat_id, message: sections.filter(Boolean).join('\\n') } }];"
       },
       "id": "16bc79f6-9d5f-40d1-a211-cc4484788a0e",
       "name": "Format Intel Report",
@@ -5931,6 +5931,82 @@
         36768,
         47936
       ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT (SELECT dossier FROM company_intel WHERE company_key = lower(regexp_replace($1,'[,.].*$','')) AND fetched_at > now() - interval '30 days' LIMIT 1) AS dossier",
+        "options": {
+          "queryReplacement": "={{ [ $json.company || 'unknown' ] }}"
+        }
+      },
+      "id": "dd65706b-c2b8-4977-9ee4-0ec7fcec80e2",
+      "name": "Read Intel Cache",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        29540,
+        49956
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Prepare Research').first().json.research_type }}",
+              "rightValue": "intel",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "leftValue": "={{ $json.dossier ? \"yes\" : \"no\" }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b3354756-54da-41f0-aade-32d8770d73ea",
+      "name": "IF: Intel Cache Fresh?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        29740,
+        49956
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Cached counterpart of Format Intel Report -- same formatting body, sourced\n// from a fresh company_intel row instead of a live CompanyIntel call. See R2\n// item 5 (scripts/s34_r2_intel_cache.js) for why this is duplicated rather\n// than shared.\nconst r = ($('Read Intel Cache').first().json || {}).dossier || {};\nconst chatId = $('Extract Input').first().json.chat_id;\nconst recIcon = r.recommendation === 'Apply' ? '✅' : r.recommendation === 'Caution' ? '⚠️' : '\\u{1F6D1}';\nconst sections = [\n  recIcon + ' *' + (r.company || 'Unknown') + ' — Health Score: ' + (r.health_score || '?') + '/100* _(cached)_',\n  '_' + (r.summary || 'No summary available.') + '_', '',\n  '\\u{1F4CA} *Sentiment:* ' + (r.sentiment && r.sentiment.overall_mood || 'Unknown') + (r.sentiment && r.sentiment.glassdoor_rating ? ' (Glassdoor: ' + r.sentiment.glassdoor_rating + ')' : ''),\n];\nif (r.sentiment && r.sentiment.positives && r.sentiment.positives.length) sections.push(r.sentiment.positives.map(p => '  ✅ ' + p).join('\\n'));\nif (r.sentiment && r.sentiment.negatives && r.sentiment.negatives.length) sections.push(r.sentiment.negatives.map(p => '  ❌ ' + p).join('\\n'));\nsections.push('');\nsections.push('\\u{1F534} *Layoffs:* ' + (r.layoffs && r.layoffs.has_recent_layoffs ? 'Yes — ' + r.layoffs.details : 'None recent'));\nsections.push('\\u{1F4B0} *Funding:* ' + (r.funding && r.funding.stage || 'Unknown') + (r.funding && r.funding.last_round ? ' (' + r.funding.last_round + ')' : ''));\nsections.push('\\u{1F6C2} *H1B:* ' + (r.h1b && r.h1b.sponsors ? 'Yes' : 'Unknown'));\nsections.push('');\nif (r.green_flags && r.green_flags.length) sections.push('\\u{1F7E2} *Green Flags:*\\n' + r.green_flags.map(f => '• ' + f).join('\\n'));\nif (r.red_flags && r.red_flags.length) sections.push('\\u{1F534} *Red Flags:*\\n' + r.red_flags.map(f => '• ' + f).join('\\n'));\nreturn [{ json: { chat_id: chatId, message: sections.filter(Boolean).join('\\n') } }];"
+      },
+      "id": "abd05271-cf94-474e-a179-0006f6ccdfce",
+      "name": "Format Intel Report (Cached)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        29940,
+        49876
+      ]
     }
   ],
   "pinData": {},
@@ -6632,7 +6708,7 @@
         ],
         [
           {
-            "node": "You.com Research",
+            "node": "Read Intel Cache",
             "type": "main",
             "index": 0
           }
@@ -9031,6 +9107,46 @@
         [
           {
             "node": "Build Pass2 Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Intel Cache": {
+      "main": [
+        [
+          {
+            "node": "IF: Intel Cache Fresh?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Intel Cache Fresh?": {
+      "main": [
+        [
+          {
+            "node": "Format Intel Report (Cached)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "You.com Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Intel Report (Cached)": {
+      "main": [
+        [
+          {
+            "node": "Send Intel",
             "type": "main",
             "index": 0
           }
