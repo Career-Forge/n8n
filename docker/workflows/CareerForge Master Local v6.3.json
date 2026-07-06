@@ -5920,6 +5920,17 @@
         34500,
         48280
       ]
+    },
+    {
+      "parameters": {},
+      "id": "d53e5e0b-de3d-4891-acfc-b38f9416e0e7",
+      "name": "Merge Pass1 Step0",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        36768,
+        47936
+      ]
     }
   ],
   "pinData": {},
@@ -8312,6 +8323,11 @@
             "node": "Pass1 Selection",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Step0 JD Analysis",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -8331,7 +8347,7 @@
       "main": [
         [
           {
-            "node": "Step0 JD Analysis",
+            "node": "Merge Pass1 Step0",
             "type": "main",
             "index": 0
           }
@@ -8353,9 +8369,9 @@
       "main": [
         [
           {
-            "node": "Build Pass2 Input",
+            "node": "Merge Pass1 Step0",
             "type": "main",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -9005,6 +9021,17 @@
           {
             "node": "CompanyIntel Apply",
             "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Pass1 Step0": {
+      "main": [
+        [
+          {
+            "node": "Build Pass2 Input",
+            "type": "main",
             "index": 0
           }
         ]
