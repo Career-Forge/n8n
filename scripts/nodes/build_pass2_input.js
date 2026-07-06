@@ -20,8 +20,23 @@ const antiHalluc = '\n\nCRITICAL ANTI-HALLUCINATION RULES:\n'
   + '- The resume should work equally well for ANY company — no company-specific framing\n'
   + '- Use ONLY the verbatim excerpts from Pass 1 decisions as source material — do NOT invent metrics, technologies, or achievements';
 
+function buildBudgetBlock(p1) {
+  const cp = p1 && p1._contentPlan;
+  if (!cp || !cp.alloc) return '';
+  const lines = [];
+  for (const comp of (p1.companies || [])) {
+    for (const pos of (comp.positions || [])) {
+      if (!pos || pos.isSelected === false) continue;
+      if (cp.alloc[pos.id] != null) lines.push('- position ' + pos.id + ' (' + (pos.title || '') + '): ' + cp.alloc[pos.id] + ' bullets');
+    }
+  }
+  for (const it of (p1.selectedInternships || [])) { if (it && it.isSelected !== false && cp.alloc[it.id] != null) lines.push('- internship ' + it.id + ' (' + (it.title || '') + '): ' + cp.alloc[it.id] + ' bullets'); }
+  for (const pj of (p1.selectedProjects || [])) { if (pj && pj.isSelected !== false && cp.alloc[pj.id] != null) lines.push('- project ' + pj.id + ' (' + (pj.name || '') + '): ' + cp.alloc[pj.id] + ' bullets'); }
+  if (!lines.length) return '';
+  return '\n\n== BULLET BUDGET (MANDATORY) ==\nTier: ' + (cp.tier || 'unknown') + '. Style: ' + (cp.directive || '') + '\nWrite EXACTLY these bullet counts per entry:\n' + lines.join('\n');
+}
 const pass2Input = JSON.stringify({ decisions: pass1, jdRequirements: step0.clusters || [] });
 const pass2_user = 'Generate plain-text resume content based on selection decisions. The decisions contain VERBATIM resume excerpts — use them as the SOLE source for STAR bullets.'
-  + antiHalluc + '\n\n' + pass2Input;
+  + antiHalluc + buildBudgetBlock(pass1) + '\n\n' + pass2Input;
 
 return [{ json: { pass2_user, pass1 } }];
