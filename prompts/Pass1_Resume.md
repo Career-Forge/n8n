@@ -19,7 +19,7 @@ Return ONLY valid JSON (no markdown, no explanations) with this structure:
     "portfolio": "<portfolio url or empty>",
     "location": "<city, state or empty>"
   },
-  "summary": "<3-4 sentence professional summary — ONLY for senior tier, null/empty for others>",
+  "summary": "<professional summary for SENIOR (3-4 sentences) and MID (2-3 sentences) tiers, composed ONLY from the master resume's ## SUMMARY bullets and headline; empty string for junior/fresher OR when no ## SUMMARY/headline material exists (then also omit 'summary' from sectionOrder)>",
   "companies": [
     {
       "company": "<company name>",
@@ -101,7 +101,7 @@ Return ONLY valid JSON (no markdown, no explanations) with this structure:
     {
       "id": "<unique short id>",
       "title": "<achievement title — e.g. award name, competition, honor>",
-      "description": "<VERBATIM text from resume — copy exact original text including all details>",
+      "description": "<VERBATIM text copied from the master resume's ## ACHIEVEMENTS section ONLY — NEVER derive achievements from experience bullets or invent them; return an empty selectedAchievements array if the resume has no ## ACHIEVEMENTS section>",
       "date": "<date or empty>",
       "issuer": "<issuing organization or empty>"
     }
@@ -144,8 +144,8 @@ Detect the candidate's tier based on their TOTAL professional experience (exclud
 SECTION ORDER BY TIER (MANDATORY)
 ═══════════════════════════════════════════════════════════════
 
-- SENIOR: ["summary", "experience", "skills", "certifications", "education"]
-- MID: ["experience", "projects", "skills", "certifications", "education"]
+- SENIOR: ["summary", "experience", "skills", "achievements", "certifications", "education"] — include "achievements" ONLY if the master resume has an ## ACHIEVEMENTS section
+- MID: ["summary", "experience", "projects", "skills", "achievements", "certifications", "education"] — summary is 2-3 sentences for mid; include "achievements" ONLY if the master resume has an ## ACHIEVEMENTS section
   - Only include "certifications" if industry-standard certs exist (AWS, PMP, CKA, etc.)
   - NEVER include Coursera/Udemy/LinkedIn Learning completion certificates for mid/senior
 - JUNIOR: ["education", "experience", "projects", "skills"]
@@ -173,8 +173,8 @@ Selection priority (apply in order, skip if not applicable):
 3. Fill remaining slots by RECENCY (most recent first), up to the tier's capacity.
 
 Tier capacity:
-- SENIOR: Include up to 4-5 experiences (enough to fill 60% of the page).
-- MID: Include up to 3-4 experiences.
+- SENIOR: Include up to 5 experiences (the TIER CONTENT PLAN entry caps are authoritative).
+- MID: Include up to 4 experiences (the TIER CONTENT PLAN entry caps are authoritative).
 - JUNIOR: Include ALL available experiences (usually 1-2).
 - FRESHER: Include 0 experiences (use internships section instead if applicable).
 
@@ -194,13 +194,7 @@ If a candidate held MULTIPLE positions at the SAME company:
 BULLET COUNT RULES (ADAPTIVE)
 ═══════════════════════════════════════════════════════════════
 
-- SENIOR: Most recent role = 4 bullets, others = 2-3 bullets.
-- MID: Most recent role = 3-4 bullets, others = 2-3 bullets.
-- JUNIOR: Each role = 3-4 bullets (fewer roles, so more bullets each).
-- FRESHER: Internships = 2-3 bullets each.
-- Projects: 2-3 bullets each across all tiers.
-
-Adjust bullet counts dynamically to ensure SINGLE PAGE fit. If content overflows, reduce bullet counts starting from oldest/least relevant entries.
+Bullet counts are ADVISORY — the == TIER CONTENT PLAN == block in the user message is the target shape, and a deterministic allocator recomputes every bulletCount after your selection. Your real job is EXTRACTION: for every selected position, extract AT LEAST the plan's max bullets per entry as VERBATIM keyAchievements (especially for recent/relevant roles) — an under-extracted position caps what the allocator can give it, and the allocator can never invent material you did not extract.
 
 ═══════════════════════════════════════════════════════════════
 COMPANY SENTIMENT ANALYSIS

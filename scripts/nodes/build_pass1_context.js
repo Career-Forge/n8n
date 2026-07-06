@@ -40,6 +40,93 @@ const c = $('Prepare Apply Context').first().json || {};
 const tierMap = { fresher: 'fresher', junior: 'junior', mid: 'mid', senior: 'senior', experienced: 'mid' };
 const tier = tierMap[c.seniority_mode] || 'mid';
 
+// ═══ TIER CONTENT PLANS -- single source of truth (v7) ═══
+// lineBudget = PRINTED LINES, not bullets: a 2-line bullet costs 2. Numbers
+// empirically calibrated via real pdflatex compiles against the s43-tightened
+// skeleton (single-page verified per tier; overflow probe verified binding).
+const STYLE_2LINE = {
+  linesPerBullet: 2, targetChars: [150, 200],
+  directive: 'Impact-and-scope style: each bullet 150-200 characters (~2 printed lines): action verb + system/scope + technology + quantified outcome. Do not write bullets under 120 characters.'
+};
+const STYLE_1LINE = {
+  linesPerBullet: 1, targetChars: [70, 110],
+  directive: 'Skills-evidence style: each bullet 70-110 characters (~1 printed line): one skill/tool demonstrated + a concrete artifact or result. Never exceed 110 characters.'
+};
+const TIER_PLANS = {
+  senior: {
+    sectionOrder: ['summary', 'experience', 'skills', 'achievements', 'certifications', 'education'],
+    summaryLines: 3,
+    bulletStyle: STYLE_2LINE,
+    sections: {
+      experience: { maxEntries: 5, lineBudget: 22, minBulletsPerEntry: 2, maxBulletsPerEntry: 4, mostRecentMinBullets: 3 },
+      projects: { maxEntries: 0, lineBudget: 0 },
+      internships: { maxEntries: 0, lineBudget: 0 },
+      achievements: { maxEntries: 3 },
+      skills: { maxCategories: 4 },
+      certifications: { maxEntries: 2 },
+      education: { maxEntries: 1 }
+    },
+    primaryPool: 'experience'
+  },
+  mid: {
+    sectionOrder: ['summary', 'experience', 'projects', 'skills', 'achievements', 'certifications', 'education'],
+    summaryLines: 2,
+    bulletStyle: STYLE_2LINE,
+    sections: {
+      experience: { maxEntries: 4, lineBudget: 16, minBulletsPerEntry: 2, maxBulletsPerEntry: 4, mostRecentMinBullets: 3 },
+      projects: { maxEntries: 2, lineBudget: 6, minBulletsPerEntry: 1, maxBulletsPerEntry: 2 },
+      internships: { maxEntries: 0, lineBudget: 0 },
+      achievements: { maxEntries: 2 },
+      skills: { maxCategories: 4 },
+      certifications: { maxEntries: 2 },
+      education: { maxEntries: 2 }
+    },
+    primaryPool: 'experience'
+  },
+  junior: {
+    sectionOrder: ['education', 'experience', 'projects', 'skills', 'certifications'],
+    summaryLines: 0,
+    bulletStyle: STYLE_1LINE,
+    sections: {
+      experience: { maxEntries: 3, lineBudget: 16, minBulletsPerEntry: 3, maxBulletsPerEntry: 5, mostRecentMinBullets: 4 },
+      projects: { maxEntries: 3, lineBudget: 12, minBulletsPerEntry: 2, maxBulletsPerEntry: 4 },
+      internships: { maxEntries: 0, lineBudget: 0 },
+      achievements: { maxEntries: 0 },
+      skills: { maxCategories: 4 },
+      certifications: { maxEntries: 2 },
+      education: { maxEntries: 2 }
+    },
+    primaryPool: 'experience'
+  },
+  fresher: {
+    sectionOrder: ['education', 'projects', 'internships', 'skills', 'activities'],
+    summaryLines: 0,
+    bulletStyle: STYLE_1LINE,
+    sections: {
+      experience: { maxEntries: 0, lineBudget: 0 },
+      projects: { maxEntries: 4, lineBudget: 16, minBulletsPerEntry: 2, maxBulletsPerEntry: 4 },
+      internships: { maxEntries: 2, lineBudget: 10, minBulletsPerEntry: 2, maxBulletsPerEntry: 3, mostRecentMinBullets: 3 },
+      achievements: { maxEntries: 0 },
+      skills: { maxCategories: 4 },
+      certifications: { maxEntries: 3 },
+      education: { maxEntries: 2 },
+      activities: { maxEntries: 2 }
+    },
+    primaryPool: 'projects'
+  }
+};
+const plan = JSON.parse(JSON.stringify(TIER_PLANS[tier] || TIER_PLANS.mid));
+const planBlock = '\n\n== TIER CONTENT PLAN (tier: ' + tier + ') =='
+  + '\nDefault sectionOrder (user overrides take priority): ' + JSON.stringify(plan.sectionOrder)
+  + '\nEntry caps: experience ' + plan.sections.experience.maxEntries
+  + ', projects ' + plan.sections.projects.maxEntries
+  + ', internships ' + plan.sections.internships.maxEntries
+  + ', achievements ' + plan.sections.achievements.maxEntries
+  + ', certifications ' + plan.sections.certifications.maxEntries
+  + ', education ' + plan.sections.education.maxEntries + '.'
+  + '\nBullet style: ' + plan.bulletStyle.directive
+  + '\nBullet counts: a deterministic allocator recomputes every bulletCount AFTER your selection -- your bulletCount values are advisory. Extract AT LEAST ' + plan.sections[plan.primaryPool].maxBulletsPerEntry + ' VERBATIM keyAchievements for recent/relevant positions so the allocator has material to work with.';
+
 const masterResume = (c.resume_text && String(c.resume_text).trim())
   ? c.resume_text
   : JSON.stringify(c.selected_resume_bubbles || c.candidate_context_for_generation || []);
@@ -71,7 +158,7 @@ if (Array.isArray(_prefs.section_order) && _prefs.section_order.length) {
   sectionOverride = '\n\n== USER SECTION OVERRIDE (HIGHEST PRIORITY) ==\nThe user has explicitly selected which sections to include. You MUST use ONLY these sections in sectionOrder (in the best order for the tier): ' + _prefs.enabled_sections.join(', ') + '. Do NOT include any section not in this list, regardless of tier rules.';
 }
 
-const pass1_user = 'Master Resume:\n' + masterResume + '\n\nJob Description:\n' + jd + tierHint + bias + feedback + sectionOverride;
+const pass1_user = 'Master Resume:\n' + masterResume + '\n\nJob Description:\n' + jd + tierHint + bias + feedback + sectionOverride + planBlock;
 const step0_user = 'Job Description:\n' + jd;
 
-return [{ json: { pass1_user, step0_user, tier } }];
+return [{ json: { pass1_user, step0_user, tier, plan } }];
