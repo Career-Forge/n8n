@@ -49,7 +49,7 @@ const SKELETON = String.raw`\documentclass[letterpaper,11pt]{article}
 \usepackage[default]{lato}
 \usepackage[T1]{fontenc}
 
-\usepackage[top=0.45in, bottom=0.45in, left=0.55in, right=0.55in]{geometry}
+\usepackage[top=0.3in, bottom=0.3in, left=0.4in, right=0.4in]{geometry}
 
 \pagestyle{fancy}
 \fancyhf{}
@@ -63,14 +63,14 @@ const SKELETON = String.raw`\documentclass[letterpaper,11pt]{article}
 \setlength{\tabcolsep}{0in}
 
 \titleformat{\section}{
-  \vspace{-5pt}\scshape\raggedright\large
-}{}{0em}{}[\color{black}\titlerule \vspace{-4pt}]
+  \vspace{-12pt}\scshape\raggedright\large\bfseries
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
 
 \pdfgentounicode=1
 
 \newcommand{\resumeItem}[1]{
   \item\small{
-    {#1}
+    {#1 \vspace{-2pt}}
   }
 }
 \newcommand{\resumeSubheading}[4]{
@@ -98,7 +98,7 @@ const SKELETON = String.raw`\documentclass[letterpaper,11pt]{article}
 \newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
 \newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
 \newcommand{\resumeItemListStart}{\begin{itemize}[noitemsep, topsep=0pt, parsep=0pt, partopsep=0pt]}
-\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-4pt}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
 \newcommand{\resumeItemCompact}[1]{
   \item\footnotesize{
     {#1}
