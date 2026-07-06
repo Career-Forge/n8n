@@ -926,7 +926,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $('Extract Input').first().json.chat_id;\nconst lastApply = staticData.last_apply;\nif (!lastApply || !lastApply.resume_text || !lastApply.job_description) return [{ json: { chat_id: chatId, error: 'No resume/job context. Apply to a job first.', resume_text: '', job_description: '', job_title: '', company: '' } }];\nreturn [{ json: { chat_id: chatId, error: '', resume_text: lastApply.resume_text, job_description: lastApply.job_description, job_title: lastApply.job_title, company: lastApply.company } }];"
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $('Extract Input').first().json.chat_id;\nconst lastApply = staticData.last_apply;\nif (!lastApply || !lastApply.resume_text || !lastApply.job_description) return [{ json: { chat_id: chatId, error: 'No resume/job context. Apply to a job first.', resume_text: '', job_description: '', job_title: '', company: '' } }];\nreturn [{ json: { chat_id: chatId, error: '', resume_text: lastApply.resume_text, job_description: lastApply.job_description, job_title: lastApply.job_title, company: lastApply.company, forge_score: lastApply.forge_score || null } }];"
       },
       "id": "9cc58fbf-61bc-48ce-b7fa-7e96f9d28243",
       "name": "Load Score Context",
@@ -996,46 +996,7 @@
     },
     {
       "parameters": {
-        "promptType": "define",
-        "text": "={{ JSON.stringify($json) }}",
-        "hasOutputParser": true,
-        "messages": {
-          "messageValues": [
-            {
-              "message": "You are CareerForge's deep resume-vs-JD scorer. Same rubric as ForgeScore.\n\nDimensions (0-10 each, weighted): skills_match (25%), experience_relevance (25%), metric_impact (15%), seniority_fit (15%), keyword_coverage (10%), leadership_signals (10%)\n\nCompute overall_score (weighted, one decimal). Recommendation: >= 6 Apply, 4-6 Caution, < 4 Skip.\n\nStrict JSON. Include 2-3 gaps + 2-3 strengths."
-            }
-          ]
-        }
-      },
-      "id": "def1058b-0acb-42af-b4df-a244dd0418df",
-      "name": "ScoreOnly",
-      "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "typeVersion": 1.4,
-      "position": [
-        29504,
-        49168
-      ],
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 1000
-    },
-    {
-      "parameters": {
-        "schemaType": "manual",
-        "inputSchema": "{\"type\":\"object\",\"properties\":{\"overall_score\":{\"type\":\"number\"},\"dimensions\":{\"type\":\"object\",\"properties\":{\"skills_match\":{\"type\":\"integer\"},\"experience_relevance\":{\"type\":\"integer\"},\"metric_impact\":{\"type\":\"integer\"},\"seniority_fit\":{\"type\":\"integer\"},\"keyword_coverage\":{\"type\":\"integer\"},\"leadership_signals\":{\"type\":\"integer\"}}},\"gaps\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"strengths\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"recommendation\":{\"type\":\"string\",\"enum\":[\"Apply\",\"Caution\",\"Skip\"]}},\"required\":[\"overall_score\",\"dimensions\",\"gaps\",\"strengths\",\"recommendation\"]}"
-      },
-      "id": "334db788-f3cc-4a94-9059-950febfb2c73",
-      "name": "ScoreOnly Output Parser",
-      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
-      "typeVersion": 1.2,
-      "position": [
-        29648,
-        49328
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const s = $input.first().json.output || {};\nconst ctx = $('Load Score Context').first().json;\nconst d = s.dimensions || {};\nconst recIcon = s.recommendation === 'Apply' ? '\\u2705' : s.recommendation === 'Caution' ? '\\u26A0\\uFE0F' : '\\u26D4';\nconst bar = (score) => '\\u2588'.repeat(Math.round(score || 0)) + '\\u2591'.repeat(10 - Math.round(score || 0)) + ' ' + (score || 0) + '/10';\nconst msg = recIcon + ' *ForgeScore: ' + (s.overall_score || '?') + '/10* \\u2014 ' + (s.recommendation || 'Unknown') + '\\n' +\n  '_' + ctx.job_title + ' at ' + ctx.company + '_\\n\\n' +\n  '*Dimensions:*\\n' +\n  'Skills Match:     ' + bar(d.skills_match) + '\\n' +\n  'Experience:       ' + bar(d.experience_relevance) + '\\n' +\n  'Impact/Metrics:   ' + bar(d.metric_impact) + '\\n' +\n  'Seniority Fit:    ' + bar(d.seniority_fit) + '\\n' +\n  'Keyword Coverage: ' + bar(d.keyword_coverage) + '\\n' +\n  'Leadership:       ' + bar(d.leadership_signals) + '\\n\\n' +\n  (s.strengths && s.strengths.length ? '*Strengths:*\\n' + s.strengths.map(g => '\\u2705 ' + g).join('\\n') + '\\n\\n' : '') +\n  (s.gaps && s.gaps.length ? '*Gaps:*\\n' + s.gaps.map(g => '\\u26A0\\uFE0F ' + g).join('\\n') : '');\nreturn [{ json: { chat_id: ctx.chat_id, message: msg } }];"
+        "jsCode": "// R2: ScoreOnly dropped -- score is a moving-in-time value, but for the same\n// resume+JD ForgeScore already computed during the apply this is scoring, so\n// there is no LLM call here anymore, just formatting of the stored output.\nconst ctx = $('Load Score Context').first().json;\nconst s = ctx.forge_score || {};\nconst d = s.dimensions || {};\nconst recIcon = s.recommendation === 'Apply' ? '\\u2705' : s.recommendation === 'Caution' ? '\\u26A0\\uFE0F' : '\\u26D4';\nconst bar = (score) => '\\u2588'.repeat(Math.round(score || 0)) + '\\u2591'.repeat(10 - Math.round(score || 0)) + ' ' + (score || 0) + '/10';\nconst msg = recIcon + ' *ForgeScore: ' + (s.overall_score || '?') + '/10* \\u2014 ' + (s.recommendation || 'Unknown') + '\\n' +\n  '_' + ctx.job_title + ' at ' + ctx.company + '_\\n\\n' +\n  '*Dimensions:*\\n' +\n  'Skills Match:     ' + bar(d.skills_match) + '\\n' +\n  'Experience:       ' + bar(d.experience_relevance) + '\\n' +\n  'Impact/Metrics:   ' + bar(d.metric_impact) + '\\n' +\n  'Seniority Fit:    ' + bar(d.seniority_fit) + '\\n' +\n  'Keyword Coverage: ' + bar(d.keyword_coverage) + '\\n' +\n  'Leadership:       ' + bar(d.leadership_signals) + '\\n\\n' +\n  (s.strengths && s.strengths.length ? '*Strengths:*\\n' + s.strengths.map(g => '\\u2705 ' + g).join('\\n') + '\\n\\n' : '') +\n  (s.gaps && s.gaps.length ? '*Gaps:*\\n' + s.gaps.map(g => '\\u26A0\\uFE0F ' + g).join('\\n') : '');\nreturn [{ json: { chat_id: ctx.chat_id, message: msg } }];"
       },
       "id": "fb419953-45a8-4e1a-96ba-550b2380773e",
       "name": "Format Score Message",
@@ -1800,29 +1761,6 @@
         "telegramApi": {
           "id": "XayaGFL8EdfqdoR7",
           "name": "CareerForge_Telegram"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "model": "deepseek/deepseek-v4-flash",
-        "options": {
-          "maxTokens": 2048,
-          "timeout": 60000
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
-      "typeVersion": 1,
-      "position": [
-        29504,
-        49344
-      ],
-      "id": "3dc2392f-841c-498b-80ec-68f800c03f81",
-      "name": "OpenRouter Chat Model",
-      "credentials": {
-        "openRouterApi": {
-          "id": "ypIVPJu8JYSWTkHT",
-          "name": "CareerForge_OpenRouter"
         }
       }
     },
@@ -5112,11 +5050,11 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ 'RESUME:\\n' + ($('Assemble Resume LaTeX').first().json.resumePlainText || '') + '\\n\\nJOB DESCRIPTION:\\n' + ($('Prepare Job Context').first().json.job_description || 'No JD provided.') }}",
+        "text": "={{ 'RESUME:\\n' + ($('Assemble Resume LaTeX').first().json.resumePlainText || '') + '\\n\\nJOB DESCRIPTION:\\n' + ($('Prepare Job Context').first().json.job_description || 'No JD provided.') + '\\n\\nREQUIREMENT CLUSTERS (pre-extracted -- score against exactly these, do not derive your own):\\n' + JSON.stringify((($('Parse Step0').first().json || {}).step0 || {}).clusters || []) + '\\n\\nDEALBREAKERS (pre-extracted):\\n' + JSON.stringify((($('Parse Step0').first().json || {}).step0 || {}).dealbreakers || []) }}",
         "messages": {
           "messageValues": [
             {
-              "message": "You are an expert ATS analyzer. Extract structured scoring signals.\n\nCRITICAL RULES:\n1. ALL fields are required - use penalty defaults if data is missing\n2. coverage_score must be 0-100 (not text like \"High\")\n3. present must be boolean true/false (not \"Met\" or \"Present\")\n4. years_evidence requires evidence array - if evidence.length=0, years must be 0\n5. evidence array is REQUIRED for every cluster (use [] if none)\n6. Be generous with years_evidence if context implies experience (e.g., \"Senior Engineer\" role → infer 3+ years if it is not directly mentioned!)\n\nPENALTY DEFAULTS (used when data is unclear/missing):\n- coverage_score: 0\n- present: false\n- years_evidence: 0\n- dealbreaker.present: false (caps score at 65)\n- culture_fit.score: 50 (neutral)\n\nReturn ONLY valid JSON with these exact top-level keys: requirement_clusters, dealbreakers, experience, quantification, culture_fit, structure.\nEach requirement_cluster MUST have: cluster_name(string), coverage_score(0-100), present(boolean), years_evidence(number), years_required(number), evidence(string[]).\nEach dealbreaker MUST have: requirement(string), present(boolean).\nexperience MUST have: total_years(number), relevant_years(number), has_management(boolean).\nquantification MUST have: metrics_count(number), relevance_score(0-100).\nculture_fit MUST have: score(0-100), has_white_text_spam(boolean).\nstructure MUST have: has_sections(boolean), page_count(number), score(0-100).\nNo markdown wrapping. No extra keys.\n"
+              "message": "You are an expert ATS analyzer. Extract structured scoring signals.\n\nYou are given a pre-extracted list of requirement clusters and dealbreakers from the JD (see REQUIREMENT CLUSTERS / DEALBREAKERS in the input) -- score the resume against EXACTLY those clusters, one requirement_cluster entry per given cluster, in the same order. Do not invent new clusters, and do not split, merge, or rename the given ones.\n\nCRITICAL RULES:\n1. ALL fields are required - use penalty defaults if data is missing\n2. coverage_score must be 0-100 (not text like \"High\")\n3. present must be boolean true/false (not \"Met\" or \"Present\")\n4. years_evidence requires evidence array - if evidence.length=0, years must be 0\n5. evidence array is REQUIRED for every cluster (use [] if none)\n6. Be generous with years_evidence if context implies experience (e.g., \"Senior Engineer\" role → infer 3+ years if it is not directly mentioned!)\n\nPENALTY DEFAULTS (used when data is unclear/missing):\n- coverage_score: 0\n- present: false\n- years_evidence: 0\n- dealbreaker.present: false (caps score at 65)\n- culture_fit.score: 50 (neutral)\n\nReturn ONLY valid JSON with these exact top-level keys: requirement_clusters, dealbreakers, experience, quantification, culture_fit, structure.\nEach requirement_cluster MUST have: cluster_name(string), coverage_score(0-100), present(boolean), years_evidence(number), years_required(number), evidence(string[]).\nEach dealbreaker MUST have: requirement(string), present(boolean).\nexperience MUST have: total_years(number), relevant_years(number), has_management(boolean).\nquantification MUST have: metrics_count(number), relevance_score(0-100).\nculture_fit MUST have: score(0-100), has_white_text_spam(boolean).\nstructure MUST have: has_sections(boolean), page_count(number), score(0-100).\nNo markdown wrapping. No extra keys.\n"
             }
           ]
         },
@@ -5351,11 +5289,11 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ JSON.stringify({ resume: $('Prepare Apply Context').first().json.resume_text, jd: $('Prepare Apply Context').first().json.job_description, company: $('Prepare Apply Context').first().json.company, dossier: ($('Pass Dossier').first().json||{}).dossier, tier: $('Prepare Apply Context').first().json.seniority_mode }) }}",
+        "text": "={{ JSON.stringify({ resume: $('Prepare Apply Context').first().json.resume_text, jd: $('Prepare Apply Context').first().json.job_description, company: $('Prepare Apply Context').first().json.company, role: $('Prepare Apply Context').first().json.job_title, dossier: ($('Pass Dossier').first().json||{}).dossier, tier: $('Prepare Apply Context').first().json.seniority_mode }) }}",
         "messages": {
           "messageValues": [
             {
-              "message": "You are CoverForge Pass 1 — the adaptive selection engine for cover letters. Analyze the resume and JD, detect the candidate's career tier, and decide which achievements to highlight.\n\nIMPORTANT: Extract the company name and role/position from the job description text. Do NOT expect them as separate inputs.\n\nReturn ONLY valid JSON:\n{\n  \"extractedCompany\": \"<company name extracted from JD>\",\n  \"extractedRole\": \"<role/position extracted from JD>\",\n  \"tier\": \"<fresher|junior|mid|senior>\",\n  \"selectedAchievements\": [\n    {\n      \"id\": \"<short id>\",\n      \"title\": \"<achievement title>\",\n      \"sourceExperience\": \"<company/project where this happened>\",\n      \"starSituation\": \"<brief situation>\",\n      \"starAction\": \"<what you did>\",\n      \"starResult\": \"<quantified result>\",\n      \"jdKeywordsToWeave\": [\"<relevant JD keywords>\"],\n      \"personalTouch\": \"<authentic personal element>\"\n    }\n  ],\n  \"companyResearch\": {\n    \"mission\": \"<company mission/values>\",\n    \"recentNews\": \"<recent initiative, product, or funding>\",\n    \"techStack\": \"<relevant tech they use>\",\n    \"whyExcited\": \"<genuine reason for excitement>\",\n    \"companySentiment\": [\"<what this company values most, e.g. ownership, innovation, customer-first>\"]\n  },\n  \"competitivePositioning\": {\n    \"unique_differentiator\": \"<What makes this candidate different from typical applicants? Look for: prior work with this company's platform/product, unique skill combinations, rare domain expertise, notable achievements (hackathon wins, open source contributions, speaking engagements).>\",\n    \"insider_advantage\": \"<Does candidate already know the company/product/team? Evidence: used their APIs, attended their events, contributed to their ecosystem, worked with their technology, cited their research. Return 'None identified' if no evidence.>\",\n    \"domain_edge\": \"<Rare combination of skills/industries. Example: 'Healthcare + Finance experience = understands regulated industries.' Look for 2+ domains that rarely overlap. Return 'None identified' if not applicable.>\",\n    \"timing_advantage\": \"<Why NOW is the perfect time for this candidate to join. Look for: just completed relevant project, transitioning from research to production, location alignment, visa/availability timing. Return 'None identified' if not clear.>\"\n  },\n  \"buyer_persona\": \"<enterprise_cto|technical_manager|startup_founder|hr_recruiter>\",\n  \"openingHook\": \"<attention-grabbing opening approach adapted to tier, competitive positioning, AND buyer persona>\",\n  \"closingAngle\": \"<specific contribution to mention in closing>\",\n  \"toneNotes\": \"<how to calibrate tone for this company, this tier, AND the detected buyer persona>\",\n  \"personalizationScore\": <0-100>,\n  \"keywordMatch\": <0-100>\n}\n\n═══════════════════════════════════════════════════════════════\nTIER DETECTION (same rules as ResumeForge)\n═══════════════════════════════════════════════════════════════\n\n- FRESHER (0 years full-time): Projects, coursework, internships only.\n- JUNIOR (1-3 years): Limited professional experience.\n- MID (4-9 years): Solid experience across roles.\n- SENIOR (10+ years): Leadership, strategic impact.\n\n═══════════════════════════════════════════════════════════════\nACHIEVEMENT COUNT BY TIER\n═══════════════════════════════════════════════════════════════\n\n- SENIOR: Select exactly 3 achievements (deep, strategic, leadership-focused).\n- MID: Select exactly 3 achievements (mix of technical and impact).\n- JUNIOR: Select exactly 2 achievements + flag for \"eager to bring\" paragraph.\n- FRESHER: Select 1-2 achievements (from projects/internships) + flag for \"passion & potential\" paragraph.\n\n═══════════════════════════════════════════════════════════════\nOPENING HOOK BY TIER\n═══════════════════════════════════════════════════════════════\n\n- SENIOR: Lead with a headline achievement or industry reputation.\n- MID: Lead with a specific, relevant accomplishment.\n- JUNIOR: Lead with genuine enthusiasm + one concrete skill match.\n- FRESHER: Lead with academic passion or a compelling project story.\n\n═══════════════════════════════════════════════════════════════\nCOMPANY SENTIMENT INTEGRATION\n═══════════════════════════════════════════════════════════════\n\nAnalyze what the target company values (ownership, collaboration, innovation, etc.) from JD language and known culture. Frame all achievements to echo these values.\n\n═══════════════════════════════════════════════════════════════\nCOMPETITIVE POSITIONING (CRITICAL)\n═══════════════════════════════════════════════════════════════\n\nCRITICAL: Identify competitive positioning. Don't just list qualifications — find what makes THIS candidate uniquely suited. If candidate has prior experience with the company's platform/product/ecosystem, that's the strongest differentiator. If they have a rare skill combination (e.g., AI + regulated industries), that's domain edge. Be specific — generic statements like \"strong technical background\" are NOT positioning.\n\nPriority order for differentiators:\n1. Direct experience with the company's product/platform/APIs (strongest)\n2. Participation in company events/hackathons/ecosystem (insider signal)\n3. Rare domain combinations (e.g., Healthcare + Finance = regulated industries)\n4. Unique project outcomes or recognitions (hackathon wins, publications)\n5. Timing alignment (transition point, recent relevant completion)\n\n═══════════════════════════════════════════════════════════════\nBUYER PERSONA DETECTION (CRITICAL)\n═══════════════════════════════════════════════════════════════\n\nDetect the BUYER (who makes the hiring decision), not just the role. Look at JD signals:\n\n- enterprise_cto: JD mentions \"enterprise solutions\", \"on-premises\", \"compliance\", \"procurement\", \"discovery sessions with executives\", \"regulated industries\", \"vendor evaluation\". These roles sell to/deploy for enterprise buyers. The actual reader is often the CTO/VP Engineering the candidate will work WITH, not just HR.\n- technical_manager: JD focuses on architecture, scalability, system design, technical depth. Standard engineering roles at established companies.\n- startup_founder: JD emphasizes ownership, scrappiness, wearing multiple hats, moving fast, early-stage, founding team, equity prominent.\n- hr_recruiter: JD is generic/templated, emphasizes culture fit and soft skills more than technical depth, uses corporate HR language.\n\nFor customer-facing roles (e.g., \"Enterprise Solutions Engineer\"), the buyer is often the CTO/VP Engineering the candidate will interface with, NOT the hiring manager. Look for clues about customer-facing vs internal roles.\n\nRULES:\n- Achievement counts MUST match the tier rules above.\n- Each achievement MUST have a quantified result (for freshers, project metrics like \"served 500 users\" count).\n- Company research should be specific, not generic.\n- NEVER fabricate achievements not in the resume.\n- competitivePositioning fields must be SPECIFIC and grounded in resume evidence."
+              "message": "You are CoverForge Pass 1 — the adaptive selection engine for cover letters. Decide which achievements to highlight and how to position them.\n\nIMPORTANT: company, role, and tier are provided directly in the input JSON (already computed upstream by earlier nodes in this same run) -- use them VERBATIM for extractedCompany/extractedRole/tier in your output. Do NOT re-derive them from the JD text, and do NOT second-guess the provided tier.\n\nReturn ONLY valid JSON:\n{\n  \"extractedCompany\": \"<company name extracted from JD>\",\n  \"extractedRole\": \"<role/position extracted from JD>\",\n  \"tier\": \"<fresher|junior|mid|senior>\",\n  \"selectedAchievements\": [\n    {\n      \"id\": \"<short id>\",\n      \"title\": \"<achievement title>\",\n      \"sourceExperience\": \"<company/project where this happened>\",\n      \"starSituation\": \"<brief situation>\",\n      \"starAction\": \"<what you did>\",\n      \"starResult\": \"<quantified result>\",\n      \"jdKeywordsToWeave\": [\"<relevant JD keywords>\"],\n      \"personalTouch\": \"<authentic personal element>\"\n    }\n  ],\n  \"companyResearch\": {\n    \"mission\": \"<company mission/values>\",\n    \"recentNews\": \"<recent initiative, product, or funding>\",\n    \"techStack\": \"<relevant tech they use>\",\n    \"whyExcited\": \"<genuine reason for excitement>\",\n    \"companySentiment\": [\"<what this company values most, e.g. ownership, innovation, customer-first>\"]\n  },\n  \"competitivePositioning\": {\n    \"unique_differentiator\": \"<What makes this candidate different from typical applicants? Look for: prior work with this company's platform/product, unique skill combinations, rare domain expertise, notable achievements (hackathon wins, open source contributions, speaking engagements).>\",\n    \"insider_advantage\": \"<Does candidate already know the company/product/team? Evidence: used their APIs, attended their events, contributed to their ecosystem, worked with their technology, cited their research. Return 'None identified' if no evidence.>\",\n    \"domain_edge\": \"<Rare combination of skills/industries. Example: 'Healthcare + Finance experience = understands regulated industries.' Look for 2+ domains that rarely overlap. Return 'None identified' if not applicable.>\",\n    \"timing_advantage\": \"<Why NOW is the perfect time for this candidate to join. Look for: just completed relevant project, transitioning from research to production, location alignment, visa/availability timing. Return 'None identified' if not clear.>\"\n  },\n  \"buyer_persona\": \"<enterprise_cto|technical_manager|startup_founder|hr_recruiter>\",\n  \"openingHook\": \"<attention-grabbing opening approach adapted to tier, competitive positioning, AND buyer persona>\",\n  \"closingAngle\": \"<specific contribution to mention in closing>\",\n  \"toneNotes\": \"<how to calibrate tone for this company, this tier, AND the detected buyer persona>\",\n  \"personalizationScore\": <0-100>,\n  \"keywordMatch\": <0-100>\n}\n\n═══════════════════════════════════════════════════════════════\nTIER (provided in the input -- see ACHIEVEMENT COUNT BY TIER below)\n═══════════════════════════════════════════════════════════════\nACHIEVEMENT COUNT BY TIER\n═══════════════════════════════════════════════════════════════\n\n- SENIOR: Select exactly 3 achievements (deep, strategic, leadership-focused).\n- MID: Select exactly 3 achievements (mix of technical and impact).\n- JUNIOR: Select exactly 2 achievements + flag for \"eager to bring\" paragraph.\n- FRESHER: Select 1-2 achievements (from projects/internships) + flag for \"passion & potential\" paragraph.\n\n═══════════════════════════════════════════════════════════════\nOPENING HOOK BY TIER\n═══════════════════════════════════════════════════════════════\n\n- SENIOR: Lead with a headline achievement or industry reputation.\n- MID: Lead with a specific, relevant accomplishment.\n- JUNIOR: Lead with genuine enthusiasm + one concrete skill match.\n- FRESHER: Lead with academic passion or a compelling project story.\n\n═══════════════════════════════════════════════════════════════\nCOMPANY SENTIMENT INTEGRATION\n═══════════════════════════════════════════════════════════════\n\nAnalyze what the target company values (ownership, collaboration, innovation, etc.) from JD language and known culture. Frame all achievements to echo these values.\n\n═══════════════════════════════════════════════════════════════\nCOMPETITIVE POSITIONING (CRITICAL)\n═══════════════════════════════════════════════════════════════\n\nCRITICAL: Identify competitive positioning. Don't just list qualifications — find what makes THIS candidate uniquely suited. If candidate has prior experience with the company's platform/product/ecosystem, that's the strongest differentiator. If they have a rare skill combination (e.g., AI + regulated industries), that's domain edge. Be specific — generic statements like \"strong technical background\" are NOT positioning.\n\nPriority order for differentiators:\n1. Direct experience with the company's product/platform/APIs (strongest)\n2. Participation in company events/hackathons/ecosystem (insider signal)\n3. Rare domain combinations (e.g., Healthcare + Finance = regulated industries)\n4. Unique project outcomes or recognitions (hackathon wins, publications)\n5. Timing alignment (transition point, recent relevant completion)\n\n═══════════════════════════════════════════════════════════════\nBUYER PERSONA DETECTION (CRITICAL)\n═══════════════════════════════════════════════════════════════\n\nDetect the BUYER (who makes the hiring decision), not just the role. Look at JD signals:\n\n- enterprise_cto: JD mentions \"enterprise solutions\", \"on-premises\", \"compliance\", \"procurement\", \"discovery sessions with executives\", \"regulated industries\", \"vendor evaluation\". These roles sell to/deploy for enterprise buyers. The actual reader is often the CTO/VP Engineering the candidate will work WITH, not just HR.\n- technical_manager: JD focuses on architecture, scalability, system design, technical depth. Standard engineering roles at established companies.\n- startup_founder: JD emphasizes ownership, scrappiness, wearing multiple hats, moving fast, early-stage, founding team, equity prominent.\n- hr_recruiter: JD is generic/templated, emphasizes culture fit and soft skills more than technical depth, uses corporate HR language.\n\nFor customer-facing roles (e.g., \"Enterprise Solutions Engineer\"), the buyer is often the CTO/VP Engineering the candidate will interface with, NOT the hiring manager. Look for clues about customer-facing vs internal roles.\n\nRULES:\n- Achievement counts MUST match the tier rules above.\n- Each achievement MUST have a quantified result (for freshers, project metrics like \"served 500 users\" count).\n- Company research should be specific, not generic.\n- NEVER fabricate achievements not in the resume.\n- competitivePositioning fields must be SPECIFIC and grounded in resume evidence."
             }
           ]
         },
@@ -6497,7 +6435,7 @@
       "main": [
         [
           {
-            "node": "ScoreOnly",
+            "node": "Format Score Message",
             "type": "main",
             "index": 0
           }
@@ -6505,17 +6443,6 @@
         [
           {
             "node": "Send No Score Context",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "ScoreOnly": {
-      "main": [
-        [
-          {
-            "node": "Format Score Message",
             "type": "main",
             "index": 0
           }
@@ -6814,17 +6741,6 @@
         ]
       ]
     },
-    "OpenRouter Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "ScoreOnly",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "OpenRouter Chat Model1": {
       "ai_languageModel": [
         [
@@ -6929,17 +6845,6 @@
         [
           {
             "node": "ReviseForge",
-            "type": "ai_outputParser",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "ScoreOnly Output Parser": {
-      "ai_outputParser": [
-        [
-          {
-            "node": "ScoreOnly",
             "type": "ai_outputParser",
             "index": 0
           }
