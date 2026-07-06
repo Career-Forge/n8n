@@ -99,6 +99,19 @@ const SKELETON = String.raw`\documentclass[letterpaper,11pt]{article}
 \newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
 \newcommand{\resumeItemListStart}{\begin{itemize}[noitemsep, topsep=0pt, parsep=0pt, partopsep=0pt]}
 \newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-4pt}}
+\newcommand{\resumeItemCompact}[1]{
+  \item\footnotesize{
+    {#1}
+  }
+}
+\newcommand{\resumeSubheadingCompact}[4]{
+  \vspace{-1pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{\footnotesize #1} & \footnotesize #2 \\
+      \textit{\footnotesize#3} & \textit{\footnotesize #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+\newcommand{\resumeItemListEndCompact}{\end{itemize}\vspace{-6pt}}
 
 \begin{document}
 
@@ -359,11 +372,12 @@ function truncate110(t) {
   const sp = cut.lastIndexOf(' ');
   return (sp > 80 ? cut.slice(0, sp) : cut).replace(/[,;:.\s]+$/, '');
 }
-function bulletRenderV2(bullets) {
-  return (bullets || []).slice(0, 4).map((b) => {
+function bulletRenderV2(bullets, isCompact) {
+  const cmd = isCompact ? '\\resumeItemCompact' : '\\resumeItem';
+  return (bullets || []).slice(0, isCompact ? 3 : 4).map((b) => {
     const text = truncate110(b.text);
     const kw = b.keyword ? '\\textbf{' + escapeLatexTextV2(b.keyword) + ':} ' : '';
-    return '    \\resumeItem{' + kw + escapeLatexTextV2(text) + '}';
+    return '    ' + cmd + '{' + kw + escapeLatexTextV2(text) + '}';
   }).join('\n');
 }
 function indexByPositionIdV2(arr) {
@@ -464,29 +478,32 @@ function hasAnyContent(content) {
     content.education.length || content.certifications.length || content.achievements.length || content.activities.length ||
     content.skills.some((c) => c.skills && c.skills.length));
 }
-function renderResume(content, personal) {
-  const itemStart = '\\resumeItemListStart', itemEnd = '\\resumeItemListEnd';
+function renderResume(content, personal, isCompact) {
+  const itemStart = '\\resumeItemListStart';
+  const itemEnd = isCompact ? '\\resumeItemListEndCompact' : '\\resumeItemListEnd';
+  const subheadingCmd = isCompact ? '\\resumeSubheadingCompact' : '\\resumeSubheading';
+  const itemCmd = isCompact ? '\\resumeItemCompact' : '\\resumeItem';
   const slots = {};
   slots.summary = content.summary ? escapeLatexTextV2(content.summary) : '';
   slots.experience = (content.experience || []).map((e) =>
-    '\\resumeSubheading{' + escapeLatexTextV2(e.title) + '}{' + escapeLatexTextV2((e.startDate || '') + ' -- ' + (e.endDate || '')) + '}{' + escapeLatexTextV2(e.company) + '}{' + escapeLatexTextV2(e.location) + '}\n' + itemStart + '\n' + bulletRenderV2(e.bullets) + '\n' + itemEnd
+    subheadingCmd + '{' + escapeLatexTextV2(e.title) + '}{' + escapeLatexTextV2((e.startDate || '') + ' -- ' + (e.endDate || '')) + '}{' + escapeLatexTextV2(e.company) + '}{' + escapeLatexTextV2(e.location) + '}\n' + itemStart + '\n' + bulletRenderV2(e.bullets, isCompact) + '\n' + itemEnd
   ).join('\n');
   slots.internships = (content.internships || []).map((e) =>
-    '\\resumeSubheading{' + escapeLatexTextV2(e.title) + '}{' + escapeLatexTextV2((e.startDate || '') + ' -- ' + (e.endDate || '')) + '}{' + escapeLatexTextV2(e.company) + '}{' + escapeLatexTextV2(e.location) + '}\n' + itemStart + '\n' + bulletRenderV2(e.bullets) + '\n' + itemEnd
+    subheadingCmd + '{' + escapeLatexTextV2(e.title) + '}{' + escapeLatexTextV2((e.startDate || '') + ' -- ' + (e.endDate || '')) + '}{' + escapeLatexTextV2(e.company) + '}{' + escapeLatexTextV2(e.location) + '}\n' + itemStart + '\n' + bulletRenderV2(e.bullets, isCompact) + '\n' + itemEnd
   ).join('\n');
   slots.projects = (content.projects || []).map((p) =>
-    '\\resumeProjectHeading{\\textbf{' + escapeLatexTextV2(p.name) + '} $|$ \\emph{' + escapeLatexTextV2(p.techStack) + '}}{' + escapeLatexTextV2(p.date) + '}\n' + itemStart + '\n' + bulletRenderV2(p.bullets) + '\n' + itemEnd
+    '\\resumeProjectHeading{\\textbf{' + escapeLatexTextV2(p.name) + '} $|$ \\emph{' + escapeLatexTextV2(p.techStack) + '}}{' + escapeLatexTextV2(p.date) + '}\n' + itemStart + '\n' + bulletRenderV2(p.bullets, isCompact) + '\n' + itemEnd
   ).join('\n');
   slots.skills = (content.skills || []).map((cat) => (cat.skills && cat.skills.length) ? '\\textbf{' + escapeLatexTextV2(cat.category) + ':} ' + escapeLatexTextV2(cat.skills.join(', ')) + ' \\\\' : '').filter(Boolean).join('\n');
-  slots.education = (content.education || []).slice(0, 2).map((edu) =>
-    '\\resumeSubheading{' + escapeLatexTextV2([edu.degree, edu.major].filter(Boolean).join(' -- ')) + '}{' + escapeLatexTextV2(edu.graduationDate) + '}{' + escapeLatexTextV2(edu.institution) + '}{' + escapeLatexTextV2(edu.gpa ? 'GPA: ' + edu.gpa : '') + '}'
+  slots.education = (content.education || []).slice(0, isCompact ? 1 : 2).map((edu) =>
+    subheadingCmd + '{' + escapeLatexTextV2([edu.degree, edu.major].filter(Boolean).join(' -- ')) + '}{' + escapeLatexTextV2(edu.graduationDate) + '}{' + escapeLatexTextV2(edu.institution) + '}{' + escapeLatexTextV2(edu.gpa ? 'GPA: ' + edu.gpa : '') + '}'
   ).join('\n');
   slots.certifications = (content.certifications || []).filter((c) => c.qualityTier !== 'completion_only').map((c) =>
     '\\resumeProjectHeading{\\textbf{' + escapeLatexTextV2(c.name) + '} $|$ \\emph{' + escapeLatexTextV2(c.issuer) + '}}{' + escapeLatexTextV2(c.date) + '}'
   ).join('\n');
-  slots.achievements = (content.achievements || []).map((a) => '\\resumeItem{' + escapeLatexTextV2(firstNonEmpty(a.description, a.title)) + '}').join('\n');
+  slots.achievements = (content.achievements || []).map((a) => itemCmd + '{' + escapeLatexTextV2(firstNonEmpty(a.description, a.title)) + '}').join('\n');
   slots.activities = (content.activities || []).map((act) =>
-    '\\resumeProjectHeading{\\textbf{' + escapeLatexTextV2(act.name) + '} $|$ \\emph{' + escapeLatexTextV2(act.organization) + '}}{' + escapeLatexTextV2(act.date) + '}\n' + itemStart + '\n    \\resumeItem{' + escapeLatexTextV2(act.description) + '}\n' + itemEnd
+    '\\resumeProjectHeading{\\textbf{' + escapeLatexTextV2(act.name) + '} $|$ \\emph{' + escapeLatexTextV2(act.organization) + '}}{' + escapeLatexTextV2(act.date) + '}\n' + itemStart + '\n    ' + itemCmd + '{' + escapeLatexTextV2(act.description) + '}\n' + itemEnd
   ).join('\n');
 
   const order = (Array.isArray(content.sectionOrder) && content.sectionOrder.length) ? content.sectionOrder : ['experience', 'projects', 'skills', 'education'];
@@ -568,7 +585,8 @@ if (isFragments) {
   if (!hasAnyContent(content)) {
     throw new Error('Assemble Resume LaTeX produced an empty body (content path). Refusing to compile a blank resume.');
   }
-  latex = renderResume(content, personal);
+  const isCompact = ((($getWorkflowStaticData('global').user_prefs) || {}).template) === 'compact';
+  latex = renderResume(content, personal, isCompact);
   resumePlainTextOut = pass2.resumePlainText || derivePlainTextFromContent(content) || derivePlainText(pass1);
 }
 
