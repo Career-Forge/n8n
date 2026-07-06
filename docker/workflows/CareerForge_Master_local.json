@@ -828,30 +828,6 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $json.chat_id }}",
-        "text": "={{ $json.message }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "7289a503-25fc-4d18-8670-de8dcb34cd64",
-      "name": "Send Done",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        41360,
-        47328
-      ],
-      "webhookId": "57a354c7-77d9-4458-a2e2-9e9eef47bfd5",
-      "credentials": {
-        "telegramApi": {
-          "id": "XayaGFL8EdfqdoR7",
-          "name": "CareerForge_Telegram"
-        }
-      }
-    },
-    {
-      "parameters": {
         "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $('Extract Input').first().json.chat_id;\nconst lastApply = staticData.last_apply;\nif (!lastApply) return [{ json: { chat_id: chatId, message: \"\\u274C Nothing to track. Apply to a job first.\" } }];\nif (!staticData.tracked_applications) staticData.tracked_applications = [];\nconst entry = { job_id: lastApply.job_id, job_title: lastApply.job_title, company: lastApply.company, status: 'applied', score: lastApply.forge_score ? lastApply.forge_score.overall_score : null, applied_at: new Date().toISOString() };\nconst exists = staticData.tracked_applications.some(a => a.job_id === entry.job_id);\nif (exists) return [{ json: { chat_id: chatId, message: \"\\u2139\\uFE0F Already tracking *\" + entry.job_title + \"* at *\" + entry.company + \"*.\" } }];\nstaticData.tracked_applications.push(entry);\nreturn [{ json: { chat_id: chatId, message: \"\\u2705 Tracking *\" + entry.job_title + \"* at *\" + entry.company + \"*.\\n\\nUse /status to see all tracked applications.\" } }];"
       },
       "id": "2c147a10-4257-4da4-82d1-0a9fc9f96b3c",
@@ -865,30 +841,6 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $json.chat_id }}",
-        "text": "={{ $json.message }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "d76efe17-2851-4115-8924-2ed075f43ad1",
-      "name": "Send Track Ack",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        29504,
-        50640
-      ],
-      "webhookId": "6d204191-3bd0-4ab4-94fc-ed50854fd32e",
-      "credentials": {
-        "telegramApi": {
-          "id": "XayaGFL8EdfqdoR7",
-          "name": "CareerForge_Telegram"
-        }
-      }
-    },
-    {
-      "parameters": {
         "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $('Extract Input').first().json.chat_id;\nconst apps = staticData.tracked_applications || [];\nif (apps.length === 0) return [{ json: { chat_id: chatId, message: \"\\u{1F4CB} No tracked applications yet.\" } }];\nconst lines = apps.map((a, i) => {\n  const statusIcon = a.status === 'applied' ? '\\u{1F7E1}' : '\\u{1F7E2}';\n  const score = a.score ? ' (Score: ' + a.score + ')' : '';\n  const date = a.applied_at ? new Date(a.applied_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';\n  return (i + 1) + '. ' + statusIcon + ' *' + a.job_title + '* at *' + a.company + '*' + score + (date ? ' \\u2014 ' + date : '');\n});\nreturn [{ json: { chat_id: chatId, message: \"\\u{1F4CB} *Tracked Applications:*\\n\\n\" + lines.join('\\n') } }];"
       },
       "id": "a89432cc-b68f-4e71-bd03-6e2cd52c0429",
@@ -899,30 +851,6 @@
         29152,
         50864
       ]
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $json.chat_id }}",
-        "text": "={{ $json.message }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "e0536e08-1ad3-460a-8e9c-e633b08bf29e",
-      "name": "Send Status",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        29504,
-        50864
-      ],
-      "webhookId": "8708d93b-8009-4ef2-a78a-a10ff6a21f20",
-      "credentials": {
-        "telegramApi": {
-          "id": "XayaGFL8EdfqdoR7",
-          "name": "CareerForge_Telegram"
-        }
-      }
     },
     {
       "parameters": {
@@ -1006,30 +934,6 @@
         29856,
         49168
       ]
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $json.chat_id }}",
-        "text": "={{ $json.message }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "004f93f7-59b5-4c83-86e6-f2c26e24ba4e",
-      "name": "Send Score",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        30080,
-        49168
-      ],
-      "webhookId": "66d01378-2dac-45fd-950d-20b2cca4220d",
-      "credentials": {
-        "telegramApi": {
-          "id": "XayaGFL8EdfqdoR7",
-          "name": "CareerForge_Telegram"
-        }
-      }
     },
     {
       "parameters": {
@@ -1134,30 +1038,6 @@
         29904,
         50256
       ]
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $json.chat_id }}",
-        "text": "={{ $json.message }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "3a0972d0-dd22-4379-bb9e-4283f6d155b3",
-      "name": "Send Salary",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        30224,
-        50256
-      ],
-      "webhookId": "f81fa9ed-82fd-4763-b1c6-998a83b0d3ec",
-      "credentials": {
-        "telegramApi": {
-          "id": "XayaGFL8EdfqdoR7",
-          "name": "CareerForge_Telegram"
-        }
-      }
     },
     {
       "parameters": {
@@ -1365,30 +1245,6 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $json.chat_id }}",
-        "text": "={{ $json.message }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "2fb41295-4aee-44dc-ab6b-654df3a56744",
-      "name": "Send Revise Done",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        31216,
-        48528
-      ],
-      "webhookId": "bdcdd644-6135-45b1-abad-372dfb718d84",
-      "credentials": {
-        "telegramApi": {
-          "id": "XayaGFL8EdfqdoR7",
-          "name": "CareerForge_Telegram"
-        }
-      }
-    },
-    {
-      "parameters": {
         "jsCode": "const chatId = $('Extract Input').first().json.chat_id;\nconst routerOutput = $('Route Intent').first().json.output || {};\nconst entities = routerOutput.entities || {};\nconst intent = routerOutput.intent || 'outreach';\nconst msgText = $('Extract Input').first().json.message_text || '';\nconst draftMatch = msgText.match(/draft\\s*(\\d+)/i);\nif (draftMatch && intent === 'outreach') return [{ json: { chat_id: chatId, research_type: 'draft', draft_number: parseInt(draftMatch[1]), company: entities.company || null, role: entities.role || null, queries: [] } }];\nconst company = entities.company || 'Unknown';\nconst role = entities.role || 'Software Engineer';\nconst location = entities.location || '';\nconst year = new Date().getFullYear();\nlet queries = [];\nif (intent === 'intel') {\n  queries = ['site:layoffs.fyi ' + company + ' OR ' + company + ' layoffs ' + (year - 1) + ' ' + year, company + ' employee reviews glassdoor OR site:teamblind.com ' + company + ' culture', 'site:levels.fyi ' + company + ' salary compensation', company + ' H1B sponsorship visa ' + (year - 1) + ' OR site:h1bdata.info ' + company, company + ' funding round valuation ' + year + ' techcrunch', company + ' leadership principles core values careers'];\n} else {\n  const loc = location ? ' ' + location : '';\n  queries = [\n    company + ' ' + role + ' hiring manager site:linkedin.com/in' + loc,\n    company + ' director engineering ' + role + ' site:linkedin.com/in' + loc,\n    company + ' senior manager ' + role + ' site:linkedin.com/in' + loc,\n    company + ' ' + role + ' team lead site:linkedin.com/in' + loc,\n    company + ' technical recruiter ' + role + loc + ' LinkedIn',\n  ];\n}\nreturn [{ json: { chat_id: chatId, research_type: intent, company, role, location, queries, draft_number: null } }];"
       },
       "id": "9c5e880d-3099-4874-836c-1423614cb0e9",
@@ -1520,30 +1376,6 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $json.chat_id }}",
-        "text": "={{ $json.message }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "9c23a995-461e-45c1-8032-91d0886cd01c",
-      "name": "Send Intel",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        32160,
-        50000
-      ],
-      "webhookId": "78b21787-7f55-4084-9292-9aeeef9c7a94",
-      "credentials": {
-        "telegramApi": {
-          "id": "XayaGFL8EdfqdoR7",
-          "name": "CareerForge_Telegram"
-        }
-      }
-    },
-    {
-      "parameters": {
         "promptType": "define",
         "text": "={{ JSON.stringify($json) }}",
         "hasOutputParser": true,
@@ -1593,30 +1425,6 @@
         31408,
         50192
       ]
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $json.chat_id }}",
-        "text": "={{ $json.message }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "13088df1-7f1f-40b2-91d6-88b7568b72d6",
-      "name": "Send Contacts",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        31680,
-        50192
-      ],
-      "webhookId": "90e57a17-7cc0-4abc-82b2-4d537b95ab61",
-      "credentials": {
-        "telegramApi": {
-          "id": "XayaGFL8EdfqdoR7",
-          "name": "CareerForge_Telegram"
-        }
-      }
     },
     {
       "parameters": {
@@ -1739,30 +1547,6 @@
         33152,
         49312
       ]
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $json.chat_id }}",
-        "text": "={{ $json.message }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "08727286-9141-4f5c-a864-991feddea4f6",
-      "name": "Send Outreach",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        33344,
-        49312
-      ],
-      "webhookId": "ed3e2e19-40c9-4fdc-8916-d42326853cd2",
-      "credentials": {
-        "telegramApi": {
-          "id": "XayaGFL8EdfqdoR7",
-          "name": "CareerForge_Telegram"
-        }
-      }
     },
     {
       "parameters": {
@@ -3586,30 +3370,6 @@
         27984,
         50752
       ]
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $json.chat_id }}",
-        "text": "={{ $json.message }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "6ddc3b82-6ee8-4302-b8bc-db182e6a71ff",
-      "name": "Send Resume Status",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        28192,
-        50752
-      ],
-      "webhookId": "ffc8ab02-5828-48d9-b2e1-83c0f6e8b24e",
-      "credentials": {
-        "telegramApi": {
-          "id": "XayaGFL8EdfqdoR7",
-          "name": "CareerForge_Telegram"
-        }
-      }
     },
     {
       "parameters": {
@@ -6007,6 +5767,29 @@
         29940,
         49876
       ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "fb52572d-80c5-40fc-b944-7cf4fe518bda",
+      "name": "Send Generic Reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        30080,
+        48868
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -6478,7 +6261,7 @@
       "main": [
         [
           {
-            "node": "Send Done",
+            "node": "Send Generic Reply",
             "type": "main",
             "index": 0
           }
@@ -6489,7 +6272,7 @@
       "main": [
         [
           {
-            "node": "Send Track Ack",
+            "node": "Send Generic Reply",
             "type": "main",
             "index": 0
           }
@@ -6500,7 +6283,7 @@
       "main": [
         [
           {
-            "node": "Send Status",
+            "node": "Send Generic Reply",
             "type": "main",
             "index": 0
           }
@@ -6540,7 +6323,7 @@
       "main": [
         [
           {
-            "node": "Send Score",
+            "node": "Send Generic Reply",
             "type": "main",
             "index": 0
           }
@@ -6584,7 +6367,7 @@
       "main": [
         [
           {
-            "node": "Send Salary",
+            "node": "Send Generic Reply",
             "type": "main",
             "index": 0
           }
@@ -6679,7 +6462,7 @@
       "main": [
         [
           {
-            "node": "Send Revise Done",
+            "node": "Send Generic Reply",
             "type": "main",
             "index": 0
           }
@@ -6748,7 +6531,7 @@
       "main": [
         [
           {
-            "node": "Send Intel",
+            "node": "Send Generic Reply",
             "type": "main",
             "index": 0
           }
@@ -6770,7 +6553,7 @@
       "main": [
         [
           {
-            "node": "Send Contacts",
+            "node": "Send Generic Reply",
             "type": "main",
             "index": 0
           }
@@ -6821,7 +6604,7 @@
       "main": [
         [
           {
-            "node": "Send Outreach",
+            "node": "Send Generic Reply",
             "type": "main",
             "index": 0
           }
@@ -7735,7 +7518,7 @@
       "main": [
         [
           {
-            "node": "Send Resume Status",
+            "node": "Send Generic Reply",
             "type": "main",
             "index": 0
           }
@@ -9025,7 +8808,7 @@
       "main": [
         [
           {
-            "node": "Send Intel",
+            "node": "Send Generic Reply",
             "type": "main",
             "index": 0
           }
