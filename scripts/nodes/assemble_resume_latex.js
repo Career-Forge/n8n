@@ -213,6 +213,11 @@ function bulletItems(items) {
 }
 
 // Deterministic header from the parsed master resume (NOT the LLM).
+function normalizeUrl(u) {
+  u = String(u == null ? '' : u).trim();
+  if (!u) return '';
+  return /^https?:\/\//i.test(u) ? u : 'https://' + u;
+}
 function buildHeaderFromPersonal(p) {
   p = p || {};
   const name = escapeLatexTextV2(firstNonEmpty(p.name, 'Candidate'));
@@ -220,12 +225,12 @@ function buildHeaderFromPersonal(p) {
   const phone = firstNonEmpty(p.phone_display, p.phone);
   if (phone) parts.push(escapeLatexTextV2(phone));
   if (p.email) parts.push('\\href{mailto:' + p.email + '}{\\underline{' + p.email + '}}');
-  if (p.linkedin) parts.push('\\href{' + p.linkedin + '}{\\underline{LinkedIn}}');
-  if (p.github) parts.push('\\href{' + p.github + '}{\\underline{GitHub}}');
-  if (p.portfolio) parts.push('\\href{' + p.portfolio + '}{\\underline{Portfolio}}');
+  if (p.linkedin) parts.push('\\href{' + normalizeUrl(p.linkedin) + '}{\\underline{LinkedIn}}');
+  if (p.github) parts.push('\\href{' + normalizeUrl(p.github) + '}{\\underline{GitHub}}');
+  if (p.portfolio) parts.push('\\href{' + normalizeUrl(p.portfolio) + '}{\\underline{Portfolio}}');
   if (p.show_location && p.location) parts.push(escapeLatexTextV2(p.location));
   const contact = parts.length ? '\\small ' + parts.join(' $|$ ') : '';
-  return '\\begin{center}\n  \\textbf{\\Huge \\scshape ' + name + '} \\\\ \\vspace{4pt}\n  ' + contact + '\n\\end{center}';
+  return '\\begin{center}\n  \\textbf{\\fontsize{20}{20}\\selectfont \\scshape ' + name + '} \\\\ \\vspace{4pt}\n  ' + contact + '\n\\end{center}';
 }
 
 // command-center buildFallbackSlots 1409-1455 (non-compact only; bot has no compact template)
@@ -365,9 +370,19 @@ function escapeLatexTextV2(value) {
        .replace(/[^\x09\x0A\x0D\x20-\x7E]/g, '');
   return s;
 }
-function truncateBullet(t) {
+function truncateBullet(t, reserve) {
   t = String(t == null ? '' : t).trim();
-  const MAX = 240;
+  const SAFE_TOTAL = 210; // real-pdflatex-verified combined (keyword+body) 2-line ceiling
+  const MAX = Math.max(60, SAFE_TOTAL - (reserve || 0));
+  if (t.length <= MAX) return t;
+  const cut = t.slice(0, MAX);
+  const sp = cut.lastIndexOf(' ');
+  const base = (sp > MAX - 30 ? cut.slice(0, sp) : cut).replace(/[,;:.\s]+$/, '');
+  return base + '...';
+}
+function truncateSummary(t) {
+  t = String(t == null ? '' : t).trim();
+  const MAX = 190; // real-pdflatex-verified: holds at exactly 2 lines up to ~206 chars
   if (t.length <= MAX) return t;
   const cut = t.slice(0, MAX);
   const sp = cut.lastIndexOf(' ');
@@ -377,8 +392,9 @@ function truncateBullet(t) {
 function bulletRenderV2(bullets, isCompact) {
   const cmd = isCompact ? '\\resumeItemCompact' : '\\resumeItem';
   return (bullets || []).slice(0, isCompact ? 4 : 6).map((b) => {
-    const text = truncateBullet(b.text);
     const kwText = (b.keyword || '').replace(/[:;,.]+\s*$/, '');
+    const reserve = kwText ? kwText.length + 2 : 0;
+    const text = truncateBullet(b.text, reserve);
     const kw = kwText ? '\\textbf{' + escapeLatexTextV2(kwText) + ':} ' : '';
     return '    ' + cmd + '{' + kw + escapeLatexTextV2(text) + '}';
   }).join('\n');
@@ -491,7 +507,7 @@ function renderResume(content, personal, isCompact) {
   const subheadingCmd = isCompact ? '\\resumeSubheadingCompact' : '\\resumeSubheading';
   const itemCmd = isCompact ? '\\resumeItemCompact' : '\\resumeItem';
   const slots = {};
-  slots.summary = content.summary ? escapeLatexTextV2(content.summary) : '';
+  slots.summary = content.summary ? escapeLatexTextV2(truncateSummary(content.summary)) : '';
   slots.experience = (content.experience || []).map((e) =>
     subheadingCmd + '{' + escapeLatexTextV2(e.title) + '}{' + escapeLatexTextV2((e.startDate || '') + ' -- ' + (e.endDate || '')) + '}{' + escapeLatexTextV2(e.company) + '}{' + escapeLatexTextV2(e.location) + '}\n' + itemStart + '\n' + bulletRenderV2(e.bullets, isCompact) + '\n' + itemEnd
   ).join('\n');

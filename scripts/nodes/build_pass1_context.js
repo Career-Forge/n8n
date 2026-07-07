@@ -45,8 +45,8 @@ const tier = tierMap[c.seniority_mode] || 'mid';
 // empirically calibrated via real pdflatex compiles against the s43-tightened
 // skeleton (single-page verified per tier; overflow probe verified binding).
 const STYLE_2LINE = {
-  linesPerBullet: 2, targetChars: [150, 200],
-  directive: 'Impact-and-scope style: each bullet 150-200 characters (~2 printed lines): action verb + system/scope + technology + quantified outcome. Do not write bullets under 120 characters.'
+  linesPerBullet: 2, targetChars: [130, 165],
+  directive: 'Impact-and-scope style: each bullet 130-165 characters BEFORE the bold keyword lead-in (~2 printed lines total including the keyword): action verb + system/scope + technology + quantified outcome. Do not write bullets under 110 characters.'
 };
 const STYLE_1LINE = {
   linesPerBullet: 1, targetChars: [70, 110],

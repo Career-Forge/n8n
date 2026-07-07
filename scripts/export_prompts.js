@@ -114,9 +114,11 @@ const LATEX_HELPER_BLOCKS = [
   { block: 'SECTION_LATEX',           start: 'const SECTION_LATEX = {',                      end: '\n};' },
   { block: 'SLOT_MARKER',             start: 'const SLOT_MARKER = {',                        end: '\n};' },
   { block: 'firstNonEmpty',           start: 'function firstNonEmpty(...values) {',           end: '\n}' },
+  { block: 'normalizeUrl',            start: 'function normalizeUrl(u) {',                    end: '\n}' },
   { block: 'buildHeaderFromPersonal', start: 'function buildHeaderFromPersonal(p) {',         end: '\n}' },
   { block: 'escapeLatexTextV2',       start: 'function escapeLatexTextV2(value) {',           end: '\n  return s;\n}' },
-  { block: 'truncateBullet',          start: 'function truncateBullet(t) {',                  end: '\n}' },
+  { block: 'truncateBullet',          start: 'function truncateBullet(t, reserve) {',         end: '\n}' },
+  { block: 'truncateSummary',         start: 'function truncateSummary(t) {',                 end: '\n}' },
   { block: 'bulletRenderV2',          start: 'function bulletRenderV2(bullets, isCompact) {',  end: '\n}' },
   { block: 'renderResume',            start: 'function renderResume(content, personal, isCompact) {', end: '\n}\n' },
 ];
