@@ -6,7 +6,7 @@
 // item 5 (scripts/s34_r2_intel_cache.js) for why this is duplicated rather
 // than shared.
 const r = ($('Read Intel Cache').first().json || {}).dossier || {};
-const chatId = $('Extract Input').first().json.chat_id;
+let chatId; try { chatId = $('Extract Input').first().json.chat_id; } catch (e) { chatId = $('Prepare Research').first().json.chat_id; }
 const recIcon = r.recommendation === 'Apply' ? '✅' : r.recommendation === 'Caution' ? '⚠️' : '\u{1F6D1}';
 const sections = [
   recIcon + ' *' + (r.company || 'Unknown') + ' — Health Score: ' + (r.health_score || '?') + '/100* _(cached)_',
