@@ -3,6 +3,7 @@
 
 function escapeLatexText(input) {
   if (typeof input !== 'string') return '';
+  input = input.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
   return input.replace(/\\/g, '\\textbackslash{}').replace(/&/g, '\\&').replace(/%/g, '\\%').replace(/\$/g, '\\$').replace(/#/g, '\\#').replace(/_/g, '\\_').replace(/\{/g, '\\{').replace(/\}/g, '\\}').replace(/\^/g, '\\textasciicircum{}').replace(/~/g, '\\textasciitilde{}');
 }
 function cleanText(str) {

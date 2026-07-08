@@ -359,6 +359,7 @@ function derivePlainText(pass1) {
 
 function escapeLatexTextV2(value) {
   let s = String(value == null ? '' : value);
+  s = s.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
   s = s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/…/g, '...')
        .replace(/[–—]/g, '--').replace(/ /g, ' ')
        .replace(/[→➔➡]/g, '->').replace(/•/g, '-')
@@ -376,8 +377,21 @@ function truncateBullet(t, reserve) {
   const MAX = Math.max(60, SAFE_TOTAL - (reserve || 0));
   if (t.length <= MAX) return t;
   const cut = t.slice(0, MAX);
+  const bal = (s) => { let d = 0; for (let k = 0; k < s.length; k++) { if (s[k] === '(') d++; else if (s[k] === ')') d--; } return d === 0; };
+  const floor = Math.floor(MAX * 0.55);
+  // Prefer a clean clause end (a balanced ')' or a comma/semicolon OUTSIDE any
+  // parenthetical) -- reads as a complete thought, no ellipsis needed.
+  for (let i = cut.length - 1; i > floor; i--) {
+    const ch = cut[i];
+    if (ch === ')' && bal(cut.slice(0, i + 1))) return cut.slice(0, i + 1);
+    if ((ch === ',' || ch === ';') && bal(cut.slice(0, i))) {
+      return cut.slice(0, i).replace(/\s+(and|or|with|for|to|of|by|in|on|at|via|across|the|a|an|using)$/i, '').replace(/[,;:.\s]+$/, '');
+    }
+  }
   const sp = cut.lastIndexOf(' ');
-  const base = (sp > MAX - 30 ? cut.slice(0, sp) : cut).replace(/[,;:.\s]+$/, '');
+  let base = cut.slice(0, sp > MAX - 30 ? sp : MAX);
+  if (!bal(base) && base.lastIndexOf('(') > 0) base = base.slice(0, base.lastIndexOf('('));
+  base = base.replace(/\s+(and|or|with|for|to|of|by|in|on|at|via|across|the|a|an|using)$/i, '').replace(/[,;:.\s]+$/, '');
   return base + '...';
 }
 function truncateSummary(t) {
@@ -385,6 +399,14 @@ function truncateSummary(t) {
   const MAX = 190; // real-pdflatex-verified: holds at exactly 2 lines up to ~206 chars
   if (t.length <= MAX) return t;
   const cut = t.slice(0, MAX);
+  const period = cut.lastIndexOf('. ');
+  if (period > MAX * 0.5) return cut.slice(0, period + 1);
+  const bal = (s) => { let d = 0; for (let k = 0; k < s.length; k++) { if (s[k] === '(') d++; else if (s[k] === ')') d--; } return d === 0; };
+  const floor = Math.floor(MAX * 0.55);
+  for (let i = cut.length - 1; i > floor; i--) {
+    const ch = cut[i];
+    if ((ch === ',' || ch === ';') && bal(cut.slice(0, i))) return cut.slice(0, i).replace(/[,;:.\s]+$/, '') + '.';
+  }
   const sp = cut.lastIndexOf(' ');
   const base = (sp > MAX - 30 ? cut.slice(0, sp) : cut).replace(/[,;:.\s]+$/, '');
   return base + '...';
