@@ -115,7 +115,9 @@ const TIER_PLANS = {
     primaryPool: 'projects'
   }
 };
+const COUNT_PLANS = {"senior":{"experience":{"maxEntries":5,"shapes":{"1":[4],"2":[4,4],"3":[4,4,3],"4":[4,3,3,2],"5":[4,3,2,2,2]}},"internships":null,"projects":{"keyedOn":"experience","byCount":{"0":[3,2],"1":[3,2],"2":[3,2],"3":[2,2],"4":[2],"5":[]}},"summaryLines":3,"achievementsMax":3},"mid":{"experience":{"maxEntries":4,"shapes":{"1":[4],"2":[4,4],"3":[4,3,3],"4":[3,3,2,2]}},"internships":null,"projects":{"keyedOn":"experience","byCount":{"0":[3,3,2],"1":[3,3,2],"2":[3,2,2],"3":[2,2,2],"4":[2,2]}},"summaryLines":2,"achievementsMax":2},"junior":{"experience":{"maxEntries":3,"shapes":{"1":[5],"2":[5,4],"3":[5,4,4]}},"internships":null,"projects":{"keyedOn":"experience","byCount":{"0":[4,4,3,3],"1":[4,4,3],"2":[4,3,3],"3":[3,3]}},"summaryLines":0,"achievementsMax":0},"fresher":{"experience":null,"internships":{"maxEntries":2,"shapes":{"1":[4],"2":[3,3]}},"projects":{"keyedOn":"internships","byCount":{"0":[4,4,3,3,3],"1":[4,4,3,3],"2":[4,3,3]}},"summaryLines":0,"achievementsMax":0}};
 const plan = JSON.parse(JSON.stringify(TIER_PLANS[tier] || TIER_PLANS.mid));
+plan.countPlan = JSON.parse(JSON.stringify(COUNT_PLANS[tier] || COUNT_PLANS.mid));
 const planBlock = '\n\n== TIER CONTENT PLAN (tier: ' + tier + ') =='
   + '\nDefault sectionOrder (user overrides take priority): ' + JSON.stringify(plan.sectionOrder)
   + '\nEntry caps: experience ' + plan.sections.experience.maxEntries
