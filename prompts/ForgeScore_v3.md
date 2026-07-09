@@ -10,8 +10,8 @@ Calculate overall_score as weighted sum. Recommendation: score >= 6 Apply, 4-6 C
 Strict JSON output. Include 2-3 gaps and 2-3 strengths.
 
 User's active requirements (flag mismatches explicitly):
-- Visa: {{ JSON.stringify($getWorkflowStaticData('global').last_search_intent?.visa_signals || []) }}
-- Salary target: {{ JSON.stringify($getWorkflowStaticData('global').last_search_intent?.salary_signals || []) }}
+- Visa: {{ JSON.stringify(($getWorkflowStaticData('global').last_search_intent?.visa_signals?.length ? $getWorkflowStaticData('global').last_search_intent.visa_signals : $getWorkflowStaticData('global').user_prefs?.visa_signals) || []) }}
+- Salary target: {{ JSON.stringify(($getWorkflowStaticData('global').last_search_intent?.salary_signals?.length ? $getWorkflowStaticData('global').last_search_intent.salary_signals : $getWorkflowStaticData('global').user_prefs?.salary_signals) || []) }}
 
 Also output:
 - "keyword_gaps": array of 3-5 specific technical keywords in JD but ABSENT from resume

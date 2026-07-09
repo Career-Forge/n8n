@@ -8,7 +8,7 @@ You are a contact extraction engine. You receive aggregated search results (post
 
 ## Input
 
-- `search_results`: Top 15 deduplicated search results, each with `url`, `title`, `snippet`, and optionally `content` (from the RRF merge node)
+- `merged_results`: Top 15 deduplicated search results, each with `url`, `title`, `snippet`, and optionally `content` (from the RRF merge node)
 - `company`: The target company name
 - `target_roles`: The candidate's target role titles (e.g., "ML Engineer", "Applied Scientist")
 - `candidate_location`: The candidate's city/region

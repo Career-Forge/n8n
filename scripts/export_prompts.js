@@ -264,6 +264,104 @@ function run() {
     console.warn('\n^^ LaTeX render-helper drift detected above -- this is the shared escaping/section logic behind every resume + cover PDF. A mismatch means one node got a rendering fix the other(s) didn\'t. Investigate before the next deploy.');
   }
 
+  // ── s56: additional deliberate-duplication guards (audit-confirmed sets) ──
+  // Same warn-not-fail convention as the CompanyIntel sibling check above.
+
+  // Pass2 Regen's chainLlm prompt is a byte-identical sibling of Pass2 Generate
+  // (the jsCode user-message builders around them differ BY DESIGN -- regen adds
+  // atsGuidance -- but the system prompts must not drift).
+  const p2 = getChainLlmMessage(N['Pass2 Generate'] || {});
+  const p2r = getChainLlmMessage(N['Pass2 Regen'] || {});
+  if (p2 && p2r && p2 !== p2r) {
+    console.warn('WARN: "Pass2 Generate" and "Pass2 Regen" system prompts were identical siblings and have drifted -- check if intentional.');
+  }
+
+  // buildBudgetBlock is duplicated by design in the two Pass2 input builders
+  // (Code nodes can't share modules) -- must stay byte-identical.
+  {
+    const extractFnBlock = (code, name) => {
+      if (!code) return null;
+      const start = code.indexOf('function ' + name + '(');
+      if (start === -1) return null;
+      let depth = 0, i = code.indexOf('{', start), j = i;
+      for (;;) { if (code[j] === '{') depth++; else if (code[j] === '}') depth--; if (depth === 0) break; j++; if (j > code.length) return null; }
+      return code.slice(start, j + 1);
+    };
+    const a = extractFnBlock(getJsCode(N['Build Pass2 Input'] || {}), 'buildBudgetBlock');
+    const b = extractFnBlock(getJsCode(N['Build Pass2 Regen Input'] || {}), 'buildBudgetBlock');
+    if (a && b && a !== b) {
+      console.warn('WARN: buildBudgetBlock has drifted between "Build Pass2 Input" and "Build Pass2 Regen Input" -- these are deliberate byte-identical copies.');
+    }
+  }
+
+  // parseJSON: one canonical body copied into 10 Code nodes (can't share modules).
+  {
+    const PARSEJSON_NODES = ['Assemble Resume LaTeX', 'Parse Pass1', 'Parse Step0', 'Parse Pass2', 'Parse Apply Intel', 'Validate ATS Signals', 'Parse Pass2 Regen', 'Assemble Regen', 'Parse Cover Pass1', 'Parse Cover Pass2'];
+    const bodies = new Map();
+    for (const name of PARSEJSON_NODES) {
+      const code = getJsCode(N[name] || {});
+      if (!code) continue;
+      const start = code.indexOf('function parseJSON(');
+      if (start === -1) { console.warn(`WARN: parseJSON missing from "${name}" (was one of the 10 known copies).`); continue; }
+      let depth = 0, i = code.indexOf('{', start), j = i;
+      for (;;) { if (code[j] === '{') depth++; else if (code[j] === '}') depth--; if (depth === 0) break; j++; }
+      bodies.set(name, shortHash(code.slice(start, j + 1)));
+    }
+    if (new Set(bodies.values()).size > 1) {
+      console.warn('WARN: the 10-way parseJSON copy set has DRIFTED:');
+      for (const [name, h] of bodies) console.warn(`  ${h}  ${name}`);
+    }
+  }
+
+  // COUNTRY_NAMES / CITY_COUNTRY: S30's deliberate duplication between the two
+  // location-checking nodes (formatting normalized in s55 -- byte-comparable now).
+  {
+    const extractTable = (code, tbl) => {
+      if (!code) return null;
+      const i = code.indexOf(`const ${tbl} = {`);
+      if (i === -1) return null;
+      return code.slice(i, code.indexOf('};', i) + 2);
+    };
+    for (const tbl of ['COUNTRY_NAMES', 'CITY_COUNTRY']) {
+      const a = extractTable(getJsCode(N['Aggregate Jobs'] || {}), tbl);
+      const b = extractTable(getJsCode(N['Verify Job Links'] || {}), tbl);
+      if (a && b && a !== b) {
+        console.warn(`WARN: ${tbl} has drifted between "Aggregate Jobs" and "Verify Job Links" -- S30's rule: if either changes, update both.`);
+      }
+    }
+  }
+
+  // Identical utility-helper sets copied across sibling nodes (audit-confirmed
+  // byte-identical today; a drift means one sibling got a fix the others didn't).
+  {
+    const HELPER_SETS = [
+      ['locToString', ['Normalize You.com results', 'Normalize Serper results', 'Normalize Firecrawl Results']],
+      ['classifyUrlTier', ['Normalize You.com results', 'Normalize Serper results', 'Normalize Firecrawl Results']],
+      ['scrub', ['Prep Apply Body', 'Prep Save Pending Body', 'Restore Apply Row For Save']],
+      ['cleanString', ['Prep Apply Body', 'Prep Save Pending Body', 'Restore Apply Row For Save']],
+      ['normalizePass2', ['Parse Pass2', 'Parse Pass2 Regen']],
+    ];
+    const extractFnBlock = (code, name) => {
+      if (!code) return null;
+      const start = code.indexOf('function ' + name + '(');
+      if (start === -1) return null;
+      let depth = 0, i = code.indexOf('{', start), j = i;
+      for (;;) { if (code[j] === '{') depth++; else if (code[j] === '}') depth--; if (depth === 0) break; j++; if (j > code.length) return null; }
+      return code.slice(start, j + 1);
+    };
+    for (const [fn, nodes] of HELPER_SETS) {
+      const hashes = new Map();
+      for (const name of nodes) {
+        const block = extractFnBlock(getJsCode(N[name] || {}), fn);
+        if (block) hashes.set(name, shortHash(block));
+      }
+      if (hashes.size > 1 && new Set(hashes.values()).size > 1) {
+        console.warn(`WARN: helper "${fn}" has drifted across its copy set:`);
+        for (const [name, h] of hashes) console.warn(`  ${h}  ${name}`);
+      }
+    }
+  }
+
   for (const rel of DEAD_FILES) {
     const p = path.join(ROOT, rel);
     if (fs.existsSync(p)) { fs.unlinkSync(p); console.log(`DELETED ${rel} (orphaned/dead-lineage, no live node)`); deleted++; }
