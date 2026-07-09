@@ -354,7 +354,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const staticData = $getWorkflowStaticData('global');\nlet chatId, rawMessage, entities;\ntry {\n  chatId = $('Extract Input').first().json.chat_id;\n  rawMessage = $('Telegram Trigger').first().json.message?.text || '';\n  entities = $('Route Intent').first().json.output?.entities || {};\n} catch (e) {\n  const cb = $('Extract Callback').first().json;\n  const pending = staticData.last_pasted_jd;\n  if (!pending || !pending.jd_text) {\n    return [{ json: { chat_id: cb.chat_id, error: 'That pasted job description expired or was not found. Please paste it again.' } }];\n  }\n  const cbId = ((cb.callback_data || '').split(':')[2]) || null;\n  if (pending.id && cbId !== pending.id) {\n    return [{ json: { chat_id: cb.chat_id, error: 'That menu belongs to an older pasted job description (a newer one replaced it). Please use the newest menu or paste the JD again.' } }];\n  }\n  const ttlSec = pending.ttl_seconds || 1800;\n  const ageSec = (Date.now() - new Date(pending.created_at).getTime()) / 1000;\n  if (ageSec > ttlSec) {\n    return [{ json: { chat_id: cb.chat_id, error: 'That pasted job description expired. Please paste it again.' } }];\n  }\n  const company = pending.company || 'unknown';\n  const companySlug = company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'unknown';\n  return [{ json: { chat_id: cb.chat_id, job_number: 0, source: 'jd_paste', company_slug: companySlug, greenhouse_id: null, job: { job_id: `jdpaste-${companySlug}-${Date.now()}`, title: pending.role || '', company, location: '', url: '', description_snippet: pending.jd_text } } }];\n}\nconst jobNumber = entities.job_number;\nconst urlMatch = rawMessage.match(/https?:\\/\\/[^\\s]+/);\nif (urlMatch) {\n  const jobUrl = decodeURIComponent(urlMatch[0]);\n  let company = 'unknown'; let source = 'web';\n  const m = { ashby: jobUrl.match(/jobs\\.ashbyhq\\.com\\/([^\\/]+)\\//), lever: jobUrl.match(/jobs\\.lever\\.co\\/([^\\/]+)\\//), greenhouse: jobUrl.match(/(?:boards|job-boards)\\.greenhouse\\.io\\/([^\\/]+)\\//), workday: jobUrl.match(/([^.\\/]+)\\.wd\\d+\\.myworkdayjobs\\.com\\//), workable: jobUrl.match(/apply\\.workable\\.com\\/([^\\/]+)\\//) };\n  for (const [src, match] of Object.entries(m)) { if (match) { company = match[1]; source = src; break; } }\n  return [{ json: { chat_id: chatId, job_number: 0, direct_url: jobUrl, source, company_slug: company, greenhouse_id: null, job: { job_id: `direct-${company}-0`, title: '', company, location: '', url: jobUrl, description_snippet: '' } } }];\n}\nif (!jobNumber) return [{ json: { chat_id: chatId, error: 'No job number provided. Reply with a number (1-5) after a job search, or paste a job URL directly.' } }];\nconst lastJobs = staticData.last_jobs || {};\nconst job = lastJobs[jobNumber];\nif (!job) return [{ json: { chat_id: chatId, error: `Job #${jobNumber} not found. Run a job search first, or paste a job URL directly.` } }];\n// s52: reject a stale list -- a scheduled digest can silently replace the\n// numbering hours after the user last saw it (same staleness class already\n// guarded for last_pasted_jd, just no per-item id to key off here).\nconst listAgeSec = staticData.last_jobs_created_at ? (Date.now() - new Date(staticData.last_jobs_created_at).getTime()) / 1000 : 0;\nif (listAgeSec > 14400) return [{ json: { chat_id: chatId, error: `That job list has expired (a newer search or scheduled digest replaced it). Please run a job search again and reply with a fresh number.` } }];\nconst parts = job.job_id.split('-');\nconst greenhouseId = parts.pop();\nconst companySlug = parts.join('-');\nreturn [{ json: { chat_id: chatId, job_number: jobNumber, company_slug: companySlug, greenhouse_id: greenhouseId, source: job.source || 'greenhouse', job } }];"
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nlet chatId, rawMessage, entities;\ntry {\n  chatId = $('Extract Input').first().json.chat_id;\n  rawMessage = $('Telegram Trigger').first().json.message?.text || '';\n  entities = $('Route Intent').first().json.output?.entities || {};\n} catch (e) {\n  const cb = $('Extract Callback').first().json;\n  // s53: double-tap lock -- a second jd:generate tap while a run is already\n  // in flight would launch a full duplicate apply pipeline racing the first\n  // on staticData. Timestamp TTL (180s) so a crashed run can't stick the lock.\n  const _inflight = staticData.jd_generate_inflight;\n  if (_inflight && (Date.now() - _inflight) < 180000) {\n    return [{ json: { chat_id: cb.chat_id, error: 'Already generating from this JD — hang tight, your resume + cover letter are on the way.' } }];\n  }\n  const pending = staticData.last_pasted_jd;\n  if (!pending || !pending.jd_text) {\n    return [{ json: { chat_id: cb.chat_id, error: 'That pasted job description expired or was not found. Please paste it again.' } }];\n  }\n  const cbId = ((cb.callback_data || '').split(':')[2]) || null;\n  if (pending.id && cbId !== pending.id) {\n    return [{ json: { chat_id: cb.chat_id, error: 'That menu belongs to an older pasted job description (a newer one replaced it). Please use the newest menu or paste the JD again.' } }];\n  }\n  const ttlSec = pending.ttl_seconds || 1800;\n  const ageSec = (Date.now() - new Date(pending.created_at).getTime()) / 1000;\n  if (ageSec > ttlSec) {\n    return [{ json: { chat_id: cb.chat_id, error: 'That pasted job description expired. Please paste it again.' } }];\n  }\n  staticData.jd_generate_inflight = Date.now();\n  const company = pending.company || 'unknown';\n  const companySlug = company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'unknown';\n  return [{ json: { chat_id: cb.chat_id, job_number: 0, source: 'jd_paste', company_slug: companySlug, greenhouse_id: null, job: { job_id: `jdpaste-${companySlug}-${Date.now()}`, title: pending.role || '', company, location: '', url: '', description_snippet: pending.jd_text } } }];\n}\nconst jobNumber = entities.job_number;\nconst urlMatch = rawMessage.match(/https?:\\/\\/[^\\s]+/);\nif (urlMatch) {\n  const jobUrl = decodeURIComponent(urlMatch[0]);\n  let company = 'unknown'; let source = 'web';\n  const m = { ashby: jobUrl.match(/jobs\\.ashbyhq\\.com\\/([^\\/]+)\\//), lever: jobUrl.match(/jobs\\.lever\\.co\\/([^\\/]+)\\//), greenhouse: jobUrl.match(/(?:boards|job-boards)\\.greenhouse\\.io\\/([^\\/]+)\\//), workday: jobUrl.match(/([^.\\/]+)\\.wd\\d+\\.myworkdayjobs\\.com\\//), workable: jobUrl.match(/apply\\.workable\\.com\\/([^\\/]+)\\//) };\n  for (const [src, match] of Object.entries(m)) { if (match) { company = match[1]; source = src; break; } }\n  return [{ json: { chat_id: chatId, job_number: 0, direct_url: jobUrl, source, company_slug: company, greenhouse_id: null, job: { job_id: `direct-${company}-0`, title: '', company, location: '', url: jobUrl, description_snippet: '' } } }];\n}\nif (!jobNumber) return [{ json: { chat_id: chatId, error: 'No job number provided. Reply with a number (1-5) after a job search, or paste a job URL directly.' } }];\nconst lastJobs = staticData.last_jobs || {};\nconst job = lastJobs[jobNumber];\nif (!job) return [{ json: { chat_id: chatId, error: `Job #${jobNumber} not found. Run a job search first, or paste a job URL directly.` } }];\n// s52: reject a stale list -- a scheduled digest can silently replace the\n// numbering hours after the user last saw it (same staleness class already\n// guarded for last_pasted_jd, just no per-item id to key off here).\nconst listAgeSec = staticData.last_jobs_created_at ? (Date.now() - new Date(staticData.last_jobs_created_at).getTime()) / 1000 : 0;\nif (listAgeSec > 14400) return [{ json: { chat_id: chatId, error: `That job list has expired (a newer search or scheduled digest replaced it). Please run a job search again and reply with a fresh number.` } }];\nconst parts = job.job_id.split('-');\nconst greenhouseId = parts.pop();\nconst companySlug = parts.join('-');\nreturn [{ json: { chat_id: chatId, job_number: jobNumber, company_slug: companySlug, greenhouse_id: greenhouseId, source: job.source || 'greenhouse', job } }];"
       },
       "id": "40364d70-e69d-4b1a-a63e-6643bb1b7b62",
       "name": "Retrieve Job",
@@ -815,7 +815,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Store Apply Context — WS4: content-shape aware. Reads the merged plain-text\n// content from Pick Resume LaTeX (falls back to raw Parse Pass2 for older/legacy\n// executions); also now the sole writer of sd.last_resume_json (moved off Save\n// Apply Context, which ran mid-flight on the cover branch and needed a try/catch\n// guard since the resume branch might not have finished -- this node runs after\n// Merge PDFs, so both branches are always done).\nconst staticData = $getWorkflowStaticData('global');\nconst ctx = $('Prepare Apply Context').first().json;\n// s48: backfill display identity from Step0's JD extraction when the URL-paste\n// path produced 'unknown'/scrape-junk (Step0 always runs before this node).\ntry {\n  const s0 = ($('Parse Step0').first().json || {}).step0 || {};\n  if ((!ctx.company || ctx.company === 'unknown') && s0.companyName) ctx.company = s0.companyName;\n  if (ctx.job_number === 0 && s0.roleName) ctx.job_title = s0.roleName;\n} catch (e) {}\nlet resumeJson = null;\ntry {\n  const picked = $('Pick Resume LaTeX').first().json || {};\n  if (picked.content && Array.isArray(picked.content.experience)) resumeJson = picked.content;\n} catch (e) { resumeJson = null; }\nif (!resumeJson) {\n  try { const p = $('Parse Pass2').first().json || {}; resumeJson = p.pass2 || p || null; } catch (e) { resumeJson = null; }\n}\nlet coverJson = null;\ntry { coverJson = $('Parse Cover Pass2').first().json || null; } catch (e) { coverJson = null; }\nstaticData.last_apply = { job_id: ctx.job_id || ctx.job_number, job_title: ctx.job_title, company: ctx.company, seniority_mode: ctx.seniority_mode, resume_json: resumeJson, cover_json: coverJson, forge_score: ctx.forge_score || null, skeleton_mode: ctx.seniority_mode, resume_text: ctx.resume_text || '', personal: ctx.personal || {}, resume_skeleton: ctx.resume_skeleton || '', cover_skeleton: ctx.cover_skeleton || '', job_description: ctx.job_description || '', location: ctx.location || '', timestamp: new Date().toISOString() };\nif (resumeJson && Array.isArray(resumeJson.experience)) { staticData.last_resume_json = resumeJson; }\nreturn [{ json: { chat_id: ctx.chat_id, message: \"\\u2705 *Done!* Resume and cover letter delivered.\\n\\nReply with changes ('shorter', 'more Python', 'swap bullet 2') or 'track' to save this application.\" } }];"
+        "jsCode": "// Store Apply Context — WS4: content-shape aware. Reads the merged plain-text\n// content from Pick Resume LaTeX (falls back to raw Parse Pass2 for older/legacy\n// executions); also now the sole writer of sd.last_resume_json (moved off Save\n// Apply Context, which ran mid-flight on the cover branch and needed a try/catch\n// guard since the resume branch might not have finished -- this node runs after\n// Merge PDFs, so both branches are always done).\nconst staticData = $getWorkflowStaticData('global');\nconst ctx = $('Prepare Apply Context').first().json;\n// s48: backfill display identity from Step0's JD extraction when the URL-paste\n// path produced 'unknown'/scrape-junk (Step0 always runs before this node).\ntry {\n  const s0 = ($('Parse Step0').first().json || {}).step0 || {};\n  if ((!ctx.company || ctx.company === 'unknown') && s0.companyName) ctx.company = s0.companyName;\n  if (ctx.job_number === 0 && s0.roleName) ctx.job_title = s0.roleName;\n} catch (e) {}\nlet resumeJson = null;\ntry {\n  const picked = $('Pick Resume LaTeX').first().json || {};\n  if (picked.content && Array.isArray(picked.content.experience)) resumeJson = picked.content;\n} catch (e) { resumeJson = null; }\nif (!resumeJson) {\n  try { const p = $('Parse Pass2').first().json || {}; resumeJson = p.pass2 || p || null; } catch (e) { resumeJson = null; }\n}\nlet coverJson = null;\ntry { coverJson = $('Parse Cover Pass2').first().json || null; } catch (e) { coverJson = null; }\nstaticData.last_apply = { job_id: ctx.job_id || ctx.job_number, job_title: ctx.job_title, company: ctx.company, seniority_mode: ctx.seniority_mode, resume_json: resumeJson, cover_json: coverJson, forge_score: ctx.forge_score || null, skeleton_mode: ctx.seniority_mode, resume_text: ctx.resume_text || '', personal: ctx.personal || {}, resume_skeleton: ctx.resume_skeleton || '', cover_skeleton: ctx.cover_skeleton || '', job_description: ctx.job_description || '', location: ctx.location || '', timestamp: new Date().toISOString() };\nif (resumeJson && Array.isArray(resumeJson.experience)) { staticData.last_resume_json = resumeJson; }\nstaticData.jd_generate_inflight = null;\nreturn [{ json: { chat_id: ctx.chat_id, message: \"\\u2705 *Done!* Resume and cover letter delivered.\\n\\nReply with changes ('shorter', 'more Python', 'swap bullet 2') or 'track' to save this application.\" } }];"
       },
       "id": "148106f3-296e-46e1-9ece-a0442d62f811",
       "name": "Store Apply Context",
@@ -5818,7 +5818,8 @@
       ],
       "retryOnFail": true,
       "maxTries": 3,
-      "waitBetweenTries": 1000
+      "waitBetweenTries": 1000,
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -5953,6 +5954,130 @@
         28948,
         48154
       ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Input').first().json.chat_id }}",
+        "text": "📋 *Reading your pasted job description...*",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "45da204b-53f0-4ed7-87e5-8d6ef559dec6",
+      "name": "Send JD Paste Ack",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        26824,
+        49504
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let chatId; try { chatId = $('Extract Input').first().json.chat_id; } catch (e) { chatId = null; }\nreturn [{ json: { chat_id: chatId, error: \"Couldn't read that job description (the extraction model failed after 3 tries). Please paste it again — plain text works best.\" } }];"
+      },
+      "id": "6f868408-6395-426c-8b71-dc2fddedd5ce",
+      "name": "JD Extract Failed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        27224,
+        49704
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "callback",
+        "queryId": "={{ $('Extract Callback').first().json.callback_query_id }}",
+        "additionalFields": {}
+      },
+      "id": "1eb2f960-3198-4f12-96b6-5555c86812ef",
+      "name": "Answer JD Generate Callback",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        23324,
+        48854
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Callback').first().json.chat_id }}",
+        "text": "⚙️ *Generating your tailored resume + cover letter from the pasted JD...* (~1 min)",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "22e4b189-e0a4-4966-82ce-d02af29542dd",
+      "name": "Send JD Generate Ack",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        23624,
+        48854
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "callback",
+        "queryId": "={{ $('Extract Callback').first().json.callback_query_id }}",
+        "additionalFields": {}
+      },
+      "id": "b4fb7a7d-877a-426d-a7d4-313b7e3b75e4",
+      "name": "Answer JD Contacts Callback",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        23324,
+        49354
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Callback').first().json.chat_id }}",
+        "text": "👥 *Finding contacts for the pasted JD...* (~30 sec)",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "03e46ffd-8ea4-42a4-8ee5-9a3d89ff8d56",
+      "name": "Send JD Contacts Ack",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        23624,
+        49354
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "XayaGFL8EdfqdoR7",
+          "name": "CareerForge_Telegram"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -6120,7 +6245,7 @@
         ],
         [
           {
-            "node": "JD Paste Extract",
+            "node": "Send JD Paste Ack",
             "type": "main",
             "index": 0
           }
@@ -7589,14 +7714,14 @@
         ],
         [
           {
-            "node": "Retrieve Job",
+            "node": "Answer JD Generate Callback",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Prepare Research",
+            "node": "Answer JD Contacts Callback",
             "type": "main",
             "index": 0
           }
@@ -9150,6 +9275,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "JD Extract Failed",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -9176,6 +9308,72 @@
         [
           {
             "node": "Prepare Job Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send JD Paste Ack": {
+      "main": [
+        [
+          {
+            "node": "JD Paste Extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JD Extract Failed": {
+      "main": [
+        [
+          {
+            "node": "Send Job Not Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer JD Generate Callback": {
+      "main": [
+        [
+          {
+            "node": "Send JD Generate Ack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send JD Generate Ack": {
+      "main": [
+        [
+          {
+            "node": "Retrieve Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer JD Contacts Callback": {
+      "main": [
+        [
+          {
+            "node": "Send JD Contacts Ack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send JD Contacts Ack": {
+      "main": [
+        [
+          {
+            "node": "Prepare Research",
             "type": "main",
             "index": 0
           }
