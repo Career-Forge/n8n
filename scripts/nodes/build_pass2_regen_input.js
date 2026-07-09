@@ -12,7 +12,9 @@ const gaps = (ats.gaps || []).slice(0, 5);
 
 const antiHalluc = '\n\nCRITICAL ANTI-HALLUCINATION RULES:\n'
   + '- NEVER mention company values, leadership principles, or culture keywords by name in any bullet\n'
+  + '- NEVER write phrases like "demonstrating Customer Obsession", "aligned with LP", or "showing Ownership"\n'
   + '- Bullets must read as natural achievements, not value-signaling statements\n'
+  + '- The resume should work equally well for ANY company — no company-specific framing\n'
   + '- Use ONLY the verbatim excerpts from Pass 1 decisions as source material — do NOT invent metrics, technologies, or achievements';
 const atsGuidance = '\n\n== ATS RETRY ==\nThe previous resume scored ' + (ats.overall_score || 0) + '/100. '
   + 'Without fabricating anything, surface TRUTHFUL coverage of these weak/missing areas by choosing wording and emphasis from the existing excerpts that legitimately addresses them: '
