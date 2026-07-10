@@ -8,14 +8,14 @@ What's live, and what's next. For deep implementation history, see git log and c
 - **Tailored resume + cover letter generation** — a deterministic, tier-aware content plan (fresher/junior/mid/senior) decides how many roles/projects/bullets to select and how long each bullet runs; an LLM writes within that plan, never trusted to also decide the shape. ATS-score gated with an automatic retry-and-improve loop. Verbatim-facts-only — nothing on a generated document is invented.
 - **Resume setup** — a one-time interactive JSON-template flow over Telegram (no file uploads to a server, no separate onboarding doc to read).
 - **Company intel, cold outreach, salary data, application tracking** — all sourced from live multi-provider search with reciprocal-rank-fusion merge, cached with a TTL to avoid re-researching the same company repeatedly.
-- **A self-growing job registry** — every search that surfaces a job from a known ATS (Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Eightfold, and a few single-company integrations) permanently adds that company to the background poller's coverage.
+- **A self-growing job registry** — every search that surfaces a job from a known ATS (Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Eightfold, and a few single-company integrations) permanently adds that company to the background poller's coverage. Workday's seeded-tenant list covers Intel, Adobe, Target, Walmart, Visa, and Mastercard today.
+- **Resume section customization** — `sections:`/`order:` text commands, or a tap-to-toggle inline keyboard (send "sections") for the same thing.
 - **18 intents**, all documented in the bot's own `/help` text and in [README.md](README.md)'s Features table.
 - **4 deployment tiers** — local Docker, a small VPS, Render/Railway free tier, and n8n Cloud (with real caveats about what n8n Cloud can't run, documented in [DEPLOYMENT.md](DEPLOYMENT.md)).
 
 ## In progress / next up
 
-- **Resume section customization UX** — the `sections:`/`order:` text commands work today; an inline-keyboard tap-to-toggle alternative is in progress.
-- **Poller adapter coverage** — Greenhouse/Lever/Ashby/Workable/Recruitee/SmartRecruiters plus Workday, Apple, Amazon, and Oracle's own career sites are integrated; expanding the seeded-tenant list for the generic multi-tenant adapter types (Workday, SmartRecruiters, Eightfold) continues opportunistically.
+- **Poller adapter coverage** — Greenhouse/Lever/Ashby/Workable/Recruitee/SmartRecruiters plus Workday, Apple, Amazon, and Oracle's own career sites are integrated; SmartRecruiters/Eightfold tenant ids are opaque per-company strings not derivable from a brand name, so growing that coverage needs a quick manual lookup per company rather than a bulk add — see the poller adapter notes in `workflows/CareerForge_ATS_Poller.json`.
 
 ## Planned, not started
 
