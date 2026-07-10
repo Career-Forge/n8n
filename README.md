@@ -45,17 +45,23 @@ flowchart TD
 
 | Intent | What it does | Example message |
 |--------|-------------|-----------------|
-| **find_jobs** | Searches structured job APIs (RemoteOK, Adzuna) + web, dedupes, scores fit **/100** with sub-scores, returns top matches | "find AI jobs in NYC" |
+| **find_jobs** | Searches structured job APIs + a pgvector/tsvector job cache + web, dedupes, scores fit **/100** with sub-scores, returns top matches | "find AI jobs in NYC" |
 | **apply** | 2-phase engine: selects content against the JD, frames bullets to **researched company values + mission**, scores **ATS** and auto-improves if weak — then resume + cover PDFs | "3" (applies to job #3 from last search) |
 | **revise** | Iterates on the last resume/cover with chat memory | "make it shorter" |
 | **score** | Scores your resume against a job description (**0-100**, explainable) | "score my resume for this role" |
 | **intel** | Multi-source company health report (layoffs, funding, H1B, culture, **mission/vision**), cached | "intel about Databricks" |
-| **outreach** | Finds real recruiters/hiring managers + writes outreach citing a **real public hook**; optional verified contacts (Apollo/Hunter, BYOK) | "who should I contact at Anthropic" |
-| **draft** | Writes the outreach variants for a chosen contact | "draft 1" |
+| **outreach** | Finds real recruiters/hiring managers + writes outreach citing a **real public hook**; optional verified contacts (Apollo/Hunter, BYOK). Reply "draft 1" for a specific contact's variants | "who should I contact at Anthropic" |
 | **salary** | Salary ranges + negotiation advice | "salary for ML Engineer at Stripe" |
-| **costs** | API/LLM spend summary (last 30 days, from `tool_cost_log`) | "costs" |
 | **track** | Logs and lists your applications | "track" |
 | **status** | Pipeline status overview | "status" |
+| **setup_resume** | Upload/set up your master resume (interactive JSON template) | send a resume file, or "set up my resume" |
+| **view_prefs** | Show your saved preferences | "/prefs" |
+| **update_prefs** | Save a durable preference | "remember I need cap-exempt sponsors" |
+| **forget_pref** | Remove a saved preference | "/prefs forget location" |
+| **verbose_toggle** | Toggle showing search queries/reasoning | "/verbose on" |
+| **check_resume** | Check whether a resume is saved | "do you have my resume?" |
+| **costs** | API/LLM spend summary (last 30 days, from `tool_cost_log`) | "costs" |
+| **jd_paste** | Paste a full job description directly — no search needed | paste a job posting's full text |
 | **help** | Command list | "help" |
 
 ---
@@ -79,15 +85,17 @@ Cheap/free models for classification and scoring. Paid models only where writing
 
 | Task | Model | Cost |
 |------|-------|------|
-| Intent routing | `meta-llama/llama-3.3-70b-instruct:free` | Free |
-| Seniority detection | `deepseek/deepseek-chat-v3.1:free` | Free |
-| Job scoring | `google/gemini-3.1-flash-lite-preview` | ~$0.001/batch |
-| ForgeScore | `deepseek/deepseek-chat-v3.1:free` | Free |
-| Contact extraction | `deepseek/deepseek-chat-v3.1:free` | Free |
-| Company intel synthesis | `deepseek/deepseek-chat-v3.1:free` | Free |
-| **ResumeForge** | `anthropic/claude-sonnet-4.6` | ~$0.05 |
-| **CoverForge** | `anthropic/claude-sonnet-4.6` | ~$0.05 |
-| **Outreach writer** | `anthropic/claude-sonnet-4.6` | ~$0.05 |
+| Intent routing | `openai/gpt-5.4-mini` | ~$0.001/call |
+| Seniority detection | `deepseek/deepseek-v4-flash` | ~$0.001/call |
+| Job scoring | `deepseek/deepseek-v4-pro` | ~$0.005/batch |
+| ForgeScore | `deepseek/deepseek-v4-flash` | ~$0.001/call |
+| Contact extraction | `deepseek/deepseek-v4-flash` | ~$0.001/call |
+| Company intel synthesis | `deepseek/deepseek-v4-flash` | ~$0.001/call |
+| Salary analysis | `deepseek/deepseek-v4-flash` | ~$0.001/call |
+| **ResumeForge / CoverForge** | `anthropic/claude-sonnet-4-6` | ~$0.05 |
+| **Outreach writer** | `anthropic/claude-sonnet-4-6` | ~$0.05 |
+
+Costs above are directional (verify current OpenRouter pricing at [openrouter.ai/models](https://openrouter.ai/models) before relying on them) — model IDs are pulled directly from the live workflow's `*Model` nodes, so those are authoritative.
 
 ---
 
@@ -209,7 +217,7 @@ careerforge-n8n/
 ## How the Resume Pipeline Works
 
 1. You text a job number (e.g., "3") after a job search
-2. **SeniorityDetector** reads your master resume, picks the right LaTeX skeleton (fresher/experienced/senior)
+2. **SeniorityDetector** classifies your career tier (fresher/junior/mid/senior) — there's one shared resume skeleton; tier instead drives an adaptive content plan (how many roles/projects/bullets to select and how long each bullet runs, enforced deterministically in code, not left to the LLM)
 3. **ForgeScore** scores your fit (0-10). Below 6? You get a warning with specific gaps
 4. **ResumeForge** (Claude Sonnet 4.6) generates structured JSON — tailored bullets, keyword-aligned, metric-preserved
 5. A JS node deterministically fills the LaTeX skeleton with the JSON content
@@ -245,7 +253,7 @@ Configure 1, 2, or 3 providers. The system gracefully degrades — works with an
 
 | Component | Status |
 |-----------|--------|
-| Intent router (10 intents) | Complete |
+| Intent router (18 intents) | Complete |
 | find_jobs (Greenhouse + scoring) | Complete |
 | apply (PDF pipeline) | Complete |
 | revise (chat memory iteration) | Complete |

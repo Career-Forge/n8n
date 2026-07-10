@@ -567,7 +567,7 @@ Zero ops. No Docker, no servers, no reverse proxies. You pay for convenience.
 - OpenRouter: type "OpenAI-compatible", base URL `https://openrouter.ai/api/v1`, paste your API key
 - Telegram: paste your bot token
 
-**4. Activate** — toggle the workflow on. Done.
+**4. Activate** — toggle the workflow on. `apply`/`revise`/`score`/`intel`/`outreach`/`salary`/`track`/`status`/`setup_resume` and friends work at this point. `find_jobs` will run but its cache-first search lane won't — see the compatibility note above and "What you don't get" below.
 
 ### What you get
 - 2500 executions/month (Starter plan)
@@ -575,7 +575,9 @@ Zero ops. No Docker, no servers, no reverse proxies. You pay for convenience.
 - Built-in HTTPS, no webhook setup needed
 - n8n team handles updates and uptime
 
-### What you don't get
+### What you don't get, out of the box
+- **Local bge-m3 embeddings + pgvector hybrid job-cache search** — n8n Cloud's managed Postgres is not pgvector-enabled and there's no sidecar for Ollama. `find_jobs` degrades to web-search-only results (no cached/verified-active tier, no `🔓` badge) unless you wire in a hosted embeddings API and a separate pgvector-enabled Postgres (e.g. Neon, Supabase) yourself — not a supported preset, DIY.
+- The background ATS poller (`CareerForge_ATS_Poller.json`) has nothing to write to without that pgvector Postgres, so it's not worth activating on this tier as-is.
 - Volume mounts for templates/prompts — you'll edit prompts directly in the n8n UI
 - Custom LaTeX service — you'd need to host that separately or use a cloud LaTeX API
 - Shell access for debugging

@@ -1,6 +1,6 @@
 # Architecture
 
-CareerForge is a single n8n workflow (111 nodes) that handles 10 intents through one Telegram bot. This doc walks through the system design, data flow, and key implementation patterns.
+CareerForge is a single n8n workflow (291 nodes) that handles 18 intents through one Telegram bot, plus a separate background poller workflow that keeps a local job cache warm. This doc walks through the system design, data flow, and key implementation patterns.
 
 ## System Overview
 
@@ -37,7 +37,7 @@ Every message hits the Intent Router first. It's a Basic LLM Chain node running 
 
 ## Intent Router
 
-The router classifies into 10 intents and extracts entities (company, role, location, job number). Key design choice: using an LLM router instead of regex means users can say "who should I reach out to at Stripe" and it correctly maps to `outreach` with `company: Stripe`. No keyword matching, no training data.
+The router classifies into 18 intents and extracts entities (company, role, location, job number). Key design choice: using an LLM router instead of regex means users can say "who should I reach out to at Stripe" and it correctly maps to `outreach` with `company: Stripe`. No keyword matching, no training data.
 
 The router prompt lives in `prompts/IntentRouter.md`. It includes few-shot examples for ambiguous cases (e.g., a bare number like "3" maps to `apply` if there's a recent job search).
 
@@ -48,7 +48,7 @@ The heaviest branch. Turns a user message like "apply to job 3" into two tailore
 ```mermaid
 flowchart TD
     START["Route Intent<br/>output: apply"] --> EXTRACT["Extract Input<br/><i>chat_id, message_text</i>"]
-    EXTRACT --> PARSE["Parse Personal Info<br/><i>Read master_resume.txt</i>"]
+    EXTRACT --> PARSE["Parse Personal Info<br/><i>Read the stored resume JSON (see MASTER_RESUME_GUIDE.md)</i>"]
     PARSE --> SENIORITY["SeniorityDetector<br/><i>DeepSeek :free</i>"]
     SENIORITY --> LOAD["Load Skeletons<br/><i>Read .tex files from /data/templates</i>"]
     LOAD --> FORGESCORE["ForgeScore<br/><i>DeepSeek :free</i>"]
@@ -157,22 +157,22 @@ This means CareerForge works with SQLite — no Postgres required for basic func
 
 ## Model Routing
 
-Free models handle classification and extraction. Paid models handle writing.
+Cheap/fast models handle classification and extraction. Paid models handle writing.
 
 | Task | Model | Cost | Why |
 |------|-------|------|-----|
-| Intent routing | `meta-llama/llama-3.3-70b-instruct:free` | $0 | Fast, reliable classification |
-| Seniority detection | `deepseek/deepseek-chat-v3.1:free` | $0 | Simple JSON output |
-| ForgeScore | `deepseek/deepseek-chat-v3.1:free` | $0 | Structured scoring |
-| Job scoring | `google/gemini-3.1-flash-lite-preview` | ~$0.001 | Quality matters for ranking |
-| Resume generation | `anthropic/claude-sonnet-4.6` | ~$0.05 | Writing quality |
-| Cover letter | `anthropic/claude-sonnet-4.6` | ~$0.05 | Writing quality |
-| Outreach drafts | `anthropic/claude-sonnet-4.6` | ~$0.05 | Tone sensitivity |
-| Contact extraction | `deepseek/deepseek-chat-v3.1:free` | $0 | Pattern matching |
-| Company intel | `deepseek/deepseek-chat-v3.1:free` | $0 | Source synthesis |
-| Salary analysis | `deepseek/deepseek-chat-v3.1:free` | $0 | Data summarization |
+| Intent routing | `openai/gpt-5.4-mini` | ~$0.001 | Fast, reliable classification, native tool-calling |
+| Seniority detection | `deepseek/deepseek-v4-flash` | ~$0.001 | Simple JSON output |
+| ForgeScore | `deepseek/deepseek-v4-flash` | ~$0.001 | Structured scoring |
+| Job scoring | `deepseek/deepseek-v4-pro` | ~$0.005 | Quality matters for ranking |
+| Resume generation | `anthropic/claude-sonnet-4-6` | ~$0.05 | Writing quality |
+| Cover letter | `anthropic/claude-sonnet-4-6` | ~$0.05 | Writing quality |
+| Outreach drafts | `anthropic/claude-sonnet-4-6` | ~$0.05 | Tone sensitivity |
+| Contact extraction | `deepseek/deepseek-v4-flash` | ~$0.001 | Pattern matching |
+| Company intel | `deepseek/deepseek-v4-flash` | ~$0.001 | Source synthesis |
+| Salary analysis | `deepseek/deepseek-v4-flash` | ~$0.001 | Data summarization |
 
-All models route through OpenRouter. The $10 one-time deposit unlocks 1000 free-model calls per day — enough for heavy daily use.
+All models route through OpenRouter — model IDs above are pulled directly from the live workflow's `*Model` nodes; verify current pricing at [openrouter.ai/models](https://openrouter.ai/models) before relying on the Cost column.
 
 ## Deployment Tiers
 
@@ -219,7 +219,7 @@ See [DEPLOYMENT.md](../DEPLOYMENT.md) for step-by-step instructions for each tie
 ## File Map
 
 ```
-workflows/CareerForge_Master_local.json   ← THE bot (275 nodes)
+workflows/CareerForge_Master_local.json   ← THE bot (291 nodes)
 workflows/CareerForge_ATS_Poller.json     ← Background job-registry poller
 workflows/CareerForge_Registry_Seeder.json ← One-time registry seed
 workflows/archive/                        ← Historical snapshots, do not import
