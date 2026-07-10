@@ -6086,6 +6086,46 @@
         30422,
         48728
       ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract Registry Candidates -- scans this find's Tier-1 ATS jobs and emits one\n// item per unique (ats_type, slug) so Upsert Discovered Companies can grow the\n// poller's registry. Never blocks the main flow (side branch off Aggregate Jobs).\nfunction extractCandidate(job) {\n  const url = job.url || '';\n  const label = job.tier_label || '';\n  const name = String(job.company || '').trim();\n  if (!name) return null;\n  let m;\n  if (label === 'ats:greenhouse' && (m = url.match(/(?:boards|job-boards)\\.greenhouse\\.io\\/([^\\/?#]+)/i))) {\n    return { name, ats_type: 'greenhouse', slug: m[1], api_base: '' };\n  }\n  if (label === 'ats:lever' && (m = url.match(/jobs\\.lever\\.co\\/([^\\/?#]+)/i))) {\n    return { name, ats_type: 'lever', slug: m[1], api_base: '' };\n  }\n  if (label === 'ats:ashby' && (m = url.match(/jobs\\.ashbyhq\\.com\\/([^\\/?#]+)/i))) {\n    let slug; try { slug = decodeURIComponent(m[1]); } catch (e) { slug = m[1]; }\n    return { name, ats_type: 'ashby', slug, api_base: '' };\n  }\n  if (label === 'ats:workday' && (m = url.match(/([\\w-]+)\\.(wd\\d+)\\.myworkdayjobs\\.com\\/(?:[a-z]{2}-[A-Z]{2}\\/)?([^\\/?#]+)/i))) {\n    return { name, ats_type: 'workday', slug: m[3], api_base: m[1] + '.' + m[2] };\n  }\n  if (label === 'ats:smartrecruiters' && (m = url.match(/jobs\\.smartrecruiters\\.com\\/([^\\/?#]+)/i))) {\n    return { name, ats_type: 'smartrecruiters', slug: m[1], api_base: '' };\n  }\n  if (label === 'ats:workable' && (m = url.match(/apply\\.workable\\.com\\/([^\\/?#]+)/i))) {\n    return { name, ats_type: 'workable', slug: m[1], api_base: '' };\n  }\n  return null;\n}\n\nconst agg = $input.first().json || {};\nconst jobs = Array.isArray(agg.jobs) ? agg.jobs : [];\nconst seen = new Set();\nconst out = [];\nfor (const job of jobs) {\n  if (job.source_tier !== 1) continue;\n  const c = extractCandidate(job);\n  if (!c) continue;\n  const key = c.ats_type + '|' + c.slug.toLowerCase();\n  if (seen.has(key)) continue;\n  seen.add(key);\n  out.push({ json: c });\n}\nreturn out;"
+      },
+      "id": "005ab38f-8cc9-45f1-9777-f311063bafe6",
+      "name": "Extract Registry Candidates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        33208,
+        46460
+      ],
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO companies (name, ats_type, slug, api_base, next_poll_at)\nVALUES ($1, $2, $3, NULLIF($4, '')::text, now())\nON CONFLICT (ats_type, slug) DO NOTHING",
+        "options": {
+          "queryReplacement": "={{ [$json.name, $json.ats_type, $json.slug, $json.api_base || ''] }}"
+        }
+      },
+      "id": "e5136b41-a59b-4ae8-bd2c-e1c7b1e03ba3",
+      "name": "Upsert Discovered Companies",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        33468,
+        46460
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
     }
   ],
   "pinData": {},
@@ -6272,6 +6312,11 @@
         [
           {
             "node": "Verify Job Links",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract Registry Candidates",
             "type": "main",
             "index": 0
           }
@@ -9395,6 +9440,17 @@
         [
           {
             "node": "Send Job Not Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Registry Candidates": {
+      "main": [
+        [
+          {
+            "node": "Upsert Discovered Companies",
             "type": "main",
             "index": 0
           }
