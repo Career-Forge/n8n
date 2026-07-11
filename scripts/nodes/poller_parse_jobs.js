@@ -112,20 +112,22 @@ if (selfFetchCompanies.length) {
     async function fetchWorkday(company) {
       const apiBase = String(company.api_base || '');
       const dot = apiBase.indexOf('.');
-      if (dot === -1) return [];
+      if (dot === -1) return { rows: [], ok: false };
       const tenant = apiBase.slice(0, dot), wdN = apiBase.slice(dot + 1);
-      if (!tenant || !wdN || !company.slug) return [];
+      if (!tenant || !wdN || !company.slug) return { rows: [], ok: false };
       const host = tenant + '.' + wdN + '.myworkdayjobs.com';
       const path = '/wday/cxs/' + tenant + '/' + company.slug + '/jobs';
       const LIMIT = 20, MAX_PAGES = 5;
       let cachedTotal = null;
       const rows = [];
+      let ok = false;
       for (let page = 0; page < MAX_PAGES; page++) {
         const offset = page * LIMIT;
         const reqBody = JSON.stringify({ appliedFacets: {}, limit: LIMIT, offset, searchText: '' });
         const res = await httpFetch(host, path, 'POST', { 'Content-Type': 'application/json' }, reqBody);
         if (res.status !== 200) break;
         let data; try { data = JSON.parse(res.body); } catch (e) { break; }
+        ok = true;
         if (cachedTotal === null) cachedTotal = data.total || 0;
         const postings = data.jobPostings || [];
         if (!postings.length) break;
@@ -135,18 +137,20 @@ if (selfFetchCompanies.length) {
         if (rows.filter((r) => TITLE_RX.test(r.title)).length >= CAP) break;
         if (offset + LIMIT >= cachedTotal) break;
       }
-      return rows;
+      return { rows, ok };
     }
 
     function slugifyTitle(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'position'; }
     async function fetchApple(company) {
       const LIMIT_PAGES = 5;
       const rows = [];
+      let ok = false;
       for (let page = 1; page <= LIMIT_PAGES; page++) {
         const reqBody = JSON.stringify({ query: '', locale: 'en-us', sort: 'newest', filters: {}, page, format: 'json' });
         const res = await httpFetch('jobs.apple.com', '/api/v1/search', 'POST', { 'Content-Type': 'application/json' }, reqBody);
         if (res.status !== 200) break;
         let data; try { data = JSON.parse(res.body); } catch (e) { break; }
+        ok = true;
         const results = (data.res && data.res.searchResults) || [];
         if (!results.length) break;
         for (const j of results) {
@@ -156,15 +160,16 @@ if (selfFetchCompanies.length) {
         if (rows.filter((r) => TITLE_RX.test(r.title)).length >= CAP) break;
         if (results.length < 20) break; // short of a full page -- no more results
       }
-      return rows;
+      return { rows, ok };
     }
 
     async function fetchEightfold(company) {
       const host = company.api_base, domain = company.slug;
-      if (!host || !domain) return [];
+      if (!host || !domain) return { rows: [], ok: false };
       const LIMIT = 10, MAX_PAGES = 5;
       let tier = 'smartapply';
       const rows = [];
+      let ok = false;
       for (let page = 0; page < MAX_PAGES; page++) {
         const start = page * LIMIT;
         const qs = 'domain=' + encodeURIComponent(domain) + '&start=' + start + '&num=' + LIMIT;
@@ -177,6 +182,7 @@ if (selfFetchCompanies.length) {
         }
         if (res.status !== 200) break;
         let data; try { data = JSON.parse(res.body); } catch (e) { break; }
+        ok = true;
         const positions = (tier === 'pcsx' ? ((data.data && data.data.positions) || []) : (data.positions || []));
         if (!positions.length) break;
         for (const j of positions) {
@@ -193,18 +199,25 @@ if (selfFetchCompanies.length) {
         }
         if (rows.filter((r) => TITLE_RX.test(r.title)).length >= CAP) break;
       }
-      return rows;
+      return { rows, ok };
     }
 
     async function fetchOne(company) {
       if (company.ats_type === 'workday') return fetchWorkday(company);
       if (company.ats_type === 'apple') return fetchApple(company);
       if (company.ats_type === 'eightfold') return fetchEightfold(company);
-      return [];
+      return { rows: [], ok: false };
     }
 
-    const results = await Promise.all(selfFetchCompanies.map((c) => Promise.race([fetchOne(c).catch(() => []), wait(20000, [])])));
-    for (const rows of results) for (const r of rows) push(r.board, r);
+    const results = await Promise.all(selfFetchCompanies.map((c) => Promise.race([fetchOne(c).catch(() => ({ rows: [], ok: false })), wait(20000, { rows: [], ok: false })])));
+    const selfFetchOutcomes = {};
+    for (let i = 0; i < results.length; i++) {
+      const c = selfFetchCompanies[i];
+      const { rows, ok } = results[i];
+      selfFetchOutcomes[c.board] = { ok, count: rows.length };
+      for (const r of rows) push(r.board, r);
+    }
+    $getWorkflowStaticData('global').self_fetch_outcomes = selfFetchOutcomes;
   } catch (e) {} // require('https') unavailable or unexpected failure -- degrade to whatever the sync pass already found
 }
 
