@@ -31,7 +31,7 @@ Then, in the n8n UI (`http://localhost:5678`, basic-auth from `.env`):
 3. Activate it. Telegram needs an HTTPS `WEBHOOK_URL` (use ngrok/Cloudflare Tunnel for local dev), then set the bot webhook to `<WEBHOOK_URL>/webhook/<telegram-trigger-path>`.
 4. Apply the DB schema if starting fresh: `db/schema.sql`.
 
-> Ops note: the live workflow is edited via the `scripts/sN_*.js` patch scripts, never by hand-editing the 356 KB JSON. Each patch writes all three master copies, then you `docker cp` + `n8n import:workflow` + `update:workflow --active=true` + `docker restart`. See `plan_handout.md` for the exact recipe.
+> Ops note: the live workflow is edited via the `scripts/sN_*.js` patch scripts, never by hand-editing the 356 KB JSON. Each patch writes all three master copies, then you `docker cp` + `n8n import:workflow` + `update:workflow --active=true` + `docker restart`. See `docs/archive/plan_handout.md` for the exact recipe.
 
 ---
 
@@ -67,6 +67,7 @@ Key-value config the workflow reads at runtime. Insert with SQL (`careerforge` D
 |---|---|---|
 | `telegraph_token` | your Telegraph access token (manual, one-time — see below) | Telegraph long-list rendering. |
 | `adzuna_app_id` / `adzuna_app_key` | your free Adzuna keys | Free structured job lane (real location + salary). [api.adzuna.com] |
+| `jsearch_key` | your RapidAPI key for JSearch | `JSearch Fetch` node, another structured job lane. [rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch] |
 | `apollo_enabled` | `true` / `false` (default off) | Turn on Apollo contact enrichment. |
 | `hunter_enabled` | `true` / `false` (default off) | Turn on Hunter email verification. |
 | `apollo_daily_limit` | integer (default 25) | Soft daily cap on Apollo credits (1 credit/match). |
@@ -101,7 +102,8 @@ Without this row, `find` still works but the long-result Telegraph page link is 
 | Ollama bge-m3 | Free (local) | `ollama pull bge-m3`. |
 | **Apollo** | Premium (BYOK) | Credential + `apollo_enabled=true`. |
 | **Hunter** | Premium (BYOK) | Credential + `hunter_enabled=true`. |
-| USAJobs / JSearch / Apify | Parked | Lanes not wired (need keys); see PLAN.md. |
+| USAJobs / Apify | Parked | Lanes not wired (need keys); see `docs/archive/PLAN.md`. |
+| JSearch | Free trial (RapidAPI) | Actually wired (`JSearch Fetch` node) -- needs `jsearch_key` in `app_settings` (section 5). |
 
 ---
 

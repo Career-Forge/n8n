@@ -162,13 +162,13 @@ careerforge-n8n/
 |-- DEPLOYMENT.md                      # 5 hosting tiers (local to cloud)
 |-- API.md                             # External services + cost math
 |-- LICENSE                            # MIT
-|-- PLAN.md                            # Refactor execution plan
 |
 |-- docs/
 |   |-- QUICKSTART.md                  # Docker + ngrok 10-min setup
 |   |-- MASTER_RESUME_GUIDE.md         # Template walkthrough
 |   |-- CUSTOMIZE_PROMPTS.md           # Tune voice and style
 |   |-- ARCHITECTURE.md                # System diagrams + deep dive
+|   |-- archive/                       # Superseded planning docs -- historical only
 |   +-- diagrams/                      # Mermaid .mmd sources
 |
 |-- workflows/
