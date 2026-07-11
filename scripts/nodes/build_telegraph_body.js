@@ -33,16 +33,20 @@ function scoreEmoji(s) { return s >= 70 ? '🟢' : s >= 55 ? '🟡' : '⚪'; }
 function tierGlyph(t, source) { return t === 1 ? (source === 'cache' ? '🔓' : '✅') : t === 2 ? '🌿' : t === 2.5 ? '🏢' : t === 3 ? '🌐' : ''; }
 function clean(slug) { return (slug || '').replace(/-/g,' ').replace(/\b\w/g, l => l.toUpperCase()); }
 function displayLocation(job) {
+  const loc = (job.location || '').trim();
+  const locOk = loc && !/^(unknown|n\/?a|null|undefined)$/i.test(loc);
   const dl = (job.detected_location || '').trim();
+  const dlOk = dl && !/^(unknown|n\/?a|null|undefined)$/i.test(dl);
   let base;
-  if (dl && !/^(unknown|n\/?a|null|undefined)$/i.test(dl)) base = dl;
+  // s57: an ATS-verified location (Verify Job Links' backfill) beats the
+  // LLM's snippet-derived guess -- only fall back to detected_location when
+  // this job's location was never deterministically verified.
+  if (job.location_verified === true && locOk) base = loc;
+  else if (dlOk) base = dl;
+  else if (locOk) base = loc;
   else {
-    const loc = (job.location || '').trim();
-    if (loc && !/^(unknown|n\/?a|null|undefined)$/i.test(loc)) base = loc;
-    else {
-      const hay = ((job.title || '') + ' ' + (job.description_snippet || '')).toLowerCase();
-      base = (intent.remote_preference === 'remote_only' || hay.includes('remote')) ? 'Remote' : 'Location not specified';
-    }
+    const hay = ((job.title || '') + ' ' + (job.description_snippet || '')).toLowerCase();
+    base = (intent.remote_preference === 'remote_only' || hay.includes('remote')) ? 'Remote' : 'Location not specified';
   }
   // F2: location filtering was active for this search but this job's location
   // couldn't be verified (Aggregate Jobs' 'unknown' branch) -- badge it rather
@@ -53,8 +57,11 @@ function displayLocation(job) {
 const rankedJobs = scored
   .map(s => ({ ...(jobMap[s.job_id] || {}), fit_score: s.fit_score, one_liner: s.one_liner, detected_location: s.detected_location, location_match: s.location_match, score100: s.score100, sub_scores: s.sub_scores, bottleneck: s.bottleneck, bin: s.bin }))
   .filter(j => j && j.url)
-  .filter(j => !(j.location_match === 'mismatch' && intent.location_canonical && intent.remote_preference !== 'remote_only'))
+  .filter(j => !(j.location_match === 'mismatch' && j.location_verified !== true && intent.location_canonical && intent.remote_preference !== 'remote_only'))
   .sort((a, b) => {
+    if (intent.sort_by === 'newest') {
+      return (new Date(b.updated_at || 0).getTime() || 0) - (new Date(a.updated_at || 0).getTime() || 0);
+    }
     const tierDiff = (a.source_tier || 99) - (b.source_tier || 99);
     if (tierDiff !== 0) return tierDiff;
     const scoreDiff = (b.score100 || 0) - (a.score100 || 0);
@@ -145,7 +152,7 @@ if (appendixJobs.length) {
   contentNodes.push({ tag: 'p', children: [{ tag: 'i', children: ['Ranked by search relevance only — the AI scorer only reviews the top 30 in depth. Treat these as a match ESTIMATE, not a verified fit.'] }] });
   for (const [i, job] of appendixJobs.entries()) {
     const tg = tierGlyph(job.source_tier, job.source);
-    contentNodes.push({ tag: 'h4', children: [(i + 1) + '. ' + (tg ? tg + ' ' : ''), { tag: 'a', attrs: { href: job.url }, children: [job.title || 'Unknown Role'] }] });
+    contentNodes.push({ tag: 'h4', children: [(rankedJobs.length + i + 1) + '. ' + (tg ? tg + ' ' : ''), { tag: 'a', attrs: { href: job.url }, children: [job.title || 'Unknown Role'] }] });
     const metaParts = [clean(job.company) || 'Unknown', displayLocation(job)];
     { const _sal = salaryStr(job); if (_sal) metaParts.push('💰 ' + _sal); }
     contentNodes.push({ tag: 'p', children: [{ tag: 'i', children: [metaParts.join(' · ')] }] });

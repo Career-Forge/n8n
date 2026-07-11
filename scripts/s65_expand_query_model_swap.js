@@ -1,7 +1,7 @@
 /**
- * s61_expand_query_model_swap.js -- fixes "AI jobs in Pune" silently failing
+ * s65_expand_query_model_swap.js -- fixes "AI jobs in Pune" silently failing
  * with "Couldn't figure out what role you're looking for," found in the same
- * live test as s60's dead-link bugs (exec id 337, ~1 min before exec 338).
+ * live test as s64's dead-link bugs (exec id 337, ~1 min before exec 338).
  *
  * Root-caused with real execution data: Expand Query Model (deepseek/
  * deepseek-v4-flash) produced a PERFECTLY VALID response -- role_families,

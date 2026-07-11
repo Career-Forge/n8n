@@ -170,11 +170,14 @@ filtered = filtered.filter(j => {
 // Sort: verified-location first (only matters when location filtering was
 // actually active -- location_verified is undefined on every job otherwise,
 // making this a no-op), then tier, then recency within tier.
+const _sortNewest = expandCtx.sort_by === 'newest';
 filtered.sort((a, b) => {
   const locDiff = (a.location_verified === true ? 0 : 1) - (b.location_verified === true ? 0 : 1);
   if (locDiff !== 0) return locDiff;
-  const tierDiff = (a.source_tier || 99) - (b.source_tier || 99);
-  if (tierDiff !== 0) return tierDiff;
+  if (!_sortNewest) {
+    const tierDiff = (a.source_tier || 99) - (b.source_tier || 99);
+    if (tierDiff !== 0) return tierDiff;
+  }
   const ad = new Date(a.updated_at || 0).getTime() || 0;
   const bd = new Date(b.updated_at || 0).getTime() || 0;
   return bd - ad;

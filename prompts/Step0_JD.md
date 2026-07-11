@@ -8,8 +8,8 @@ Extract structured requirements from the job description. Return ONLY valid JSON
   "dealbreakers": ["<non-negotiable requirements: specific degrees, years of experience, certifications, legal requirements>"],
   "targetTier": "<fresher|junior|mid|senior — based on years required and seniority language>",
   "keyTerms": ["<top 10 technical terms/skills mentioned in JD>"],
-  "companyName": "<exact company name as written in JD — e.g. 'Microsoft', 'Google', 'Amazon'>",
-  "roleName": "<exact role/position title from JD>",
+  "companyName": "<exact company name as written in JD — e.g. 'Microsoft', 'Google', 'Amazon'; if not stated anywhere, use 'the company'>",
+  "roleName": "<exact role/position title from JD; if not stated, use 'this role'>",
   "shortRole": "<shortened role title in max 2 words for filename use — e.g. 'AI Engineer', 'Data Scientist', 'SWE Intern', 'Product Manager'>"
 }
-Extract 4-6 requirement clusters max. Be concise and factual.
+Extract 4-6 requirement clusters max. Be concise and factual. Do not invent a company or role name that is not actually present in the text.

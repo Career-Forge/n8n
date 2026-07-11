@@ -16,7 +16,7 @@ That's CareerForge. It's an n8n workflow. One JSON file. ~$2/month to run.
 
 Here's what's under the hood:
 
-The apply pipeline routes through 3 LaTeX skeletons (fresher/experienced/senior), scores your fit with DeepSeek before burning a Sonnet call, and uses Claude to generate structured JSON — not raw LaTeX, because LLMs + LaTeX = chaos. A JS node deterministically fills the skeleton. Deterministic = debuggable.
+The apply pipeline routes through one shared LaTeX skeleton with a deterministic, tier-aware content plan (fresher/junior/mid/senior decide how much gets selected, not which template), scores your fit with DeepSeek before burning a Sonnet call, and uses Claude to generate structured JSON — not raw LaTeX, because LLMs + LaTeX = chaos. A JS node deterministically fills the skeleton. Deterministic = debuggable.
 
 The outreach and intel branches fan out to up to 3 search providers in parallel, merge results with Reciprocal Rank Fusion (k=60, top 15), then run entity extraction. You configure 1, 2, or 3 providers. It degrades gracefully.
 

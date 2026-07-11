@@ -506,6 +506,33 @@ function mergeContent(pass1, pass2) {
   const p2int = indexByPositionIdV2(pass2.internship_bullets);
   const p2proj = indexByPositionIdV2(pass2.project_bullets);
   const masterRows = masterExperienceRowsV2();
+  // s59: education-date backstop, same idiom as the title-integrity backstop
+  // above -- Pass1's LLM invented "2024" for a real end_date of 2023-12 on a
+  // real live apply. resume_structured.education (threaded in since s50) has
+  // the correct raw date; resolve graduationDate from it instead of trusting
+  // Pass1's own text output.
+  function masterEducationRowsV2() {
+    let r = {};
+    try { r = ($('Prepare Apply Context').first().json || {}).resume_structured || {}; } catch (e) { r = {}; }
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const fmt = (e) => {
+      const src = e.end_date || e.start_date;
+      if (!src) return '';
+      const m = String(src).match(/^(\d{4})-(\d{2})/);
+      if (!m) return String(src);
+      const mon = MONTHS[parseInt(m[2], 10) - 1] || '';
+      return (mon ? mon + ' ' : '') + m[1] + (e.is_current ? ' (Expected)' : '');
+    };
+    return (Array.isArray(r.education) ? r.education : []).map((e) => ({ institutionKey: normKeyV2(e.institution || ''), formattedDate: fmt(e) }));
+  }
+  function resolveMasterGraduationDateV2(edu, rows) {
+    const fallback = edu.graduationDate || '';
+    if (!rows.length) return fallback;
+    const key = normKeyV2(edu.institution || '');
+    const match = rows.find((row) => row.institutionKey && key && row.institutionKey === key);
+    return (match && match.formattedDate) || fallback;
+  }
+  const masterEduRows = masterEducationRowsV2();
 
   const experience = [];
   for (const comp of (pass1.companies || [])) {
@@ -549,7 +576,7 @@ function mergeContent(pass1, pass2) {
   return {
     summary: (sectionOrder.indexOf('summary') !== -1 && pass2.summary) ? String(pass2.summary) : (pass1.summary || ''),
     experience, internships, projects, skills,
-    education: pass1.education || [],
+    education: (pass1.education || []).map((edu) => Object.assign({}, edu, { graduationDate: resolveMasterGraduationDateV2(edu, masterEduRows) })),
     certifications: pass1.certifications || [],
     achievements: (pass1.selectedAchievements || []).slice(0, ((pass1._contentPlan || {}).achievementsMax) || 3),
     activities: pass1.activities || [],

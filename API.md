@@ -8,12 +8,12 @@ Every external service CareerForge talks to — what it does, what it costs, and
 |---------|-----------|---------|-----------|--------|
 | OpenRouter | 1000 calls/day (after $10 deposit) | All LLM inference | Yes | [openrouter.ai](https://openrouter.ai/sign-up) |
 | Telegram Bot API | Unlimited | User interface | Yes | [@BotFather](https://t.me/BotFather) |
-| Firecrawl | Via OpenRouter plugin | Web search (intel, outreach) | 1 of 3 | [OpenRouter Plugins](https://openrouter.ai/settings/plugins) |
+| Firecrawl | 100K scraping credits | Web search (intel, outreach, find_jobs) | 1 of 3 | [firecrawl.dev](https://firecrawl.dev/app/api-keys) |
 | Serper | 2500 searches (one-time) | Google SERP search | 1 of 3 | [serper.dev](https://serper.dev) |
 | You.com | $100 free credit | Web search | 1 of 3 | [api.you.com](https://api.you.com) |
-| Greenhouse | Unlimited, no auth | Job board API | Automatic | No signup needed |
+| Adzuna | Free key | Structured job search (real location + salary data) | Optional | [developer.adzuna.com](https://developer.adzuna.com) |
 
-**"1 of 3"** = you need at least one search provider. More providers = better results (RRF merges rankings). Firecrawl via OpenRouter is the easiest — zero extra signup.
+**"1 of 3"** = you need at least one of the three web-search providers. More providers = better results (RRF merges rankings). Adzuna is a separate, optional structured lane, not one of the three — see [SETUP.md](SETUP.md)'s `app_settings` table section for how its keys get into the DB (not `.env`, not an n8n credential).
 
 ## Monthly cost estimate
 
@@ -21,16 +21,18 @@ After the one-time $10 OpenRouter deposit:
 
 | What | Model | Cost per call | Calls/day (typical) | Monthly |
 |------|-------|--------------|---------------------|---------|
-| Intent routing | Llama 3.3 70B :free | $0 | 10-20 | $0 |
-| Seniority detection | DeepSeek :free | $0 | 1-3 | $0 |
-| ForgeScore | DeepSeek :free | $0 | 1-3 | $0 |
-| Contact extraction | DeepSeek :free | $0 | 1-2 | $0 |
-| Company intel | DeepSeek :free | $0 | 1-2 | $0 |
-| Salary analysis | DeepSeek :free | $0 | 0-1 | $0 |
-| Job scoring | Gemini Flash Lite | ~$0.001 | 5-10 | ~$0.15 |
-| Resume generation | Claude Sonnet 4.6 | ~$0.05 | 1-3 | ~$1.50 |
-| Cover letter | Claude Sonnet 4.6 | ~$0.05 | 1-3 | ~$1.50 |
-| Outreach drafts | Claude Sonnet 4.6 | ~$0.05 | 0-2 | ~$0.50 |
+| Intent routing | `openai/gpt-5.4-mini` | ~$0.001 | 10-20 | ~$0.30 |
+| Seniority detection | `deepseek/deepseek-v4-flash` | ~$0.001 | 1-3 | ~$0.06 |
+| ForgeScore | `deepseek/deepseek-v4-flash` | ~$0.001 | 1-3 | ~$0.06 |
+| Contact extraction | `deepseek/deepseek-v4-flash` | ~$0.001 | 1-2 | ~$0.04 |
+| Company intel | `deepseek/deepseek-v4-flash` | ~$0.001 | 1-2 | ~$0.04 |
+| Salary analysis | `deepseek/deepseek-v4-flash` | ~$0.001 | 0-1 | ~$0.02 |
+| Job scoring | `deepseek/deepseek-v4-pro` | ~$0.005/batch | 5-10 | ~$0.75 |
+| Resume generation | `anthropic/claude-sonnet-4-6` | ~$0.05 | 1-3 | ~$1.50 |
+| Cover letter | `anthropic/claude-sonnet-4-6` | ~$0.05 | 1-3 | ~$1.50 |
+| Outreach drafts | `anthropic/claude-sonnet-4-6` | ~$0.05 | 0-2 | ~$0.50 |
+
+Model IDs are pulled from the live workflow's `*Model` nodes — verify current pricing at [openrouter.ai/models](https://openrouter.ai/models) before relying on the numbers above.
 
 **Realistic monthly total: $2-4.** The $10 deposit is not a subscription — it's a prepaid balance that lasts months of daily use.
 
@@ -44,8 +46,8 @@ OpenRouter is the single gateway for all LLM calls. One API key, all models.
 
 1. **Sign up** at [openrouter.ai/sign-up](https://openrouter.ai/sign-up)
 2. **Deposit $10** — Settings > Billing > Add credits. This is a one-time prepaid balance, not a subscription. It unlocks:
-   - 1000 free-model calls per day (Llama, DeepSeek, etc.)
-   - Access to paid models (Sonnet, Gemini)
+   - 1000 free-model calls per day
+   - Access to paid models (Claude, GPT, DeepSeek Pro, etc.)
 3. **Create an API key** — Settings > API Keys > Create Key
 4. **Copy the key** — starts with `sk-or-v1-`
 
@@ -65,27 +67,19 @@ This is the part most people get wrong. OpenRouter uses the **OpenAI-compatible*
 
 All LLM nodes in the workflow share this one credential. You don't need separate credentials per model — the model slug in each node tells OpenRouter which model to use.
 
-### Firecrawl plugin (easiest search provider)
+### Firecrawl (easiest search provider to set up)
 
-Instead of signing up for a separate search API, you can enable Firecrawl directly inside OpenRouter:
+OpenRouter's plugin page is the easiest way to get a Firecrawl key — it accepts OpenRouter's ToS and auto-creates a Firecrawl account with 100K free credits, no separate signup form:
 
-1. Go to [openrouter.ai/settings/plugins](https://openrouter.ai/settings/plugins)
-2. Enable **Web Search** (Firecrawl)
-3. That's it — no separate API key needed
+1. Go to [openrouter.ai/settings/plugins](https://openrouter.ai/settings/plugins), enable **Web Search**
+2. Grab your real key from [firecrawl.dev/app/api-keys](https://firecrawl.dev/app/api-keys)
+3. Set `FIRECRAWL_API_KEY=fc-...` in `.env`
 
-CareerForge detects the Firecrawl plugin automatically when `FIRECRAWL_API_KEY` is set in your `.env`. If you're using the plugin route, set it to your OpenRouter key:
-```env
-FIRECRAWL_API_KEY=sk-or-v1-your-openrouter-key
-```
+Note this is a real, separate Firecrawl API key (`fc-...`), not your OpenRouter key — CareerForge calls the native Firecrawl API via a real n8n credential (`Firecrawl Search` node), not an OpenRouter plugin passthrough. See [SETUP.md](SETUP.md) for wiring the n8n credential object itself (the `.env` key alone isn't enough for this lane).
 
 ### Models used
 
-| Slug | Task | Free? |
-|------|------|-------|
-| `meta-llama/llama-3.3-70b-instruct:free` | Intent routing | Yes |
-| `deepseek/deepseek-chat-v3.1:free` | Seniority, scoring, contacts, intel, salary | Yes |
-| `google/gemini-3.1-flash-lite-preview` | Job scoring | ~$0.001/call |
-| `anthropic/claude-sonnet-4.6` | Resume, cover letter, outreach | ~$0.05/call |
+Model IDs are pulled directly from the live workflow's `*Model` nodes — the table in the [Monthly cost estimate](#monthly-cost-estimate) section above is generated the same way and is authoritative. Verify current pricing at [openrouter.ai/models](https://openrouter.ai/models) before relying on it.
 
 ---
 
@@ -161,11 +155,14 @@ Just Firecrawl via OpenRouter. Zero extra signup, zero extra cost. Add Serper or
 
 ---
 
-## Greenhouse (Job Board API)
+## Job search sources
 
-The `find_jobs` intent searches Greenhouse job boards. This API is free, public, and requires no authentication. CareerForge calls it automatically — nothing to configure.
+`find_jobs` merges two kinds of sources, not a single API:
 
-The job search Code node builds queries against Greenhouse's public API (`boards.greenhouse.io/api`). It searches across multiple company boards in parallel.
+1. **Live web/structured lanes**, called on every search: Adzuna (structured, needs the `app_settings` keys above), RemoteOK (free, public, no auth), JSearch, plus the Firecrawl/Serper/You.com search fan-out described above.
+2. **A local Postgres/pgvector cache**, filled by a separate, always-running **ATS Poller** workflow (`workflows/CareerForge_ATS_Poller.json`) that pulls directly from company career sites — Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Eightfold, Workable, Recruitee, plus a few single-company integrations (Amazon, Apple, Oracle). None of these need signup or keys; the poller hits each ATS's own public API. `find_jobs` reads this cache instantly (`Hybrid Cache Search`) rather than re-fetching live, and it grows automatically — every search that surfaces a job from a known ATS adds that company to the poller's coverage.
+
+Nothing here needs configuring beyond importing and activating the poller workflow (see the Quick Start in [README.md](README.md)). See [ROADMAP.md](ROADMAP.md) for current adapter coverage.
 
 ---
 

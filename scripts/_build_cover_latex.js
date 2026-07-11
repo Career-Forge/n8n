@@ -58,5 +58,6 @@ contentLines.push(escapeLatexText(coverJson.cta || ''));
 contentLines.push('\\end{lettercontent}');
 const contentLatex = contentLines.join('\n');
 let fullLatex = wrapResumeWithSkeleton({ skeleton: coverSkeleton, headerLatex: '% Header omitted for cover letter', contentLatex });
-fullLatex = fullLatex.replace('{{NAME}}', escapeLatexText(personal.name || 'Candidate')).replace('{{PHONE}}', escapeLatexText(personal.phone_display || personal.phone_primary || '')).replaceAll('{{EMAIL}}', personal.email || '').replace('{{LINKEDIN}}', personal.linkedin || '');
+function normalizeUrlCoverV2(u) { u = String(u == null ? '' : u).trim(); if (!u) return ''; return /^https?:\/\//i.test(u) ? u : 'https://' + u; }
+fullLatex = fullLatex.replace('{{NAME}}', escapeLatexText(personal.name || 'Candidate')).replace('{{PHONE}}', escapeLatexText(personal.phone_display || personal.phone_primary || '')).replaceAll('{{EMAIL}}', personal.email || '').replace('{{LINKEDIN}}', normalizeUrlCoverV2(personal.linkedin || ''));
 return [{ json: { latex: normalizeLatexForPdflatex(fullLatex).split("\\$|\\$").join("$|$"), chat_id: ctx.chat_id, job_title: ctx.job_title, company: ctx.company } }];

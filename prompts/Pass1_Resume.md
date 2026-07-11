@@ -44,9 +44,7 @@ Return ONLY valid JSON (no markdown, no explanations) with this structure:
             "alignmentTip": "<how to frame bullets to resonate with these values>"
           }
         }
-      ],
-      "hasProgression": <boolean — true if multiple roles show career growth>,
-      "renderAsStacked": <boolean — true to render as single company header with sub-roles>
+      ]
     }
   ],
   "selectedInternships": [
@@ -185,9 +183,6 @@ MULTI-ROLE / PROGRESSION DETECTION
 ═══════════════════════════════════════════════════════════════
 
 If a candidate held MULTIPLE positions at the SAME company:
-- Set "hasProgression": true and "renderAsStacked": true
-- This renders as ONE company header with multiple role sub-entries
-- Saves space and demonstrates career growth
 - Count the entire company tenure for "longest tenure" calculation
 
 ═══════════════════════════════════════════════════════════════

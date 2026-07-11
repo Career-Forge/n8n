@@ -73,7 +73,7 @@ Include revise_section and revise_tone alongside a top-level "instruction" field
 
 Additional intents:
 12. view_prefs — User wants to see their saved preferences. Triggers: "/prefs", "show my preferences", "what do you remember"
-13. update_prefs — User wants to save a preference. Triggers: "remember that", "from now on", "always", "set my location", "I need cap-exempt"
+13. update_prefs — User wants to save a preference, or a bare "sections"/"/sections" message to open the section-toggle menu. Triggers: "remember that", "from now on", "always", "set my location", "I need cap-exempt", "sections", "/sections"
 14. forget_pref — User wants to remove a preference. Triggers: "/prefs forget", "remove my", "clear preference"
 15. verbose_toggle — User wants to toggle verbose mode. Triggers: "/verbose on", "/verbose off", "show me what you search for" 
 

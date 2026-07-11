@@ -11,7 +11,7 @@ What's live, and what's next. For deep implementation history, see git log and c
 - **A self-growing job registry** — every search that surfaces a job from a known ATS (Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Eightfold, and a few single-company integrations) permanently adds that company to the background poller's coverage. Workday's seeded-tenant list covers Intel, Adobe, Target, Walmart, Visa, and Mastercard today.
 - **Resume section customization** — `sections:`/`order:` text commands, or a tap-to-toggle inline keyboard (send "sections") for the same thing.
 - **18 intents**, all documented in the bot's own `/help` text and in [README.md](README.md)'s Features table.
-- **4 deployment tiers** — local Docker, a small VPS, Render/Railway free tier, and n8n Cloud (with real caveats about what n8n Cloud can't run, documented in [DEPLOYMENT.md](DEPLOYMENT.md)).
+- **5 deployment tiers** — local Docker, Render free tier, Railway, a small Hetzner VPS, and n8n Cloud (with real caveats about what n8n Cloud can't run, documented in [DEPLOYMENT.md](DEPLOYMENT.md)).
 
 ## In progress / next up
 

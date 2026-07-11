@@ -159,7 +159,7 @@ Activate the workflow. Text your bot "help" to verify.
 careerforge-n8n/
 |
 |-- README.md                          # This file
-|-- DEPLOYMENT.md                      # 4 hosting tiers (local to cloud)
+|-- DEPLOYMENT.md                      # 5 hosting tiers (local to cloud)
 |-- API.md                             # External services + cost math
 |-- LICENSE                            # MIT
 |-- PLAN.md                            # Refactor execution plan
