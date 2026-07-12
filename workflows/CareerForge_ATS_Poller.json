@@ -56,7 +56,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT id AS company_id, name, ats_type, slug, COALESCE(api_base,'') AS api_base, (ats_type || ':' || slug) AS board, COALESCE(etag,'') AS etag FROM companies WHERE is_active AND next_poll_at <= now() ORDER BY next_poll_at ASC LIMIT 25"
+        "query": "(SELECT id AS company_id, name, ats_type, slug, COALESCE(api_base,'') AS api_base, (ats_type || ':' || slug) AS board, COALESCE(etag,'') AS etag, 'dream' AS lane FROM companies WHERE is_active AND tier = 'dream' AND next_poll_at <= now() ORDER BY next_poll_at ASC LIMIT 8) UNION ALL (SELECT id, name, ats_type, slug, COALESCE(api_base,''), (ats_type || ':' || slug), COALESCE(etag,''), 'never_polled' FROM companies WHERE is_active AND tier <> 'dream' AND last_polled_at IS NULL AND next_poll_at <= now() ORDER BY created_at ASC LIMIT 8) UNION ALL (SELECT id, name, ats_type, slug, COALESCE(api_base,''), (ats_type || ':' || slug), COALESCE(etag,''), 'earned' FROM companies WHERE is_active AND tier IN ('hot','warm') AND next_poll_at <= now() ORDER BY next_poll_at ASC LIMIT 8) UNION ALL (SELECT id, name, ats_type, slug, COALESCE(api_base,''), (ats_type || ':' || slug), COALESCE(etag,''), 'general' FROM companies WHERE is_active AND tier IN ('probe','cold') AND last_polled_at IS NOT NULL AND next_poll_at <= now() ORDER BY next_poll_at ASC LIMIT 8)"
       },
       "credentials": {
         "postgres": {

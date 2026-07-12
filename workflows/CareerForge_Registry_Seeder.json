@@ -39,9 +39,9 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO companies (name, ats_type, slug, api_base, next_poll_at)\nVALUES ($1, $2, $3, NULLIF($4, '')::text, now())\nON CONFLICT (ats_type, slug) DO UPDATE SET name = EXCLUDED.name, is_active = TRUE",
+        "query": "INSERT INTO companies (name, ats_type, slug, api_base, tier, next_poll_at)\nVALUES ($1, $2, $3, NULLIF($4, '')::text, COALESCE(NULLIF($5, ''), 'probe'), now())\nON CONFLICT (ats_type, slug) DO UPDATE SET name = EXCLUDED.name, is_active = TRUE, tier = CASE WHEN EXCLUDED.tier = 'dream' THEN 'dream' ELSE companies.tier END",
         "options": {
-          "queryReplacement": "={{ [$json.name, $json.ats_type, $json.slug, $json.api_base] }}",
+          "queryReplacement": "={{ [$json.name, $json.ats_type, $json.slug, $json.api_base, $json.tier || ''] }}",
           "queryBatching": "independently"
         }
       },
