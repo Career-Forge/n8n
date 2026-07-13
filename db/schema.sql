@@ -18,9 +18,9 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE TABLE IF NOT EXISTS companies (
   id                    BIGSERIAL PRIMARY KEY,
   name                  TEXT        NOT NULL,
-  ats_type              TEXT        NOT NULL,   -- greenhouse|lever|ashby|workable|recruitee|personio|smartrecruiters|workday|...
-  slug                  TEXT        NOT NULL,   -- board token / site / account id
-  api_base              TEXT,                   -- optional override (smartrecruiters company id; workday "tenant|wdN|site")
+  ats_type              TEXT        NOT NULL,   -- greenhouse|lever|ashby|workable|recruitee|personio|smartrecruiters|workday|avature|...
+  slug                  TEXT        NOT NULL,   -- board token / site / account id -- NOT globally unique on its own (see below)
+  api_base              TEXT        NOT NULL DEFAULT '', -- tenant/override, e.g. workday "tenant.wdN", avature portal[/listing page]
   is_active             BOOLEAN     NOT NULL DEFAULT TRUE,
   poll_interval         INTERVAL    NOT NULL DEFAULT '6 hours',
   next_poll_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -29,7 +29,11 @@ CREATE TABLE IF NOT EXISTS companies (
   last_modified         TEXT,
   consecutive_failures  INT         NOT NULL DEFAULT 0,
   created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (ats_type, slug)
+  -- s74: (ats_type, slug) alone is NOT enough -- Workday tenants routinely reuse
+  -- generic site slugs ("External", "External_Career_Site"); api_base (the real
+  -- tenant) is the actual disambiguator. A 2-column key here let 2 real seeds
+  -- silently rename a different company's row in production before this fix.
+  UNIQUE (ats_type, slug, api_base)
 );
 
 -- "which boards are due to poll" — the poller's hot query
