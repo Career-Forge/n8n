@@ -18,6 +18,7 @@ RULES:
 - serper_queries: EXACTLY 2 Google queries WITH after: date filter
   Example: ["(site:boards.greenhouse.io OR site:jobs.lever.co) \"ML Engineer\" healthcare \"New York\" after:2026-04-28","site:jobs.ashbyhq.com health AI engineer NYC mid level"]
 - location_canonical: Full string for Firecrawl geo-targeting (e.g. "New York,New York,United States"). null if none stated.
+  PRIORITY RULE (absolute): if the user's OWN MESSAGE states any location signal -- a specific place, "remote", "worldwide", "anywhere", "global", "any location" -- that ALWAYS wins over "User preferences", no exceptions, even if a preference exists. Only use the preference's location when the message itself contains ZERO location language. NEVER blend the message's location with the preference's location into one string -- pick exactly one source. When the message says "worldwide"/"anywhere"/"any location", output the single word "worldwide" (not a sentence).
 - country: ISO code (e.g. "US","IN","GB"). Default "US"
 - remote_preference: "remote_only" | "hybrid_ok" | "in_office_only" | "open" (default if unstated: "open")
 - freshness: "qdr:d" (24hrs) | "qdr:w" (1 week, DEFAULT) | "qdr:m" (1 month)

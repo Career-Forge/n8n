@@ -30,7 +30,7 @@ for (const j of allJobs) jobMap[j.job_id] = j;
 
 function salaryStr(job) { const lo = job.salary_min, hi = job.salary_max; if (!lo && !hi) return ''; const sym = {USD:'$',INR:'₹',GBP:'£',EUR:'€',AUD:'A$',CAD:'C$',SGD:'S$',CHF:'CHF ',NZD:'NZ$',ZAR:'R',BRL:'R$',MXN:'MX$',PLN:'zł '}[job.salary_currency] || (job.salary_currency ? job.salary_currency + ' ' : '$'); const lakh = job.salary_currency === 'INR'; const f = lakh ? (n => { const v = n/100000; return (v % 1 ? v.toFixed(1) : v) + 'L'; }) : (n => n >= 1000 ? (Math.round(n/1000) + 'k') : ('' + n)); return sym + ((lo && hi) ? (f(lo) + '–' + f(hi)) : (f(lo || hi) + '+')); }
 function scoreEmoji(s) { return s >= 70 ? '🟢' : s >= 55 ? '🟡' : '⚪'; }
-function tierGlyph(t, source) { return t === 1 ? (source === 'cache' ? '🔓' : '✅') : t === 2 ? '🌿' : t === 2.5 ? '🏢' : t === 3 ? '🌐' : ''; }
+function tierGlyph(t, source) { return t === 1 ? (source === 'cache' ? '🔓' : '✅') : t === 1.5 ? '💰' : t === 2 ? '🌿' : t === 2.5 ? '🏢' : t === 3 ? '🌐' : ''; }
 function clean(slug) { return (slug || '').replace(/-/g,' ').replace(/\b\w/g, l => l.toUpperCase()); }
 function displayLocation(job) {
   const loc = (job.location || '').trim();
@@ -99,16 +99,18 @@ const searchContext = (intent.role_families?.slice(0,3).join(', ') || 'Jobs')
   + (badges.length ? ' · ' + badges.join(' · ') : '')
   + ' · ' + rankedJobs.length + ' results';
 
-const finalTierCounts = { 1: 0, 2: 0, '2.5': 0, 3: 0 };
+const finalTierCounts = { 1: 0, '1.5': 0, 2: 0, '2.5': 0, 3: 0 };
 for (const j of rankedJobs) {
   const t = j.source_tier;
   if (t === 1) finalTierCounts[1]++;
+  else if (t === 1.5) finalTierCounts['1.5']++;
   else if (t === 2) finalTierCounts[2]++;
   else if (t === 2.5) finalTierCounts['2.5']++;
   else if (t === 3) finalTierCounts[3]++;
 }
 const tierBadgeParts = [];
 if (finalTierCounts[1])     tierBadgeParts.push('✅ ' + finalTierCounts[1] + ' ATS');
+if (finalTierCounts['1.5']) tierBadgeParts.push('💰 ' + finalTierCounts['1.5'] + ' Structured');
 if (finalTierCounts[2])     tierBadgeParts.push('🌿 ' + finalTierCounts[2] + ' Curated');
 if (finalTierCounts['2.5']) tierBadgeParts.push('🏢 ' + finalTierCounts['2.5'] + ' Career');
 if (finalTierCounts[3])     tierBadgeParts.push('🌐 ' + finalTierCounts[3] + ' Aggregator');

@@ -146,7 +146,17 @@ function checkLocationState(job, locTerms, countryCode) {
   }
   return 'unknown';
 }
-const hasCityConstraint = locationCanon && !['any','anywhere','worldwide'].includes(locationCanon);
+// s75: a location_canonical that's really a sentence (e.g. a raw preference
+// blurb that leaked through, or a future prompt-compliance slip) must never
+// drive substring matching -- it matches nothing real and silently mismatches
+// everything. Cheap sanity gate: a real canonical location is short and has
+// no connector words.
+function looksLikeCleanLocation(s) {
+  const STOP = ['and','or','targeting','roles','role','the','for','based','remember'];
+  const tokens = s.split(/[\s,]+/).filter(Boolean);
+  return tokens.length > 0 && tokens.length <= 8 && !tokens.some(t => STOP.includes(t.toLowerCase()));
+}
+const hasCityConstraint = locationCanon && !['any','anywhere','worldwide'].includes(locationCanon) && looksLikeCleanLocation(locationCanon);
 const locTerms = hasCityConstraint ? locationCanon.split(/[\s,]+/).filter(t => t.length > 1) : [];
 // Country fallback only when there's no city-level signal AND the country isn't
 // the silent "nothing stated" default (country always defaults to 'US' even on
@@ -184,10 +194,11 @@ filtered.sort((a, b) => {
 });
 
 // Tier composition for downstream display
-const tierCounts = { 1: 0, 2: 0, '2.5': 0, 3: 0 };
+const tierCounts = { 1: 0, '1.5': 0, 2: 0, '2.5': 0, 3: 0 };
 for (const j of filtered) {
   const t = j.source_tier;
   if (t === 1) tierCounts[1]++;
+  else if (t === 1.5) tierCounts['1.5']++;
   else if (t === 2) tierCounts[2]++;
   else if (t === 2.5) tierCounts['2.5']++;
   else if (t === 3) tierCounts[3]++;

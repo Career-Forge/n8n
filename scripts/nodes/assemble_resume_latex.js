@@ -274,7 +274,24 @@ function buildFallbackSlots(pass1) {
     '\\resumeProjectHeading{\\textbf{' + escapeLatexText(cert.name) + '} $|$ \\emph{' + escapeLatexText(cert.issuer) + '}}{' + escapeLatexText(cert.date) + '}'
   ).join('\n');
 
-  slots.achievements = (pass1.selectedAchievements || []).map((a) => '\\resumeItem{' + escapeLatexText(firstNonEmpty(a.description, a.title)) + '}').join('\n');
+  slots.achievements = (function () {
+    // s76: grouped fallback -- mirrors the V2 renderer, fixed 3-line budget.
+    const stripLinks = (s) => String(s || '').replace(/\s*\|?\s*(?:https?:\/\/)?(?:www\.)?github\.com\/\S*/gi, '').trim().replace(/[|\s]+$/, '');
+    const catOf = (s) => /\b(?:\d+(?:st|nd|rd|th)\s+place|winner|prize|champion)\b/i.test(s) ? 'Hackathon Wins'
+      : /\b(?:meetup|conference|talk|presentation|speaker|keynote|demo(?:ed)?)\b/i.test(s) || /llm day/i.test(s) ? 'Speaking'
+      : 'Highlights';
+    const groups = { 'Hackathon Wins': [], 'Speaking': [], 'Highlights': [] };
+    for (const a of (pass1.selectedAchievements || [])) {
+      const txt = stripLinks(firstNonEmpty(a.description, a.title));
+      if (txt) groups[catOf(txt)].push(txt);
+    }
+    const rows = [];
+    for (const cat of ['Hackathon Wins', 'Speaking', 'Highlights']) {
+      if (!groups[cat].length) continue;
+      rows.push('\\resumeItem{\\textbf{' + escapeLatexText(cat) + ':} ' + groups[cat].map((t) => escapeLatexText(t)).join(' $|$ ') + '}');
+    }
+    return rows.slice(0, 3).join('\n');
+  })();
 
   slots.activities = (pass1.activities || []).map((act) =>
     '\\resumeProjectHeading{\\textbf{' + escapeLatexText(act.name) + '} $|$ \\emph{' + escapeLatexText(act.organization) + '}}{' + escapeLatexText(act.date) + '}\n' + itemStart + '\n    \\resumeItem{' + escapeLatexText(act.description) + '}\n' + itemEnd
@@ -578,10 +595,10 @@ function mergeContent(pass1, pass2) {
     experience, internships, projects, skills,
     education: (pass1.education || []).map((edu) => Object.assign({}, edu, { graduationDate: resolveMasterGraduationDateV2(edu, masterEduRows) })),
     certifications: pass1.certifications || [],
-    achievements: (pass1.selectedAchievements || []).slice(0, ((pass1._contentPlan || {}).achievementsMax) || 3),
+    achievements: (pass1.selectedAchievements || []).slice(0, 8),
     activities: pass1.activities || [],
     sectionOrder,
-    _budget: pass1._contentPlan ? { tier: pass1._contentPlan.tier, maxBulletsPerEntry: pass1._contentPlan.maxBulletsPerEntry, linesPerBullet: pass1._contentPlan.linesPerBullet } : null,
+    _budget: pass1._contentPlan ? { tier: pass1._contentPlan.tier, maxBulletsPerEntry: pass1._contentPlan.maxBulletsPerEntry, linesPerBullet: pass1._contentPlan.linesPerBullet, achievementsLines: pass1._contentPlan.achievementsMax || 3 } : null,
   };
 }
 function derivePlainTextFromContent(content) {
@@ -617,6 +634,17 @@ function hasAnyContent(content) {
     content.education.length || content.certifications.length || content.achievements.length || content.activities.length ||
     content.skills.some((c) => c.skills && c.skills.length));
 }
+function capTechStackV2(name, stack) {
+  // s76: the project header line is name + stack + right-aligned date; an
+  // unbounded stack collides with the date and truncates mid-word. Cap at the
+  // last full comma boundary within the width budget.
+  const budget = Math.max(30, 92 - String(name || '').length);
+  let s = String(stack || '');
+  if (s.length <= budget) return s;
+  let cut = s.lastIndexOf(',', budget);
+  if (cut < 15) cut = budget;
+  return s.slice(0, cut).replace(/[\s,]+$/, '');
+}
 function renderResume(content, personal, isCompact) {
   const itemStart = '\\resumeItemListStart';
   const itemEnd = isCompact ? '\\resumeItemListEndCompact' : '\\resumeItemListEnd';
@@ -631,7 +659,7 @@ function renderResume(content, personal, isCompact) {
     subheadingCmd + '{' + escapeLatexTextV2(e.title) + '}{' + escapeLatexTextV2((e.startDate || '') + ' -- ' + (e.endDate || '')) + '}{' + escapeLatexTextV2(e.company) + '}{' + escapeLatexTextV2(e.location) + '}\n' + itemStart + '\n' + bulletRenderV2(e.bullets, isCompact) + '\n' + itemEnd
   ).join('\n');
   slots.projects = (content.projects || []).map((p) =>
-    '\\resumeProjectHeading{\\textbf{' + escapeLatexTextV2(p.name) + '} $|$ \\emph{' + escapeLatexTextV2(p.techStack) + '}}{' + escapeLatexTextV2(p.date) + '}\n' + itemStart + '\n' + bulletRenderV2(p.bullets, isCompact) + '\n' + itemEnd
+    '\\resumeProjectHeading{\\textbf{' + escapeLatexTextV2(p.name) + '} $|$ \\emph{' + escapeLatexTextV2(capTechStackV2(p.name, p.techStack)) + '}}{' + escapeLatexTextV2(p.date) + '}\n' + itemStart + '\n' + bulletRenderV2(p.bullets, isCompact) + '\n' + itemEnd
   ).join('\n');
   slots.skills = (content.skills || []).map((cat) => (cat.skills && cat.skills.length) ? '\\textbf{' + escapeLatexTextV2(cat.category) + ':} ' + escapeLatexTextV2(cat.skills.join(', ')) + ' \\\\' : '').filter(Boolean).join('\n');
   slots.education = (content.education || []).slice(0, isCompact ? 1 : 2).map((edu) =>
@@ -640,7 +668,37 @@ function renderResume(content, personal, isCompact) {
   slots.certifications = (content.certifications || []).filter((c) => c.qualityTier !== 'completion_only').map((c) =>
     '\\resumeProjectHeading{\\textbf{' + escapeLatexTextV2(c.name) + '} $|$ \\emph{' + escapeLatexTextV2(c.issuer) + '}}{' + escapeLatexTextV2(c.date) + '}'
   ).join('\n');
-  slots.achievements = (content.achievements || []).map((a) => itemCmd + '{' + escapeLatexTextV2(firstNonEmpty(a.description, a.title)) + '}').join('\n');
+  slots.achievements = (function () {
+    // s76: compact grouped achievements -- one \resumeItem per CATEGORY,
+    // pipe-separated, links stripped, line-budgeted against the tier plan.
+    const stripLinks = (s) => String(s || '').replace(/\s*\|?\s*(?:https?:\/\/)?(?:www\.)?github\.com\/\S*/gi, '').trim().replace(/[|\s]+$/, '');
+    const catOf = (s) => /\b(?:\d+(?:st|nd|rd|th)\s+place|winner|prize|champion)\b/i.test(s) ? 'Hackathon Wins'
+      : /\b(?:meetup|conference|talk|presentation|speaker|keynote|demo(?:ed)?)\b/i.test(s) || /llm day/i.test(s) ? 'Speaking'
+      : 'Highlights';
+    const groups = { 'Hackathon Wins': [], 'Speaking': [], 'Highlights': [] };
+    for (const a of (content.achievements || [])) {
+      const txt = stripLinks(firstNonEmpty(a.description, a.title));
+      if (txt) groups[catOf(txt)].push(txt);
+    }
+    const lineBudget = ((content._budget || {}).achievementsLines) || 3;
+    const CHARS_PER_LINE = 105;
+    const est = (cat, items) => Math.ceil((cat.length + 2 + items.join(' | ').length) / CHARS_PER_LINE);
+    // Balanced allocation: every non-empty category keeps >=1 line so a big
+    // wins list can never evict Speaking entirely; remainder lines go to the
+    // earliest category (wins first).
+    const order = ['Hackathon Wins', 'Speaking', 'Highlights'].filter((c) => groups[c].length);
+    const per = Math.max(1, Math.floor(lineBudget / Math.max(1, order.length)));
+    let extra = Math.max(0, lineBudget - per * order.length);
+    const rows = [];
+    for (const cat of order) {
+      let myBudget = per + (extra > 0 ? 1 : 0);
+      if (extra > 0) extra--;
+      const items = groups[cat].slice();
+      while (items.length > 1 && est(cat, items) > myBudget) items.pop();
+      rows.push(itemCmd + '{\\textbf{' + escapeLatexTextV2(cat) + ':} ' + items.map((t) => escapeLatexTextV2(t)).join(' $|$ ') + '}');
+    }
+    return rows.join('\n');
+  })();
   slots.activities = (content.activities || []).map((act) =>
     '\\resumeProjectHeading{\\textbf{' + escapeLatexTextV2(act.name) + '} $|$ \\emph{' + escapeLatexTextV2(act.organization) + '}}{' + escapeLatexTextV2(act.date) + '}\n' + itemStart + '\n    ' + itemCmd + '{' + escapeLatexTextV2(act.description) + '}\n' + itemEnd
   ).join('\n');

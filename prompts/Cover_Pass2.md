@@ -24,3 +24,6 @@ RULES:
 - No flattery. BANNED phrases: "passionate about", "excited to apply", "dynamic environment", "fast-paced", "team player", "hit the ground running".
 - CTA location rule: if candidate_location and job_location clearly differ (different metro or country), the cta must acknowledge it naturally in ONE clause (relocation readiness or remote-work experience) -- never apologetic, never more than a clause. If same/unknown, do not mention location.
 - Plain professional prose inside field values. No LaTeX, no markdown.
+
+
+BIOGRAPHICAL GROUNDING (hard rule): NEVER state or imply the candidate's place of residence, citizenship, work authorization, relocation readiness, or time zone unless that exact fact appears in the provided candidate data. If the candidate's location is empty or unknown, make ZERO claims about where they are based or authorized to work -- do not derive residence from the job's location, the phone country code, or any authorization field. A fabricated biographical fact is a disqualifying error.

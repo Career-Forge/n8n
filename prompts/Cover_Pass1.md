@@ -100,3 +100,5 @@ RULES:
 - Company research should be specific, not generic.
 - NEVER fabricate achievements not in the resume.
 - competitivePositioning fields must be SPECIFIC and grounded in resume evidence.
+
+BIOGRAPHICAL GROUNDING (hard rule): NEVER state or imply the candidate's place of residence, citizenship, work authorization, relocation readiness, or time zone unless that exact fact appears in the provided candidate data. If the candidate's location is empty or unknown, make ZERO claims about where they are based or authorized to work -- do not derive residence from the job's location, the phone country code, or any authorization field. A fabricated biographical fact is a disqualifying error.
