@@ -182,8 +182,15 @@ if (remotePref !== 'remote_only' && (locTerms.length || countryCode)) {
   });
 }
 
-// Recency filter (soft)
+// Recency filter (soft). s83: cache rows are liveness-verified by the poller
+// (status='active' = seen live within the poll interval; Close Stale Jobs
+// retires the dead) -- a posted-date cutoff there throws away verified-live
+// jobs (exec 582 dropped a still-live 2024 Netflix posting). Cache rows are
+// exempt unless the user explicitly asked for a time window. Web lanes
+// unchanged: an old web hit really is likely dead.
+const freshnessExplicit = expandCtx.freshness_explicit === true;
 filtered = filtered.filter(j => {
+  if (j.source === 'cache' && !freshnessExplicit) return true;
   if (!j.updated_at) return true;
   const t = new Date(j.updated_at).getTime();
   return isNaN(t) || t >= cutoff;
