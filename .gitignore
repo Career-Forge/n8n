@@ -63,3 +63,6 @@ workflows/*.backup*.json
 
 # harness scratch output
 scripts/_tmp_s6b1/
+
+# Local registry snapshots (full live-DB exports incl. tier labels -- not published)
+data/backups/
