@@ -156,12 +156,24 @@ function looksLikeCleanLocation(s) {
   const tokens = s.split(/[\s,]+/).filter(Boolean);
   return tokens.length > 0 && tokens.length <= 8 && !tokens.some(t => STOP.includes(t.toLowerCase()));
 }
-const hasCityConstraint = locationCanon && !['any','anywhere','worldwide'].includes(locationCanon) && looksLikeCleanLocation(locationCanon);
+// s79: a bare COUNTRY name is not a city -- 'find jobs in Germany' must use
+// the country-level matcher (which knows berlin->DE via CITY_COUNTRY), not
+// city substring matching (which would drop every job labeled 'Berlin' for
+// lacking the literal substring 'germany'). Exact alias membership, so
+// 'new york, new york, united states' still takes the city path.
+function countryFromCanonical(s) {
+  for (const code of Object.keys(COUNTRY_NAMES)) { if (COUNTRY_NAMES[code].includes(s)) return code; }
+  return null;
+}
+const canonCountry = locationCanon ? countryFromCanonical(locationCanon) : null;
+const hasCityConstraint = locationCanon && !canonCountry && !['any','anywhere','worldwide'].includes(locationCanon) && looksLikeCleanLocation(locationCanon);
 const locTerms = hasCityConstraint ? locationCanon.split(/[\s,]+/).filter(t => t.length > 1) : [];
 // Country fallback only when there's no city-level signal AND the country isn't
 // the silent "nothing stated" default (country always defaults to 'US' even on
 // a totally generic query) -- avoids dropping results on unscoped searches.
-const countryCode = (!locTerms.length && expandCtx.country && expandCtx.country !== 'US') ? expandCtx.country : null;
+// s79: an explicitly TYPED country ('usa') engages the filter even for US --
+// only the schema's silent country='US' default stays suppressed.
+const countryCode = canonCountry || ((!locTerms.length && expandCtx.country && expandCtx.country !== 'US') ? expandCtx.country : null);
 if (remotePref !== 'remote_only' && (locTerms.length || countryCode)) {
   filtered = filtered.filter(j => {
     const state = checkLocationState(j, locTerms, countryCode);
