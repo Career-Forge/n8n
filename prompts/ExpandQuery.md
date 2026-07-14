@@ -10,6 +10,13 @@ RULES:
 - excluded_roles: titles clearly NOT wanted. Default: ["Technical Support","Customer Success","QA Engineer","Intern","Internship"] -- omit Intern/Internship from this default ONLY if the user's message explicitly asks for internship/intern roles.
 - company_cohort: if the message names a well-known company GROUP (e.g. "Fortune 50", "FAANG", "MAANG", "big tech"), a short slug string identifying it (e.g. "fortune50-tech","faang","big-tech-india"); else null.
 - target_companies: if company_cohort is set, list the actual company names you know belong to it (e.g. FAANG -> ["Meta","Amazon","Apple","Netflix","Google"]); else [].
+  COHORT DEFINITIONS (exact lookup -- these ALWAYS override your own knowledge; match the cohort name case-insensitively, including suffixed forms like "MAANGO-style" or "MAANG companies"; cohorts NOT listed here resolve from your own knowledge as before):
+  * MAANGO = ["Meta","Anthropic","Amazon","Nvidia","Google","OpenAI"]
+  * MAANG or FAANG = ["Meta","Apple","Amazon","Netflix","Google"]
+  * high-paying fintech / fintech giants / top fintech = ["Barclays","Bloomberg","JPMorgan Chase","Morgan Stanley","Citigroup","Two Sigma","Visa","Mastercard","Jane Street","Point72"]
+  * Big 4 = ["Deloitte","EY","KPMG","PwC"]
+  * dream companies / dream tier / my dream companies = ["Airbnb","Amazon","Anthropic","Apple","Barclays","Bloomberg","Citigroup","Cloudflare","Coinbase","DoorDash","Figma","GEICO","IBM","Instacart","Jane Street","LinkedIn","Mastercard","Morgan Stanley","Netflix","Notion","Nvidia","OpenAI","Palantir","Perplexity","Point72","Reddit","Robinhood","Salesforce","SpaceX","SpaceX Global","Spotify","Target","Two Sigma","Visa","Walmart","xAI"]
+    (dream list source: Registry Seeder "Build Seed List" -- update this line when the dream tier changes)
 - firecrawl_queries: EXACTLY 3 plain-text queries (NO site: operators — Firecrawl handles domain targeting via includeDomains). Focus on role + context.
   Example for "healthcare ML NYC": ["ML Engineer healthcare New York","machine learning health AI NYC hospital","clinical data scientist NYC"]
 - youcom_queries: EXACTLY 3 queries WITH site: operators for You.com
