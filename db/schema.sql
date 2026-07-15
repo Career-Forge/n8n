@@ -29,6 +29,16 @@ CREATE TABLE IF NOT EXISTS companies (
   last_modified         TEXT,
   consecutive_failures  INT         NOT NULL DEFAULT 0,
   created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+  -- Poller priority lane (dream/hot/warm/probe/cold/never_polled, see Select
+  -- Due Companies) and self-growth yield tracking (Extract Registry
+  -- Candidates) -- present in the live DB via earlier migrations, added here
+  -- too so a fresh install matches observed reality.
+  tier                  TEXT        NOT NULL DEFAULT 'probe',
+  relevant_yield        INT         NOT NULL DEFAULT 0,
+  -- s98/Phase B: 0-1 company-quality weight from data/reference/company_tiers.json
+  -- (Fortune 500 + hand-curated MAANGO/fintech/startup overlay), seeded by
+  -- scripts/seed_company_tier_weights.js. NULL = no match found (untiered).
+  tier_weight           NUMERIC,
   -- s74: (ats_type, slug) alone is NOT enough -- Workday tenants routinely reuse
   -- generic site slugs ("External", "External_Career_Site"); api_base (the real
   -- tenant) is the actual disambiguator. A 2-column key here let 2 real seeds
