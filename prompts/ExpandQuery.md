@@ -45,7 +45,7 @@ Output ONLY JSON. No markdown, no preamble, no explanation.
 - salary_min: integer annual floor in the query's currency if stated ("180k"->180000, "$150k+"->150000, "20L+"/"₹20L"->2000000), else null.
 - equity: true if equity / stock / RSUs mentioned, else false.
 - sponsorship_required: true if the user needs visa sponsorship ("visa sponsorship", "sponsors H1B", "needs sponsorship"), else false.
-- f1_opt_constraint: "remote_from_outside_us" if they want a US-based REMOTE role they'd work from OUTSIDE the US (e.g. "remote US jobs I can do from India"); "us_physical" if remote but worked from inside the US; else "none".
+- cross_border_remote_note: ONLY if the user's message or preferences describe a visa/work-permit category with a physical-presence requirement (e.g. "I'm on OPT, must be physically in the US", "my permit requires me to work from Germany") AND their search conflicts with it (e.g. searching remote roles based elsewhere) -- write ONE short plain-language heads-up sentence, grounded ONLY in what they explicitly stated. Empty string "" if nothing stated or no conflict. NEVER invent a visa category or country the user didn't mention.
 - exclude_recent_layoffs: true if they want stable companies / no recent layoffs, else false.
 - min_funding_stage: "seed" | "series_a" | "series_b" | "series_c" | "public" | null.
 - culture_constraints: array of short phrases (e.g. ["no crunch","growth-focused"]) or [].

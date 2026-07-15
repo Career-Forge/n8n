@@ -46,7 +46,7 @@ Score holistically on a 0-10 integer scale considering:
 - **Role alignment**: Does the job title/department match the candidate's target roles and recent experience?
 - **Location match**: Is the job in the candidate's preferred location, or remote?
 - **Seniority fit**: Does the job's implied seniority match the candidate's experience level?
-- **Work authorization**: If the candidate requires sponsorship, does the company likely sponsor? (Large tech companies generally do; small startups generally don't.)
+- **Work authorization**: Check `requested_visa_signals` in the input. If NON-EMPTY (the candidate explicitly stated a sponsorship/visa need), score against that STATED need directly -- does this employer likely meet it? If EMPTY (nothing stated), fall back to a generic heuristic ONLY (large/established firms more likely to sponsor; small startups less likely) -- never assume a need the candidate didn't state.
 
 ### 3. One-Liner Format
 
@@ -85,5 +85,5 @@ Output item shape: { "job_id": "...", "fit_score": N, "one_liner": "...", "detec
 In ADDITION to fit_score, return three 0-100 integer sub-scores per job:
 - skills_score: how well the candidate's skills match the JD's implied requirements.
 - experience_score: role / seniority / domain-experience alignment.
-- workauth_score: work-authorization fit — if the candidate needs sponsorship, does this employer likely sponsor? (large/established firms higher, tiny startups lower; unknown → 60).
+- workauth_score: work-authorization fit — if `requested_visa_signals` is non-empty, score against that STATED need explicitly; if empty, fall back to the generic large/established-firm-higher heuristic (unknown → 60). Never invent a sponsorship need the candidate didn't state.
 Output item shape now: { "job_id", "fit_score" (0-10), "skills_score", "experience_score", "workauth_score" (0-100), "detected_location", "location_match", "one_liner" }

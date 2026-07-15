@@ -165,7 +165,7 @@ const top3 = rankedJobs.slice(0, 3);
 const _degraded = (($('Parse Scorer Output').first().json || {}).strategy === 'neutral_fallback');
 let top3Msg = '🎯 *Found ' + rankedJobs.length + ' roles*' + (appendixJobs.length ? ' _(+' + appendixJobs.length + ' more in the full list)_' : '') + '\n';
 if (_degraded) top3Msg += '⚠️ _Scoring degraded — showing by source quality_\n';
-if (((intent.ambiguity_flags) || []).indexOf('F1_OPT_REMOTE_LOCATION') !== -1) top3Msg += (intent._f1_note || '🛂 F-1 OPT: remote work must be performed inside the US.') + '\n';
+if (((intent.ambiguity_flags) || []).indexOf('CROSS_BORDER_REMOTE_TENSION') !== -1) top3Msg += (intent._cross_border_note || '🛂 Heads-up: check your visa/work-permit physical-presence requirements against this role\'s location.') + '\n';
   if (badges.length) top3Msg += badges.join(' · ') + '\n';
 if (tierBadgeLine) top3Msg += '_' + tierBadgeLine + '_\n';
 top3Msg += '\n';
