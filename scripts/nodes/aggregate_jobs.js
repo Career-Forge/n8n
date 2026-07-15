@@ -104,32 +104,11 @@ if (roleFamilies.length > 0) {
 // where location_canonical is null but country is a real signal. Deliberately
 // non-exhaustive -- anything unrecognized falls to 'unknown' (kept, demoted,
 // badged), never a guessed drop.
-const COUNTRY_NAMES = {
-  US: ['usa','u.s.a','u.s.','united states','america'],
-  IN: ['india'],
-  GB: ['uk','u.k.','united kingdom','britain','england','scotland','wales'],
-  CA: ['canada'],
-  AU: ['australia'],
-  DE: ['germany','deutschland'],
-  SG: ['singapore'],
-  AE: ['uae','united arab emirates','dubai','abu dhabi'],
-  NL: ['netherlands','holland'],
-  FR: ['france'],
-  IE: ['ireland'],
-  NZ: ['new zealand'],
-};
-const CITY_COUNTRY = {
-  'new york':'US','san francisco':'US','seattle':'US','austin':'US','boston':'US',
-  'chicago':'US','los angeles':'US','san jose':'US','denver':'US','atlanta':'US',
-  'dallas':'US','houston':'US','washington':'US','miami':'US','portland':'US',
-  'hyderabad':'IN','bangalore':'IN','bengaluru':'IN','mumbai':'IN','pune':'IN',
-  'delhi':'IN','new delhi':'IN','gurgaon':'IN','gurugram':'IN','chennai':'IN',
-  'noida':'IN','kolkata':'IN','ahmedabad':'IN',
-  'london':'GB','manchester':'GB','edinburgh':'GB','birmingham':'GB',
-  'toronto':'CA','vancouver':'CA','montreal':'CA','ottawa':'CA',
-  'berlin':'DE','munich':'DE','frankfurt':'DE','hamburg':'DE',
-  'singapore':'SG','dublin':'IE','amsterdam':'NL','paris':'FR','sydney':'AU','melbourne':'AU','auckland':'NZ',
-};
+// s86: sourced from the app_settings 'geo_reference' row (Load Geo Reference
+// (Search)) instead of an embedded literal -- zero place names left here.
+const _geo0 = ($('Load Geo Reference (Search)').first().json.geo_reference) || { countries: {}, cities: {} };
+const COUNTRY_NAMES = _geo0.countries || {};
+const CITY_COUNTRY = _geo0.cities || {};
 function detectCountryFromLocation(hay) {
   for (const code of Object.keys(COUNTRY_NAMES)) { if (COUNTRY_NAMES[code].some(s => hay.includes(s))) return code; }
   for (const city of Object.keys(CITY_COUNTRY)) { if (hay.includes(city)) return CITY_COUNTRY[city]; }
@@ -173,7 +152,10 @@ const locTerms = hasCityConstraint ? locationCanon.split(/[\s,]+/).filter(t => t
 // a totally generic query) -- avoids dropping results on unscoped searches.
 // s79: an explicitly TYPED country ('usa') engages the filter even for US --
 // only the schema's silent country='US' default stays suppressed.
-const countryCode = canonCountry || ((!locTerms.length && expandCtx.country && expandCtx.country !== 'US') ? expandCtx.country : null);
+// s87: country is never silently defaulted upstream anymore -- any
+// non-null value here is a REAL signal (explicit message, stored pref, or
+// resume-derived), so the old 'US'-suppression special-case is dead weight.
+const countryCode = canonCountry || (!locTerms.length ? (expandCtx.country || null) : null);
 if (remotePref !== 'remote_only' && (locTerms.length || countryCode)) {
   filtered = filtered.filter(j => {
     const state = checkLocationState(j, locTerms, countryCode);
