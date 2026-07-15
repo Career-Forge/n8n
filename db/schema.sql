@@ -150,9 +150,16 @@ CREATE TABLE IF NOT EXISTS company_writing_profiles (
 -- ── S1: app_settings — generic single-user key/value config ──
 --  Deterministic, out-of-git settings store (read by Code nodes via an
 --  upstream Postgres node, since $env is unreliable in the JS task runner).
---  Holds: telegraph_token (S1), and the Apollo/Hunter daily call budget (S8).
+--  Holds: telegraph_token (S1), the Apollo/Hunter daily call budget (S8), and
+--  geo_reference (s86) — a JSON blob {countries:{ISO:[aliases]}, cities:{name:ISO}}
+--  read via `value::jsonb` by "Load Geo Reference (Search/Apply)". Single source
+--  of truth for country/city detection across the whole pipeline — grow
+--  coverage by editing this row, never by adding a new hardcoded list in code.
 CREATE TABLE IF NOT EXISTS app_settings (
   key        TEXT PRIMARY KEY,
   value      TEXT,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+INSERT INTO app_settings (key, value) VALUES ('geo_reference', '{"countries":{"US":["usa","u.s.a","u.s.a.","u.s.","united states","united states of america","america"],"IN":["india"],"GB":["uk","u.k.","united kingdom","britain","england","scotland","wales"],"CA":["canada"],"AU":["australia"],"DE":["germany","deutschland"],"SG":["singapore"],"AE":["uae","united arab emirates","dubai","abu dhabi"],"NL":["netherlands","holland"],"FR":["france"],"IE":["ireland"],"NZ":["new zealand"]},"cities":{"new york":"US","san francisco":"US","seattle":"US","austin":"US","boston":"US","chicago":"US","los angeles":"US","san jose":"US","denver":"US","atlanta":"US","dallas":"US","houston":"US","washington":"US","miami":"US","portland":"US","hyderabad":"IN","bangalore":"IN","bengaluru":"IN","mumbai":"IN","pune":"IN","delhi":"IN","new delhi":"IN","gurgaon":"IN","gurugram":"IN","chennai":"IN","noida":"IN","kolkata":"IN","ahmedabad":"IN","london":"GB","manchester":"GB","edinburgh":"GB","birmingham":"GB","toronto":"CA","vancouver":"CA","montreal":"CA","ottawa":"CA","berlin":"DE","munich":"DE","frankfurt":"DE","hamburg":"DE","singapore":"SG","dublin":"IE","amsterdam":"NL","paris":"FR","sydney":"AU","melbourne":"AU","auckland":"NZ"}}')
+  ON CONFLICT (key) DO NOTHING;
