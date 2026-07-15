@@ -32,6 +32,21 @@ function salaryStr(job) { const lo = job.salary_min, hi = job.salary_max; if (!l
 function scoreEmoji(s) { return s >= 70 ? '🟢' : s >= 55 ? '🟡' : '⚪'; }
 function tierGlyph(t, source) { return t === 1 ? (source === 'cache' ? '🔓' : '✅') : t === 1.5 ? '💰' : t === 2 ? '🌿' : t === 2.5 ? '🏢' : t === 3 ? '🌐' : ''; }
 function clean(slug) { return (slug || '').replace(/-/g,' ').replace(/\b\w/g, l => l.toUpperCase()); }
+// s99: normalized-name lookup against company_tiers.json -- mirrored from
+// build_reference_data.js/seed_company_tier_weights.js (keep the normalizer
+// in sync if any of those change). Fail-open: returns null on any read/parse
+// error, callers treat null as "untiered."
+const NAME_SUFFIX_RX = /\b(incorporated|corporation|company|limited|holdings?|group|llc|inc|corp|co|ltd|llp|plc|gmbh|ag|sa|nv|bv)\b\.?/g;
+function normalizeCompanyName(raw) {
+  return String(raw || '').toLowerCase().replace(/&/g, 'and').replace(/[.,'"()]/g, '').replace(NAME_SUFFIX_RX, '').replace(/\s+/g, ' ').trim();
+}
+let COMPANY_TIERS = null;
+try { COMPANY_TIERS = JSON.parse(require('fs').readFileSync('/home/node/.n8n-files/companies/reference/company_tiers.json', 'utf8')).companies || {}; } catch (e) { COMPANY_TIERS = null; }
+function tierLookup(companyName) {
+  if (!COMPANY_TIERS) return null;
+  return COMPANY_TIERS[normalizeCompanyName(companyName)] || null;
+}
+function tierStar(companyName) { const t = tierLookup(companyName); return (t && t.w >= 0.9) ? '⭐ ' : ''; }
 function displayLocation(job) {
   const loc = (job.location || '').trim();
   const locOk = loc && !/^(unknown|n\/?a|null|undefined)$/i.test(loc);
@@ -48,6 +63,17 @@ function displayLocation(job) {
     const hay = ((job.title || '') + ' ' + (job.description_snippet || '')).toLowerCase();
     base = (intent.remote_preference === 'remote_only' || hay.includes('remote')) ? 'Remote' : 'Location not specified';
   }
+  // s98: dedupe repeated comma segments per semicolon-group before display --
+  // "New Delhi, India, India" -> "New Delhi, India" (real cosmetic bug from a
+  // live digest), "Berlin, Berlin, Germany" -> "Berlin, Germany" for
+  // Awin-style multi-location strings. Pure string cleanup, dedupes WITHIN
+  // each semicolon-separated group only (never merges across groups).
+  base = base.split(/;\s*/).map((segment) => {
+    const parts = segment.split(',').map((p) => p.trim()).filter(Boolean);
+    const seen = new Set();
+    const deduped = parts.filter((p) => { const key = p.toLowerCase(); if (seen.has(key)) return false; seen.add(key); return true; });
+    return deduped.join(', ');
+  }).join('; ');
   // F2: location filtering was active for this search but this job's location
   // couldn't be verified (Aggregate Jobs' 'unknown' branch) -- badge it rather
   // than blend it in with confirmed matches. 🔎 (not 🌐 -- see header comment).
@@ -89,6 +115,7 @@ const appendixJobs = allJobs
 
 const badges = [];
 if (intent.location_canonical) badges.push('📍 ' + String(intent.location_canonical).split(',')[0]);
+else if (intent.country_name) badges.push('📍 ' + intent.country_name);
 if (intent.salary_signals?.length) badges.push('💰 ' + intent.salary_signals[0]);
 if (intent.visa_signals?.length) badges.push('🛂 ' + intent.visa_signals[0]);
 if (intent.industry_signals?.length) badges.push('🏭 ' + intent.industry_signals[0]);
@@ -139,7 +166,7 @@ for (const [i, job] of rankedJobs.entries()) {
   const _pd = job.updated_at ? new Date(job.updated_at) : null;
   const posted = (_pd && !isNaN(_pd.getTime())) ? _pd.toLocaleDateString('en-US', {month:'short',day:'numeric'}) : '';
   contentNodes.push({ tag: 'h4', children: [(i + 1) + '. ' + scoreEmoji(score) + (tg ? ' ' + tg : '') + ' ', { tag: 'a', attrs: { href: job.url }, children: [job.title || 'Unknown Role'] }] });
-  const metaParts = [clean(job.company) || 'Unknown', displayLocation(job)];
+  const metaParts = [(tierStar(job.company) + clean(job.company)) || 'Unknown', displayLocation(job)];
   { const _sal = salaryStr(job); if (_sal) metaParts.push('💰 ' + _sal); }
   metaParts.push(score + '/100');
   if (posted) metaParts.push(posted);
@@ -155,7 +182,7 @@ if (appendixJobs.length) {
   for (const [i, job] of appendixJobs.entries()) {
     const tg = tierGlyph(job.source_tier, job.source);
     contentNodes.push({ tag: 'h4', children: [(rankedJobs.length + i + 1) + '. ' + (tg ? tg + ' ' : ''), { tag: 'a', attrs: { href: job.url }, children: [job.title || 'Unknown Role'] }] });
-    const metaParts = [clean(job.company) || 'Unknown', displayLocation(job)];
+    const metaParts = [(tierStar(job.company) + clean(job.company)) || 'Unknown', displayLocation(job)];
     { const _sal = salaryStr(job); if (_sal) metaParts.push('💰 ' + _sal); }
     contentNodes.push({ tag: 'p', children: [{ tag: 'i', children: [metaParts.join(' · ')] }] });
   }
@@ -173,7 +200,7 @@ for (const [i, job] of top3.entries()) {
   const titleClean = (job.title || 'Unknown').replace(/[\[\]]/g, '');
   const tg = tierGlyph(job.source_tier, job.source);
   top3Msg += '*' + (i+1) + '.* ' + (tg ? tg + ' ' : '') + '[' + titleClean + '](' + job.url + ')\n';
-  top3Msg += '    🏢 ' + clean(job.company) + ' · 📍 ' + displayLocation(job) + '\n';
+  top3Msg += '    🏢 ' + tierStar(job.company) + clean(job.company) + ' · 📍 ' + displayLocation(job) + '\n';
   top3Msg += '    📊 ' + ((job.score100 != null) ? job.score100 : (job.fit_score || 0) * 10) + '/100 — ' + (job.one_liner || '') + '\n\n';
 }
 if (!top3.length) top3Msg += '_No direct job pages survived filtering. Try broadening the query._\n\n';
