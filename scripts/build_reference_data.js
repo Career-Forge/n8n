@@ -37,6 +37,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const readline = require('readline');
 
 const ROOT = path.resolve(__dirname, '..');
 const RAW = path.join(ROOT, 'data', 'reference', 'raw');
@@ -63,13 +64,58 @@ function log(msg) { console.log(`[build_reference_data] ${msg}`); }
 // ═══════════════════════════════════════════════════════════════
 // 1. GeoNames gazetteer
 // ═══════════════════════════════════════════════════════════════
-function buildGazetteer() {
+async function buildGazetteer() {
   const citiesPath = path.join(RAW, 'cities15000.txt');
   const countryPath = path.join(RAW, 'countryInfo.txt');
   const oldGeoPath = path.join(RAW, 'old_geo_reference.json');
+  const altNamesPath = path.join(RAW, 'alternateNamesV2.txt');
   if (!fs.existsSync(citiesPath) || !fs.existsSync(countryPath)) {
     log('SKIP gazetteer -- raw GeoNames files not found in data/reference/raw/');
     return;
+  }
+
+  // alternateNamesV2.txt (19M rows, ALL geoname records) carries the quality
+  // flags cities15000's own flattened `alternatenames` column throws away --
+  // isPreferredName / isShortName. Real bug caught by testing "New York" and
+  // "München" against the first build (both present in the raw flattened
+  // column, both missing from the output): that column is roughly
+  // alphabetical with NO usefulness ranking, so a naive "first N valid"
+  // cap -- or even a shortest-first sort -- keeps whichever obscure
+  // transliteration happens to sort first/shortest and crowds out the actual
+  // common name (NYC's "New York" only appears after 70+ transliterations;
+  // "München" only ranks behind "Lungsod ng Muenchen" and a dozen 3-7 char
+  // codes). The V2 file's isPreferredName/isShortName flags (confirmed live:
+  // NYC's "New York" row has BOTH set, tagged iso=en) are the real signal.
+  // Filtered here to only the geonameIds already in cities15000 (34k of 19M
+  // rows) before any further processing.
+  let altNamesByGeonameId = null;
+  if (fs.existsSync(altNamesPath)) {
+    altNamesByGeonameId = new Map();
+    const cityIdSet = new Set(
+      fs.readFileSync(citiesPath, 'utf8').split('\n').filter(Boolean).map((l) => l.split('\t')[0])
+    );
+    // 777MB uncompressed -- well over Node's ~512MB max string length, so this
+    // MUST stream line-by-line rather than readFileSync the whole thing.
+    const rl = readline.createInterface({ input: fs.createReadStream(altNamesPath, 'utf8'), crlfDelay: Infinity });
+    for await (const line of rl) {
+      if (!line) continue;
+      const cols = line.split('\t');
+      const geonameId = cols[1];
+      if (!cityIdSet.has(geonameId)) continue;
+      const iso = cols[2] || '';
+      const altName = cols[3] || '';
+      if (!altName) continue;
+      const isPreferred = cols[4] === '1';
+      const isShort = cols[5] === '1';
+      const isColloquial = cols[6] === '1';
+      const isHistoric = cols[7] === '1';
+      if (isHistoric) continue; // never surface a retired historical name
+      if (!altNamesByGeonameId.has(geonameId)) altNamesByGeonameId.set(geonameId, []);
+      altNamesByGeonameId.get(geonameId).push({ name: altName, iso, isPreferred, isShort, isColloquial });
+    }
+    log(`alternateNamesV2.txt: quality-flagged alt names loaded for ${altNamesByGeonameId.size} of ${cityIdSet.size} cities`);
+  } else {
+    log('WARNING: alternateNamesV2.txt not found -- falling back to the unranked flattened column (lower quality alt names)');
   }
 
   // Latin-script filter for alternate names -- GeoNames' alternatenames column
@@ -104,21 +150,51 @@ function buildGazetteer() {
     const cols = line.split('\t');
     // geonameid, name, asciiname, alternatenames, lat, lon, featClass, featCode,
     // countryCode, cc2, admin1, admin2, admin3, admin4, population, elevation, dem, tz, modDate
+    const geonameId = cols[0];
     const name = cols[1], asciiname = cols[2], altRaw = cols[3] || '';
     const lat = parseFloat(cols[4]), lon = parseFloat(cols[5]);
     const cc = cols[8], admin1 = cols[10] || '';
     const population = parseInt(cols[14], 10) || 0;
     if (!name || !cc) continue;
 
-    const altCandidates = altRaw.split(',').map((s) => s.trim()).filter(Boolean);
     const seen = new Set([name.toLowerCase(), asciiname.toLowerCase()]);
-    const alt = [];
-    for (const a of altCandidates) {
-      if (alt.length >= 8) break;
-      const low = a.toLowerCase();
-      if (seen.has(low) || !LATIN_RX.test(a) || a.length > 60) continue;
-      seen.add(low);
-      alt.push(a);
+    let alt;
+    const flagged = altNamesByGeonameId && altNamesByGeonameId.get(geonameId);
+    if (flagged) {
+      // Rank by quality signal, not alphabet/length: English + preferred/short
+      // first, then any-language preferred, then any-language short, then
+      // plain English, then everything else Latin-script as a last-resort
+      // fill (still capped, still deduped).
+      const rank = (r) => (r.iso === 'en' && (r.isPreferred || r.isShort)) ? 0
+        : r.isPreferred ? 1
+        : r.isShort ? 2
+        : r.iso === 'en' ? 3
+        : 4;
+      const candidates = flagged
+        .filter((r) => LATIN_RX.test(r.name) && r.name.length <= 60)
+        .sort((a, b) => rank(a) - rank(b));
+      alt = [];
+      for (const r of candidates) {
+        if (alt.length >= 12) break;
+        const low = r.name.toLowerCase();
+        if (seen.has(low)) continue;
+        seen.add(low);
+        alt.push(r.name);
+      }
+    } else {
+      // Fallback (no V2 data for this city, or file missing entirely):
+      // shortest-first over the unranked flattened column -- lower quality
+      // but never silently empty.
+      const altCandidates = altRaw.split(',').map((s) => s.trim()).filter(Boolean);
+      const validAlts = [];
+      for (const a of altCandidates) {
+        const low = a.toLowerCase();
+        if (seen.has(low) || !LATIN_RX.test(a) || a.length > 60) continue;
+        seen.add(low);
+        validAlts.push(a);
+      }
+      validAlts.sort((x, y) => x.length - y.length);
+      alt = validAlts.slice(0, 12);
     }
 
     cities.push({ n: name, a: asciiname, alt, cc, a1: admin1, p: population, lat, lon });
@@ -129,7 +205,7 @@ function buildGazetteer() {
 
   const out = {
     generated_at: new Date().toISOString(),
-    source: 'GeoNames.org (CC BY 4.0) -- cities15000 + countryInfo, https://download.geonames.org/export/dump/',
+    source: 'GeoNames.org (CC BY 4.0) -- cities15000 + countryInfo + alternateNamesV2 (quality-flagged), https://download.geonames.org/export/dump/',
     country_names: countryNames,
     countries,
     cities,
@@ -263,7 +339,9 @@ function buildH1bSponsors() {
   log(`h1b_sponsors.json: ${Object.keys(sponsors).length} employers, ${sizeMB}MB`);
 }
 
-buildGazetteer();
-buildCompanyTiers();
-buildH1bSponsors();
-log('Done.');
+(async function main() {
+  await buildGazetteer();
+  buildCompanyTiers();
+  buildH1bSponsors();
+  log('Done.');
+})();
