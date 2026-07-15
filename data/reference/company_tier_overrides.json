@@ -1,0 +1,34 @@
+{
+  "_comment": "Hand-curated tier overlay. NEEDS USER REVIEW before this is treated as final -- weights and inclusion/exclusion are product taste, not derived from data. Merged on top of the Fortune 500 base by scripts/build_reference_data.js: an override always wins over a Fortune-500-rank-derived weight for the same normalized company name. 'dream' foundation reused from the existing Registry Seeder / ExpandQuery.md cohort list (34 companies), re-tiered into a continuous 0-1 weight instead of a flat flag, plus additions for quant trading firms and 2024-2026-era AI startups the original flat list didn't cover.",
+  "tiers": {
+    "maango": {
+      "weight": 1.0,
+      "companies": ["Meta", "Anthropic", "Amazon", "Nvidia", "Google", "OpenAI"]
+    },
+    "maang_remainder": {
+      "weight": 0.95,
+      "companies": ["Apple", "Netflix"]
+    },
+    "top_fintech_quant": {
+      "weight": 0.9,
+      "companies": ["Bloomberg", "Barclays", "JPMorgan Chase", "Morgan Stanley", "Citigroup", "Two Sigma", "Visa", "Mastercard", "Jane Street", "Point72", "Citadel", "Goldman Sachs", "Susquehanna International Group", "D. E. Shaw", "Renaissance Technologies", "Millennium Management", "DRW", "Optiver", "IMC Trading", "Akuna Capital", "Hudson River Trading"]
+    },
+    "hot_ai_startup": {
+      "weight": 0.85,
+      "companies": ["Perplexity", "xAI", "Figma", "Ramp", "Databricks", "Scale AI", "Notion", "Stripe", "Cohere", "Mistral AI", "Anysphere", "Runway", "ElevenLabs", "Groq", "Together AI", "Hugging Face", "Airtable", "Linear", "Vercel", "Retool", "Deel", "Rippling", "Brex"]
+    },
+    "other_dream": {
+      "weight": 0.8,
+      "companies": ["Airbnb", "Cloudflare", "Coinbase", "DoorDash", "Instacart", "LinkedIn", "Palantir", "Reddit", "Robinhood", "Salesforce", "SpaceX", "Spotify", "Target", "Walmart", "IBM", "GEICO", "GitLab", "Discord", "Plaid"]
+    },
+    "big4_consulting": {
+      "weight": 0.7,
+      "companies": ["Deloitte", "EY", "KPMG", "PwC", "McKinsey & Company", "Boston Consulting Group", "Bain & Company"]
+    },
+    "private_fortune500_supplement": {
+      "weight": 0.6,
+      "_comment": "Forbes Global 2000 is public-companies-only; these are large PRIVATE US companies that rank in Fortune 500 by revenue but would otherwise be invisible to a public-company-only base list.",
+      "companies": ["Cargill", "Koch Industries", "Mars, Incorporated", "Publix Super Markets", "State Farm Insurance", "Fidelity Investments", "Reyes Holdings", "Enterprise Holdings", "Love's Travel Stops", "H-E-B", "Bechtel"]
+    }
+  }
+}

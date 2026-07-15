@@ -66,3 +66,7 @@ scripts/_tmp_s6b1/
 
 # Local registry snapshots (full live-DB exports incl. tier labels -- not published)
 data/backups/
+
+# Raw downloaded source files for build_reference_data.js (large, re-downloadable
+# from public sources -- only the built JSONs in data/reference/ are committed)
+data/reference/raw/
