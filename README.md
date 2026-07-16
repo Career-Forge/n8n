@@ -159,8 +159,10 @@ Activate the workflow. Text your bot "help" to verify.
 careerforge-n8n/
 |
 |-- README.md                          # This file
+|-- SETUP.md                           # Full clone-and-BYOK guide
 |-- DEPLOYMENT.md                      # 5 hosting tiers (local to cloud)
 |-- API.md                             # External services + cost math
+|-- ROADMAP.md                         # What's live, what's next
 |-- LICENSE                            # MIT
 |
 |-- docs/
@@ -168,6 +170,7 @@ careerforge-n8n/
 |   |-- MASTER_RESUME_GUIDE.md         # Template walkthrough
 |   |-- CUSTOMIZE_PROMPTS.md           # Tune voice and style
 |   |-- ARCHITECTURE.md                # System diagrams + deep dive
+|   |-- ADAPTER_EXPANSION.md           # Design plan: next-wave ATS adapters (Meta/Google/Microsoft/Workday-bulk)
 |   |-- archive/                       # Superseded planning docs -- historical only
 |   +-- diagrams/                      # Mermaid .mmd sources
 |
@@ -199,6 +202,16 @@ careerforge-n8n/
 |       |-- Dockerfile
 |       +-- app.py                     # Flask + pdflatex PDF compiler
 |
+|-- db/
+|   +-- schema.sql                     # Postgres + pgvector schema (companies, jobs, tier_weight, app_settings, ...)
+|
+|-- data/
+|   +-- reference/                     # Local gazetteer (34k cities), company tier weights, H1B sponsor data
+|       |-- geonames_cities.json       # GeoNames gazetteer -- location matching for find_jobs
+|       |-- company_tiers.json         # Fortune 500 + hand-curated tier weights -- ⭐ badge, scoring
+|       |-- h1b_sponsors.json          # USCIS H1B approval data -- workauth scoring
+|       +-- README.md                  # Sources, licenses, regeneration instructions
+|
 |-- docker/
 |   |-- docker-compose.yml             # n8n + LaTeX (local dev)
 |   |-- docker-compose.render.yml      # Render free tier (SQLite)
@@ -208,7 +221,7 @@ careerforge-n8n/
 |   |-- .env.example                   # All API keys documented
 |   +-- README.md
 |
-+-- scripts/
++-- scripts/                           # Patch scripts (deploy history, s1-s101+) + one-off utilities + build_reference_data.js
     +-- uptime_ping.sh                 # Keep-alive ping for Render free tier
 ```
 
@@ -254,7 +267,7 @@ Configure 1, 2, or 3 providers. The system gracefully degrades — works with an
 | Component | Status |
 |-----------|--------|
 | Intent router (18 intents) | Complete |
-| find_jobs (Greenhouse + scoring) | Complete |
+| find_jobs (12+ ATS APIs + web search, gazetteer location match, tier/H1B-aware scoring) | Complete |
 | apply (PDF pipeline) | Complete |
 | revise (chat memory iteration) | Complete |
 | score (ForgeScore standalone) | Complete |

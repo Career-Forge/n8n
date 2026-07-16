@@ -66,6 +66,10 @@ const PROMPT_MAP = {
   'ReviseForge':           { file: 'ReviseForge.md',        extract: getChainLlmMessage },
   'Expand Query':          { file: 'ExpandQuery.md',        extract: getChainLlmMessage },
   'SalarySummarize':       { file: 'SalarySummarize.md',    extract: getChainLlmMessage },
+  // Found missing during a doc-staleness audit -- a real chainLlm node (the
+  // jd_paste intent's company/role extractor) with no tracked prompt file at
+  // all, so drift on it was structurally invisible to this script.
+  'JD Paste Extract':      { file: 'JDPasteExtract.md',     extract: getChainLlmMessage },
 };
 
 // scripts/nodes/*.js -- node name -> filename (all plain jsCode extraction)

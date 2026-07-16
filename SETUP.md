@@ -107,15 +107,17 @@ Without this row, `find` still works but the long-result Telegraph page link is 
 
 ---
 
-## 7. Models (central map)
+## 7. Models
 
-Every LLM model is defined in one place: the `MODEL_MAP` in `scripts/s9_polish.js` (keyed by model-node name). To swap a model, edit the map and re-run `node scripts/s9_polish.js` + redeploy. Defaults (all verified on openrouter.ai, June 2026):
+There's no single `MODEL_MAP` file — each `*Model` node in the live workflow sets its own model directly, and those live nodes are the authoritative source (the old `scripts/s9_polish.js` MODEL_MAP approach was retired; that file now lives under `scripts/applied/` as deploy history only). To swap a model, edit the relevant `*Model` node's `model` parameter and redeploy — see [DEPLOYMENT.md](DEPLOYMENT.md) for the import/restart steps. Live defaults, by role:
 
-- **Resume bullet generation / revise** → `anthropic/claude-sonnet-4.6`
-- **Resume + cover selection, cover writing** → `anthropic/claude-haiku-4.5`
-- **JD analysis, ATS extraction, apply-time intel** → `deepseek/deepseek-v4-flash`
+- **Writer/selection lane** (Pass1, Pass2, Pass2 Regen, Cover Pass1, Cover Pass2, ReviseForge, OutreachWriter) → `anthropic/claude-sonnet-4-6`
+- **Job scoring** (JobScorer) → `deepseek/deepseek-v4-pro`
+- **JSON/classification lane** (SeniorityDetector, ForgeScore, CompanyIntel, ContactFinder, SalarySummarize, Step0, CompanyIntel Apply, Extract ATS Signals) → `deepseek/deepseek-v4-flash`
+- **Intent routing + query expansion** (Intent Router, Expand Query, JD Paste Extract) → `openai/gpt-5.4-mini`
 - **Embeddings** → local Ollama `bge-m3`
-- **Legacy roles** (intent, scoring, seniority, expand, salary, company-intel, contact-finder) → `openai/gpt-5.4-mini`; preferred cheaper swap noted inline in `MODEL_MAP` (`deepseek/deepseek-v4-flash` for JSON roles, `claude-haiku-4.5` for outreach).
+
+Verify current pricing/availability at [openrouter.ai/models](https://openrouter.ai/models) before relying on any of these — model IDs above are pulled directly from the live workflow.
 
 ---
 

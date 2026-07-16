@@ -10,7 +10,7 @@ You text: "find ML engineer jobs in NYC"
 You get: top 5 ranked matches, scored against your resume.
 
 You text: "3"
-You get: two PDFs — a tailored resume and cover letter — in 45 seconds. Delivered to your phone. Ready to submit.
+You get: two PDFs — a tailored resume and cover letter — in about 5 minutes. Delivered to your phone. Ready to submit.
 
 That's CareerForge. It's an n8n workflow. One JSON file. ~$2/month to run.
 

@@ -1,16 +1,16 @@
 # Architecture
 
-CareerForge is a single n8n workflow (291 nodes) that handles 18 intents through one Telegram bot, plus a separate background poller workflow that keeps a local job cache warm. This doc walks through the system design, data flow, and key implementation patterns.
+CareerForge is a single n8n workflow (302 nodes) that handles 18 intents through one Telegram bot, plus a separate background poller workflow (17 nodes) that keeps a local job cache warm across 12+ ATS platforms. This doc walks through the system design, data flow, and key implementation patterns.
 
 ## System Overview
 
 ```mermaid
 flowchart TD
-    TG["Telegram Message"] --> ROUTER["Intent Router<br/><i>Llama 3.3 70B :free</i>"]
+    TG["Telegram Message"] --> ROUTER["Intent Router<br/><i>gpt-5.4-mini</i>"]
     CRON["Schedule Trigger<br/><i>8am + 11:30am ET</i>"] --> FIND
 
     ROUTER --> |help| HELP["Help Text"]
-    ROUTER --> |find_jobs| FIND["Job Discovery<br/><i>Greenhouse API + JobScorer</i>"]
+    ROUTER --> |find_jobs| FIND["Job Discovery<br/><i>12+ ATS APIs + web search<br/>gazetteer location match, /100 scoring</i>"]
     ROUTER --> |apply| APPLY["Resume + Cover PDF<br/><i>Claude Sonnet 4.6 + LaTeX</i>"]
     ROUTER --> |revise| REVISE["Refine Last Output<br/><i>Chat Memory + Sonnet</i>"]
     ROUTER --> |score| SCORE["ForgeScore<br/><i>Resume vs JD</i>"]
@@ -33,7 +33,7 @@ flowchart TD
     HELP --> TG_OUT
 ```
 
-Every message hits the Intent Router first. It's a Basic LLM Chain node running Llama 3.3 70B (free via OpenRouter). The router outputs a JSON object with `intent` and `entities` — a Switch node fans out to the matching branch.
+Every message hits the Intent Router first. It's an Agent-architecture node (needs native tool-calling for structured output) running `openai/gpt-5.4-mini`. The router outputs a JSON object with `intent` and `entities` — a Switch node fans out to the matching branch.
 
 ## Intent Router
 
@@ -49,9 +49,9 @@ The heaviest branch. Turns a user message like "apply to job 3" into two tailore
 flowchart TD
     START["Route Intent<br/>output: apply"] --> EXTRACT["Extract Input<br/><i>chat_id, message_text</i>"]
     EXTRACT --> PARSE["Parse Personal Info<br/><i>Read the stored resume JSON (see MASTER_RESUME_GUIDE.md)</i>"]
-    PARSE --> SENIORITY["SeniorityDetector<br/><i>DeepSeek :free</i>"]
+    PARSE --> SENIORITY["SeniorityDetector<br/><i>deepseek-v4-flash</i>"]
     SENIORITY --> LOAD["Load Skeletons<br/><i>Read .tex files from /data/templates</i>"]
-    LOAD --> FORGESCORE["ForgeScore<br/><i>DeepSeek :free</i>"]
+    LOAD --> FORGESCORE["ForgeScore<br/><i>deepseek-v4-flash</i>"]
     FORGESCORE --> GATE{"Score >= 4.0?"}
 
     GATE -->|"Skip (< 4.0)"| SKIP_MSG["Send Skip Message<br/><i>Telegram</i>"]
@@ -111,8 +111,8 @@ flowchart TD
 
     RRF --> TYPE_CHECK{"Intel or Outreach?"}
 
-    TYPE_CHECK -->|Intel| INTEL_LLM["CompanyIntel<br/><i>DeepSeek :free</i>"]
-    TYPE_CHECK -->|Outreach| CONTACT_LLM["ContactFinder<br/><i>DeepSeek :free</i>"]
+    TYPE_CHECK -->|Intel| INTEL_LLM["CompanyIntel<br/><i>deepseek-v4-flash</i>"]
+    TYPE_CHECK -->|Outreach| CONTACT_LLM["ContactFinder<br/><i>deepseek-v4-flash</i>"]
 
     INTEL_LLM --> FORMAT_INTEL["Format Intel Report<br/><i>Health score, layoffs,<br/>sentiment, H1B, funding</i>"]
     FORMAT_INTEL --> SEND_INTEL["Send Intel<br/><i>Telegram</i>"]
@@ -216,23 +216,28 @@ flowchart LR
 
 See [DEPLOYMENT.md](../DEPLOYMENT.md) for step-by-step instructions for each tier.
 
+## ATS Poller & Adapter Roadmap
+
+`CareerForge_ATS_Poller.json` polls 12+ ATS platforms directly (Greenhouse, Lever, Ashby, Workday, Workable, Recruitee, SmartRecruiters, Personio, Avature, plus single-company integrations for Amazon, Apple, and Oracle) into a local job cache, so `find_jobs` can hit a warm cache before falling back to live web search. See [docs/ADAPTER_EXPANSION.md](ADAPTER_EXPANSION.md) for the design plan on the next wave of adapters (Meta, Google, Microsoft, bulk Workday tenant expansion).
+
 ## File Map
 
 ```
-workflows/CareerForge_Master_local.json   ← THE bot (291 nodes)
-workflows/CareerForge_ATS_Poller.json     ← Background job-registry poller
+workflows/CareerForge_Master_local.json   ← THE bot (302 nodes)
+workflows/CareerForge_ATS_Poller.json     ← Background job-registry poller (17 nodes, 12+ ATS platforms)
 workflows/CareerForge_Registry_Seeder.json ← One-time registry seed
 workflows/archive/                        ← Historical snapshots, do not import
 docker/workflows/                         ← Byte-identical copies, imported into Docker n8n
 prompts/*.md                              ← LLM prompt source files (regenerated from live via scripts/export_prompts.js)
 templates/cover_skeleton.tex              ← LaTeX skeleton (resume uses one shared skeleton, no seniority variants)
 services/latex/                           ← Flask PDF compiler
-db/schema.sql                             ← Postgres + pgvector schema
+db/schema.sql                             ← Postgres + pgvector schema (companies, jobs, tier_weight, app_settings, ...)
+data/reference/                           ← Local gazetteer (34k cities), company tier weights, and H1B sponsor data -- see data/reference/README.md
 docker/                                   ← Docker configs (n8n, postgres, ollama, latex)
 scripts/                                  ← Patch scripts (deploy history) + utilities
 ```
 
-> **Heads up:** the diagrams below (`system_overview.mmd`, `apply_pipeline.mmd`, `outreach_rrf.mmd`) describe an earlier iteration of the pipeline (single-phase ResumeForge/CoverForge, a standalone RRF-merge node) and have not been re-verified against the current 275-node local-Postgres/pgvector architecture. Treat them as historically informative, not as current ground truth, until they're regenerated.
+> **Heads up:** the diagrams below (`system_overview.mmd`, `apply_pipeline.mmd`, `outreach_rrf.mmd`) describe an earlier iteration of the pipeline (single-phase ResumeForge/CoverForge, a standalone RRF-merge node) and have not been re-verified against the current 302-node local-Postgres/pgvector architecture. Treat them as historically informative, not as current ground truth, until they're regenerated.
 
 ## Diagram Sources
 

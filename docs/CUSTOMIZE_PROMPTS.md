@@ -45,9 +45,10 @@ Full recipe and gotchas (WAL-mode SQLite verification, sandbox limits) are in [S
 | `ContactFinder.md` | ContactFinder | Extracts contacts from search results |
 | `OutreachWriter.md` | OutreachWriter | Writes LinkedIn + email outreach drafts |
 | `CompanyIntel.md` | CompanyIntel, CompanyIntel Apply | Analyzes company health, culture, and mission/vision from search results |
-| `JobScorer.md` | JobScorer | Ranks and location-matches jobs from search results |
+| `JobScorer.md` | JobScorer | Ranks jobs from search results — gazetteer-verified location match, company-tier weighting, and H1B-aware work-authorization scoring feed in as deterministic signals alongside the LLM's own judgment |
 | `ATS_Extraction.md` | Extract ATS Signals | Extracts ATS-relevant signals from a generated resume for the auto-improve loop |
 | `Step0_JD.md` | Step0 JD Analysis | Extracts company/role/requirements from the job description |
+| `JDPasteExtract.md` | JD Paste Extract | Extracts company/role from a directly-pasted job description (jd_paste intent) |
 | `ExpandQuery.md` | Expand Query | Expands a find_jobs message into structured search parameters (roles, location, seniority) |
 | `ReviseForge.md` | ReviseForge | Rewrites the last generated resume/cover letter per a chat-memory revision request |
 | `SalarySummarize.md` | SalarySummarize | Synthesizes salary range + negotiation advice from search results |
