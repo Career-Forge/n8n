@@ -331,7 +331,7 @@
     {
       "parameters": {
         "chatId": "={{ $('Extract Input').first().json.chat_id }}",
-        "text": "⚙️ *Generating your tailored resume + cover letter...* (~45 sec)",
+        "text": "⚙️ *Generating your tailored resume + cover letter...* (~5 min)",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -5986,7 +5986,7 @@
     {
       "parameters": {
         "chatId": "={{ $('Extract Callback').first().json.chat_id }}",
-        "text": "⚙️ *Generating your tailored resume + cover letter from the pasted JD...* (~1 min)",
+        "text": "⚙️ *Generating your tailored resume + cover letter from the pasted JD...* (~5 min)",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
