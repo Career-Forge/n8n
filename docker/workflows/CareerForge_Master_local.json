@@ -80,46 +80,12 @@
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "chat_id",
-              "name": "chat_id",
-              "value": "={{ $getWorkflowStaticData('global').user_prefs?.owner_chat_id || '6805613388' }}",
-              "type": "string"
-            },
-            {
-              "id": "message_text",
-              "name": "message_text",
-              "value": "={{ $getWorkflowStaticData('global').user_prefs?.schedule_query || 'find me AI Engineer jobs' }}",
-              "type": "string"
-            },
-            {
-              "id": "source",
-              "name": "source",
-              "value": "schedule",
-              "type": "string"
-            },
-            {
-              "id": "intent_override",
-              "name": "intent_override",
-              "value": "find_jobs",
-              "type": "string"
-            },
-            {
-              "id": "b21ee681",
-              "name": "user_prefs_snapshot",
-              "value": "={{ JSON.stringify($getWorkflowStaticData('global').user_prefs || {}) }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
+        "jsCode": "// Schedule Payload\n// s104: was a Set node calling $getWorkflowStaticData() directly inside\n// {{ }} field expressions -- the only place in this workflow doing that.\n// On scheduled runs those expressions silently resolved to null (confirmed\n// via real execution data) even though user_prefs genuinely exists with\n// real content, which fed Expand Query a literal \"Query: null\" prompt.\n// Converted to a Code node -- same output shape, same fallback defaults,\n// off the fragile expression path.\nconst sd = $getWorkflowStaticData('global');\nconst prefs = sd.user_prefs || {};\nconst chat_id = prefs.owner_chat_id || '6805613388';\nconst message_text = prefs.schedule_query || 'find me AI Engineer jobs';\nreturn [{ json: {\n  chat_id,\n  message_text,\n  source: 'schedule',\n  intent_override: 'find_jobs',\n  user_prefs_snapshot: JSON.stringify(prefs),\n} }];"
       },
       "id": "0f252339-a484-4196-8275-dee1f4c04200",
       "name": "Schedule Payload",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         28640,
         45936
