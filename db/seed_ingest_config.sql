@@ -1,8 +1,11 @@
--- s91_ingest_config_seed.sql -- one-time seed for the ATS Poller's ingest
--- title filter (see scripts/s91_ingest_title_filter.js). Editable anytime
--- with a plain UPDATE afterward -- this is the STARTING vocabulary, not a
--- fixed list. ON CONFLICT DO NOTHING: seeds once, never clobbers a later
--- manual edit if this file is re-run.
+-- db/seed_ingest_config.sql -- one-time seed for the ATS Poller's ingest
+-- title filter (see scripts/applied/s91_ingest_title_filter.js). Editable
+-- anytime with a plain UPDATE afterward -- this is the STARTING vocabulary,
+-- not a fixed list. ON CONFLICT DO NOTHING: seeds once, never clobbers a
+-- later manual edit if this file is re-run.
+-- NOT auto-run on boot (only schema.sql is mounted to docker-entrypoint-initdb.d).
+-- Run manually: docker cp db/seed_ingest_config.sql careerforge_postgres:/tmp/seed.sql
+--   && docker exec careerforge_postgres psql -U careerforge -d careerforge -f /tmp/seed.sql
 --
 -- mode: 'keywords' (filter by this list) | 'all' (disable filtering entirely).
 -- cap_per_board: max jobs ingested per board per poll tick.

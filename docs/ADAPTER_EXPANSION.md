@@ -163,7 +163,7 @@ same treatment:
   genuinely multi-tenant version of the same platform exists elsewhere.
 - **Ingest vocabulary reuse**: the config-driven title filter shipped in
   this same fix wave (`app_settings.ingest_title_filter`, see
-  `scripts/s91_ingest_title_filter.js`) already gates every adapter's
+  `scripts/applied/s91_ingest_title_filter.js`) already gates every adapter's
   output uniformly via `push()` — a new adapter needs zero additional
   filtering logic of its own, just call the existing `push(board, obj)`.
 - **Fixture capture**: `fixtures/` holds raw captured responses per adapter

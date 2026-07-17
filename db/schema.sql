@@ -160,11 +160,14 @@ CREATE TABLE IF NOT EXISTS company_writing_profiles (
 -- ── S1: app_settings — generic single-user key/value config ──
 --  Deterministic, out-of-git settings store (read by Code nodes via an
 --  upstream Postgres node, since $env is unreliable in the JS task runner).
---  Holds: telegraph_token (S1), the Apollo/Hunter daily call budget (S8), and
+--  Holds: telegraph_token (S1), the Apollo/Hunter daily call budget (S8),
 --  geo_reference (s86) — a JSON blob {countries:{ISO:[aliases]}, cities:{name:ISO}}
 --  read via `value::jsonb` by "Load Geo Reference (Search/Apply)". Single source
 --  of truth for country/city detection across the whole pipeline — grow
 --  coverage by editing this row, never by adding a new hardcoded list in code.
+--  Also: ingest_title_filter (s91) — the ATS Poller's title-relevance keyword
+--  list + per-board cap, seeded by db/seed_ingest_config.sql (run once,
+--  editable anytime via a plain UPDATE afterward).
 CREATE TABLE IF NOT EXISTS app_settings (
   key        TEXT PRIMARY KEY,
   value      TEXT,

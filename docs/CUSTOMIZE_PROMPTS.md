@@ -24,8 +24,8 @@ Changes take effect immediately, but only in the n8n UI's copy — they're not c
 
 This repo's convention is patch scripts, not hand-editing the 600KB+ workflow JSON directly:
 
-1. Write or edit a `scripts/sN_*.js` patch script that anchors on the exact current node text and replaces it (see any `scripts/s2*.js`–`s22_*.js` file for the pattern — string-split anchors, a harness that proves the new logic works *before* touching any file).
-2. Run it inside the n8n container (repo staged under `/tmp`), which rewrites all 3 tracked master JSON copies.
+1. Write a new `scripts/sN_*.js` patch script (top-level, next free sprint number) that anchors on the exact current node text and replaces it — see any file under `scripts/applied/` for the pattern (string-split anchors, a harness that proves the new logic works *before* touching any file). Once deployed and committed, move it to `scripts/applied/` too.
+2. Run it inside the n8n container (repo staged under `/tmp`), which rewrites the canonical `workflows/*.json` file.
 3. Deploy: `docker cp` the updated JSON in, `n8n import:workflow`, `n8n update:workflow --active=true`, `docker restart`, poll `/healthz`.
 4. Re-run `node scripts/export_prompts.js` to refresh `prompts/*.md` so the docs match what you just shipped — then `git diff prompts/` should show exactly your intended change and nothing else. If it shows anything unexpected, something else drifted.
 
