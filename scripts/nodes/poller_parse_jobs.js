@@ -209,13 +209,22 @@ if (selfFetchCompanies.length) {
         const qs = 'domain=' + encodeURIComponent(domain) + '&start=' + start + '&num=' + LIMIT;
         let path = (tier === 'pcsx' ? '/api/pcsx/search?' : '/api/apply/v2/jobs?') + qs;
         let res = await httpFetch(host, path, 'GET', { Accept: 'application/json' });
-        if (tier === 'smartapply' && res.status === 403) {
+        let data; try { data = JSON.parse(res.body); } catch (e) { data = null; }
+        // s112: smartapply can return 200 with a genuinely EMPTY positions array
+        // instead of a 403 (confirmed live: PayPal/Starbucks/Boston Scientific are
+        // all real, working tenants smartapply reports as empty while pcsx returns
+        // real jobs) -- the OLD code only ever fell back to pcsx on a 403, so these
+        // tenants would silently ingest zero jobs forever. Falls back on EITHER
+        // signal now, but only on page 0 -- a later page legitimately running out
+        // of results on an already-working tier must not re-trigger a switch.
+        const smartapplyEmpty = tier === 'smartapply' && page === 0 && res.status === 200 && data && Array.isArray(data.positions) && data.positions.length === 0;
+        if (tier === 'smartapply' && (res.status === 403 || smartapplyEmpty)) {
           tier = 'pcsx';
           path = '/api/pcsx/search?' + qs;
           res = await httpFetch(host, path, 'GET', { Accept: 'application/json' });
+          try { data = JSON.parse(res.body); } catch (e) { data = null; }
         }
-        if (res.status !== 200) break;
-        let data; try { data = JSON.parse(res.body); } catch (e) { break; }
+        if (res.status !== 200 || !data) break;
         ok = true;
         const positions = (tier === 'pcsx' ? ((data.data && data.data.positions) || []) : (data.positions || []));
         if (!positions.length) break;
