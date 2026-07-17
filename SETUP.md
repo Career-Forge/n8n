@@ -27,11 +27,11 @@ docker exec -it careerforge_ollama ollama pull bge-m3   # one-time, ~1.2 GB
 
 Then, in the n8n UI (`http://localhost:5678`, basic-auth from `.env`):
 1. Create the **credentials** in section 4.
-2. Import the workflow: `docker/workflows/CareerForge Master Local v6.3.json`.
+2. Import the workflow: `workflows/CareerForge_Master_local.json`.
 3. Activate it. Telegram needs an HTTPS `WEBHOOK_URL` (use ngrok/Cloudflare Tunnel for local dev), then set the bot webhook to `<WEBHOOK_URL>/webhook/<telegram-trigger-path>`.
 4. Apply the DB schema if starting fresh: `db/schema.sql`.
 
-> Ops note: the live workflow is edited via the `scripts/sN_*.js` patch scripts, never by hand-editing the 356 KB JSON. Each patch writes all three master copies, then you `docker cp` + `n8n import:workflow` + `update:workflow --active=true` + `docker restart`. See `docs/archive/plan_handout.md` for the exact recipe.
+> Ops note: the live workflow is edited via `sN_*.js` patch scripts (historical ones live under `scripts/applied/`), never by hand-editing the JSON directly. Each patch writes the canonical `workflows/*.json` file, then you `docker cp` + `n8n import:workflow` + `update:workflow --active=true` + `docker restart`. See `docs/archive/plan_handout.md` for the exact recipe.
 
 ---
 

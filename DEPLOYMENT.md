@@ -289,7 +289,7 @@ The Blueprint auto-generates `N8N_ENCRYPTION_KEY` for you.
 
 **4. Import the workflow**
 
-Open your Render n8n URL > Workflows > Import from file > select each of `docker/workflows/CareerForge_Master_local.json`, `CareerForge_ATS_Poller.json`, and `CareerForge_Registry_Seeder.json`.
+Open your Render n8n URL > Workflows > Import from file > select each of `workflows/CareerForge_Master_local.json`, `CareerForge_ATS_Poller.json`, and `CareerForge_Registry_Seeder.json`.
 
 **5. Set up UptimeRobot keep-alive**
 ```
@@ -357,7 +357,7 @@ n8n service > Settings > Domains > Generate Domain
 
 **6. Deploy** — Railway auto-builds and restarts.
 
-**7. Import workflows** — open your Railway n8n URL, import each of `docker/workflows/CareerForge_Master_local.json`, `CareerForge_ATS_Poller.json`, and `CareerForge_Registry_Seeder.json`, set credentials, activate.
+**7. Import workflows** — open your Railway n8n URL, import each of `workflows/CareerForge_Master_local.json`, `CareerForge_ATS_Poller.json`, and `CareerForge_Registry_Seeder.json`, set credentials, activate.
 
 ### Notes
 - Persistent PostgreSQL — no 30-day expiry
@@ -549,7 +549,7 @@ This runs daily via cron, keeps 14 days of compressed backups, and auto-prunes o
 
 ### Import and activate
 
-Open `https://n8n.yourdomain.com`, import each of `docker/workflows/CareerForge_Master_local.json`, `CareerForge_ATS_Poller.json`, and `CareerForge_Registry_Seeder.json`, configure credentials, activate. You're live.
+Open `https://n8n.yourdomain.com`, import each of `workflows/CareerForge_Master_local.json`, `CareerForge_ATS_Poller.json`, and `CareerForge_Registry_Seeder.json`, configure credentials, activate. You're live.
 
 ---
 
@@ -561,7 +561,7 @@ Zero ops. No Docker, no servers, no reverse proxies. You pay for convenience.
 
 **1. Sign up at** [app.n8n.cloud](https://app.n8n.cloud) — 14-day free trial
 
-**2. Import workflows** — Settings > Import > upload each of `docker/workflows/CareerForge_Master_local.json`, `CareerForge_ATS_Poller.json`, and `CareerForge_Registry_Seeder.json`
+**2. Import workflows** — Settings > Import > upload each of `workflows/CareerForge_Master_local.json`, `CareerForge_ATS_Poller.json`, and `CareerForge_Registry_Seeder.json`
 
 **3. Add credentials:**
 - OpenRouter: type "OpenAI-compatible", base URL `https://openrouter.ai/api/v1`, paste your API key

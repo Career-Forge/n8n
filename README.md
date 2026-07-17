@@ -134,7 +134,7 @@ ngrok http 5678
 
 ### 4. Import the workflow
 
-In n8n: **Workflows > Import from file** > select `docker/workflows/CareerForge_Master_local.json` (the master bot), then repeat for `docker/workflows/CareerForge_ATS_Poller.json` (background job-registry poller) and `docker/workflows/CareerForge_Registry_Seeder.json` (one-time registry seed). Activate all three. See [SETUP.md](SETUP.md) for the full recipe, including the Postgres schema and Ollama embedding model.
+In n8n: **Workflows > Import from file** > select `workflows/CareerForge_Master_local.json` (the master bot), then repeat for `workflows/CareerForge_ATS_Poller.json` (background job-registry poller) and `workflows/CareerForge_Registry_Seeder.json` (one-time registry seed). Activate all three. See [SETUP.md](SETUP.md) for the full recipe, including the Postgres schema and Ollama embedding model.
 
 ### 5. Set up credentials
 

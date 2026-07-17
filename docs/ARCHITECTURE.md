@@ -227,7 +227,6 @@ workflows/CareerForge_Master_local.json   ← THE bot (302 nodes)
 workflows/CareerForge_ATS_Poller.json     ← Background job-registry poller (17 nodes, 12+ ATS platforms)
 workflows/CareerForge_Registry_Seeder.json ← One-time registry seed
 workflows/archive/                        ← Historical snapshots, do not import
-docker/workflows/                         ← Byte-identical copies, imported into Docker n8n
 prompts/*.md                              ← LLM prompt source files (regenerated from live via scripts/export_prompts.js)
 templates/cover_skeleton.tex              ← LaTeX skeleton (resume uses one shared skeleton, no seniority variants)
 services/latex/                           ← Flask PDF compiler

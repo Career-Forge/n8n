@@ -19,7 +19,7 @@ open http://localhost:5678   # login: careerforge / demo1234
 ## Import the Workflow
 
 1. Open **http://localhost:5678**
-2. **Workflows** → **Import from file** → upload `docker/workflows/CareerForge_Master_local.json`, then repeat for `CareerForge_ATS_Poller.json` and `CareerForge_Registry_Seeder.json`
+2. **Workflows** → **Import from file** → upload `workflows/CareerForge_Master_local.json`, then repeat for `CareerForge_ATS_Poller.json` and `CareerForge_Registry_Seeder.json`
 3. Open each imported workflow → set credentials (see below)
 4. Toggle each workflow **Active**
 

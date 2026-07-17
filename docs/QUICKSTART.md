@@ -47,7 +47,7 @@ Apply the DB schema if starting fresh: `psql -h localhost -U careerforge -d care
 
 1. In n8n, click **Workflows** in the left sidebar
 2. Click the **+** button → **Import from file**
-3. Select `docker/workflows/CareerForge_Master_local.json` from the repo — this is the bot itself
+3. Select `workflows/CareerForge_Master_local.json` from the repo — this is the bot itself
 4. Repeat for `CareerForge_ATS_Poller.json` (background job-registry poller) and `CareerForge_Registry_Seeder.json` (one-time registry seed)
 5. Open each imported workflow
 
