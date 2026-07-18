@@ -68,7 +68,7 @@ const isRemote = s => /remote/i.test(String(s || ''));
 for (let i = 0; i < resps.length; i++) {
   const company = (reqs[i] || {}).json || {};
   const t = company.ats_type;
-  if (t === 'workday' || t === 'apple' || t === 'eightfold' || t === 'avature' || t === 'google' || t === 'deshaw') continue; // self-fetch pass below, Fetch ATS's response for these is discarded
+  if (t === 'workday' || t === 'apple' || t === 'eightfold' || t === 'avature' || t === 'google' || t === 'deshaw' || t === 'microsoft') continue; // self-fetch pass below, Fetch ATS's response for these is discarded
   const R = respOf(resps[i]);
   if (statusOf(R) < 200 || statusOf(R) >= 300) continue;
   let body = null;
@@ -114,7 +114,7 @@ for (let i = 0; i < resps.length; i++) {
 }
 
 // ── self-fetch pass: workday / apple / eightfold, run concurrently, require('https') ──
-const selfFetchCompanies = reqs.map((r) => (r || {}).json || {}).filter((c) => c.ats_type === 'workday' || c.ats_type === 'apple' || c.ats_type === 'eightfold' || c.ats_type === 'avature' || c.ats_type === 'google' || c.ats_type === 'deshaw');
+const selfFetchCompanies = reqs.map((r) => (r || {}).json || {}).filter((c) => c.ats_type === 'workday' || c.ats_type === 'apple' || c.ats_type === 'eightfold' || c.ats_type === 'avature' || c.ats_type === 'google' || c.ats_type === 'deshaw' || c.ats_type === 'microsoft');
 if (selfFetchCompanies.length) {
   try {
     const https = require('https');
@@ -418,6 +418,50 @@ if (selfFetchCompanies.length) {
   return { rows, ok: true };
 }
 
+    async function fetchMicrosoft(company) {
+  let fcKey = '';
+  try { fcKey = $('Load Firecrawl Key').first().json.firecrawl_key || ''; } catch (e) {}
+  if (!fcKey) return { rows: [], ok: false };
+  const MAX_PAGES = 2;
+  const rows = [];
+  const seenIds = new Set();
+  let ok = false;
+  const cardRx = /\[([^\]]+)\]\((https:\/\/apply\.careers\.microsoft\.com\/careers\/job\/(\d+))[^)]*\)/g;
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const targetUrl = 'https://jobs.careers.microsoft.com/global/en/search?q=software+engineer&pg=' + page;
+    const reqBody = JSON.stringify({ url: targetUrl, formats: ['markdown'] });
+    const res = await httpFetch('api.firecrawl.dev', '/v1/scrape', 'POST', { 'Content-Type': 'application/json', Authorization: 'Bearer ' + fcKey }, reqBody, 2000000);
+    if (res.status !== 200) break;
+    let data;
+    try { data = JSON.parse(res.body); } catch (e) { break; }
+    if (!data.success || !data.data || !data.data.markdown) break;
+    ok = true;
+    const md = data.data.markdown;
+    let m;
+    let pageCount = 0;
+    cardRx.lastIndex = 0;
+    while ((m = cardRx.exec(md))) {
+      const id = m[3];
+      if (seenIds.has(id)) continue;
+      seenIds.add(id);
+      pageCount++;
+      const parts = m[1].split(/\\+\s*\n\s*\\+\s*\n/).map((s) => s.trim()).filter(Boolean);
+      const title = parts[0] || '';
+      const location = parts[1] || '';
+      rows.push({
+        company_id: company.company_id, board: company.board,
+        external_id: id, title, jd_text: '', location,
+        remote: isRemote(location + ' ' + title),
+        apply_url: m[2],
+        posted_at: null,
+      });
+    }
+    if (!pageCount) break;
+    if (rows.filter((r) => TITLE_RX.test(r.title)).length >= CAP) break;
+  }
+  return { rows, ok };
+}
+
     async function fetchOne(company) {
       if (company.ats_type === 'workday') return fetchWorkday(company);
       if (company.ats_type === 'apple') return fetchApple(company);
@@ -425,6 +469,7 @@ if (selfFetchCompanies.length) {
       if (company.ats_type === 'avature') return fetchAvature(company);
       if (company.ats_type === 'google') return fetchGoogle(company);
       if (company.ats_type === 'deshaw') return fetchDEShaw(company);
+      if (company.ats_type === 'microsoft') return fetchMicrosoft(company);
       return { rows: [], ok: false };
     }
 
