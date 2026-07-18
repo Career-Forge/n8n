@@ -104,14 +104,8 @@
           }
         },
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "If-None-Match",
-              "value": "={{ $json.etag }}"
-            }
-          ]
-        }
+        "specifyHeaders": "json",
+        "jsonHeaders": "={{ $json.etag ? { \"If-None-Match\": $json.etag } : {} }}"
       },
       "onError": "continueRegularOutput"
     },
