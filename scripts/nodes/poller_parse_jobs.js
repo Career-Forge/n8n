@@ -68,7 +68,7 @@ const isRemote = s => /remote/i.test(String(s || ''));
 for (let i = 0; i < resps.length; i++) {
   const company = (reqs[i] || {}).json || {};
   const t = company.ats_type;
-  if (t === 'workday' || t === 'apple' || t === 'eightfold' || t === 'avature' || t === 'google') continue; // self-fetch pass below, Fetch ATS's response for these is discarded
+  if (t === 'workday' || t === 'apple' || t === 'eightfold' || t === 'avature' || t === 'google' || t === 'deshaw') continue; // self-fetch pass below, Fetch ATS's response for these is discarded
   const R = respOf(resps[i]);
   if (statusOf(R) < 200 || statusOf(R) >= 300) continue;
   let body = null;
@@ -114,7 +114,7 @@ for (let i = 0; i < resps.length; i++) {
 }
 
 // ── self-fetch pass: workday / apple / eightfold, run concurrently, require('https') ──
-const selfFetchCompanies = reqs.map((r) => (r || {}).json || {}).filter((c) => c.ats_type === 'workday' || c.ats_type === 'apple' || c.ats_type === 'eightfold' || c.ats_type === 'avature' || c.ats_type === 'google');
+const selfFetchCompanies = reqs.map((r) => (r || {}).json || {}).filter((c) => c.ats_type === 'workday' || c.ats_type === 'apple' || c.ats_type === 'eightfold' || c.ats_type === 'avature' || c.ats_type === 'google' || c.ats_type === 'deshaw');
 if (selfFetchCompanies.length) {
   try {
     const https = require('https');
@@ -385,12 +385,46 @@ if (selfFetchCompanies.length) {
   return { rows, ok };
 }
 
+    async function fetchDEShaw(company) {
+  // s115: plain GET, no search term needed (unlike Google) -- the whole
+  // dataset ships on first load. __NEXT_DATA__ blob is large (~1.47MB),
+  // needs the raised capOverride.
+  const res = await httpFetch('www.deshaw.com', '/careers', 'GET', { Accept: 'text/html' }, null, 2000000);
+  if (res.status !== 200 || !res.body) return { rows: [], ok: false };
+  const m = res.body.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+  if (!m) return { rows: [], ok: false };
+  let data;
+  try { data = JSON.parse(m[1]); } catch (e) { return { rows: [], ok: false }; }
+  const pp = (data.props && data.props.pageProps) || {};
+  // internalJobs deliberately excluded -- internal-transfer-only postings.
+  const pools = [].concat(pp.regularJobs || [], pp.internships || []);
+  const rows = [];
+  for (const entry of pools) {
+    const j = entry.data || entry;
+    if (!j || !j.id) continue;
+    const jobUrl = String(j.jobUrl || '').toLowerCase();
+    if (!jobUrl) continue;
+    const locs = ((j.jobMetadata && j.jobMetadata.jobLocations) || []).map((l) => l.name).filter(Boolean);
+    rows.push({
+      company_id: company.company_id, board: company.board,
+      external_id: String(j.id), title: j.displayName || '',
+      jd_text: strip((j.jobDescription && j.jobDescription.websiteDescription) || ''),
+      location: locs.join(' | '),
+      remote: isRemote(locs.join(' | ') + ' ' + (j.displayName || '')),
+      apply_url: 'https://www.deshaw.com/careers/' + jobUrl,
+      posted_at: null,
+    });
+  }
+  return { rows, ok: true };
+}
+
     async function fetchOne(company) {
       if (company.ats_type === 'workday') return fetchWorkday(company);
       if (company.ats_type === 'apple') return fetchApple(company);
       if (company.ats_type === 'eightfold') return fetchEightfold(company);
       if (company.ats_type === 'avature') return fetchAvature(company);
       if (company.ats_type === 'google') return fetchGoogle(company);
+      if (company.ats_type === 'deshaw') return fetchDEShaw(company);
       return { rows: [], ok: false };
     }
 

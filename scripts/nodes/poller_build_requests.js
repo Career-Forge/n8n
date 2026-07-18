@@ -8,7 +8,7 @@
 // Parse Jobs never reads that response for these types.
 const items = $input.all();
 // NOTE: n8n JS task runner sandboxes out process.env; per-ATS toggles would need a settings table.
-const IMPLEMENTED = ['greenhouse', 'lever', 'ashby', 'workable', 'recruitee', 'smartrecruiters', 'amazon', 'oracle', 'workday', 'apple', 'eightfold', 'avature', 'google'];
+const IMPLEMENTED = ['greenhouse', 'lever', 'ashby', 'workable', 'recruitee', 'smartrecruiters', 'amazon', 'oracle', 'workday', 'apple', 'eightfold', 'avature', 'google', 'deshaw'];
 const mkUrl = (t, slug, apiBase) => ({
   greenhouse: 'https://boards-api.greenhouse.io/v1/boards/' + slug + '/jobs?content=true',
   lever:      'https://api.lever.co/v0/postings/' + slug + '?mode=json',
@@ -25,6 +25,7 @@ const mkUrl = (t, slug, apiBase) => ({
   eightfold:  'https://' + apiBase + '/api/apply/v2/jobs?domain=' + encodeURIComponent(slug) + '&start=0&num=10',
   avature:    'https://' + slug + '.avature.net/' + (apiBase || 'careers') + '/SearchJobs?jobRecordsPerPage=1&jobOffset=0',
   google:     'https://www.google.com/about/careers/applications/jobs/results',
+  deshaw:     'https://www.deshaw.com/careers',
 }[t]);
 const out = [];
 for (const it of items) {
