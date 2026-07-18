@@ -17,7 +17,7 @@ const mkUrl = (t, slug, apiBase) => ({
   recruitee:  'https://' + slug + '.recruitee.com/api/offers',
   smartrecruiters: 'https://api.smartrecruiters.com/v1/companies/' + encodeURIComponent(slug) + '/postings?limit=100&offset=0',
   amazon:     'https://www.amazon.jobs/en/search.json?offset=0&result_limit=100',
-  oracle:     'https://' + apiBase + '/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&finder=findReqs;siteNumber=' + encodeURIComponent(slug) + ',limit=20,offset=0,sortBy=POSTING_DATES_DESC',
+  oracle:     'https://' + apiBase + '/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList&finder=findReqs;siteNumber=' + encodeURIComponent(slug) + ',limit=20,offset=0,sortBy=POSTING_DATES_DESC',
   // self-fetching adapters (Parse Jobs discards this response and calls require('https') itself) --
   // still a real, harmless-if-it-fails URL so Fetch ATS's behavior stays predictable.
   workday:    'https://' + apiBase + '.myworkdayjobs.com/wday/cxs/' + apiBase.split('.')[0] + '/' + slug + '/jobs',

@@ -104,9 +104,10 @@ for (let i = 0; i < resps.length; i++) {
         push(company.board, { company_id: company.company_id, board: company.board, external_id: String(j.id_icims || j.id || ''), title: j.title || '', jd_text: strip(j.description || ''), location: j.location || '', remote, apply_url: j.url_next_step || ('https://www.amazon.jobs' + (j.job_path || '')), posted_at: null });
       }
     } else if (t === 'oracle') {
+      const host = company.api_base || '';
       const list = (body.items && body.items[0] && body.items[0].requisitionList) || [];
       for (const j of list) {
-        push(company.board, { company_id: company.company_id, board: company.board, external_id: String(j.Id || ''), title: j.Title || '', jd_text: strip(j.ShortDescriptionStr || ''), location: j.PrimaryLocation || j.PrimaryLocationCountry || '', remote: isRemote(j.WorkplaceType || j.WorkplaceTypeCode), apply_url: 'https://careers.oracle.com/en/sites/jobsearch/job/' + (j.Id || '') + '/', posted_at: iso(j.PostedDate) });
+        push(company.board, { company_id: company.company_id, board: company.board, external_id: String(j.Id || ''), title: j.Title || '', jd_text: strip(j.ShortDescriptionStr || ''), location: j.PrimaryLocation || j.PrimaryLocationCountry || '', remote: isRemote(j.WorkplaceType || j.WorkplaceTypeCode), apply_url: 'https://' + host + '/hcmUI/CandidateExperience/en/sites/' + encodeURIComponent(company.slug) + '/job/' + (j.Id || ''), posted_at: iso(j.PostedDate) });
       }
     }
   } catch (e) {}
