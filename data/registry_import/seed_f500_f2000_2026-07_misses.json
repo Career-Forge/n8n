@@ -1,0 +1,3931 @@
+{
+  "generated_at": "2026-07-18T01:19:38.975Z",
+  "skipped_before_probe": [
+    {
+      "name": "Google",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Amazon",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Apple",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Microsoft",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Meta",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Netflix",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Salesforce",
+      "reason": "already in registry"
+    },
+    {
+      "name": "JPMorgan Chase",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Goldman Sachs",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Deloitte",
+      "reason": "already in registry"
+    },
+    {
+      "name": "McKinsey",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Tesla",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Uber",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Airbnb",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Stripe",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Adobe",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Oracle",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "NVIDIA",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Intel",
+      "reason": "already in registry"
+    },
+    {
+      "name": "IBM",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Spotify",
+      "reason": "already in registry"
+    },
+    {
+      "name": "LinkedIn",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "Walmart",
+      "reason": "already in registry"
+    },
+    {
+      "name": "EY",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Cisco",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Shopify",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "ByteDance",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Pinterest",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Palantir",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Databricks",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Snowflake",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Coinbase",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Robinhood",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Twilio",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Dropbox",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Lyft",
+      "reason": "already in registry"
+    },
+    {
+      "name": "DoorDash",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Instacart",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Figma",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Notion",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Datadog",
+      "reason": "already in registry"
+    },
+    {
+      "name": "MongoDB",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Cloudflare",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Atlassian",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "VMware",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "ServiceNow",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "Workday",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Morgan Stanley",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Citigroup",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Capital One",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Visa",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Mastercard",
+      "reason": "already in registry"
+    },
+    {
+      "name": "UnitedHealth Group",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Target",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Costco",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "American Express",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Charles Schwab",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "State Street",
+      "reason": "already in registry"
+    },
+    {
+      "name": "BNY Mellon",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "HSBC",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Barclays",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Credit Suisse",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "UBS",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Lazard",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Evercore",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Jefferies",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Edward Jones",
+      "reason": "unrecognized vendor: Kenexa BrassRing"
+    },
+    {
+      "name": "Two Sigma",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Jane Street",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Point72",
+      "reason": "already in registry"
+    },
+    {
+      "name": "DE Shaw",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Renaissance Technologies",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "MetLife",
+      "reason": "already in registry"
+    },
+    {
+      "name": "State Farm",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Progressive",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Liberty Mutual",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Chubb",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Aflac",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Geico",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Aon",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Lincoln Financial",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Oracle Cloud",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "AWS",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Google Cloud",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Azure",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Linode",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Vercel",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Netlify",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Fastly",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Akamai",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Fortinet",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "CrowdStrike",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Okta",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Zscaler",
+      "reason": "already in registry"
+    },
+    {
+      "name": "New Relic",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Elastic",
+      "reason": "already in registry"
+    },
+    {
+      "name": "PagerDuty",
+      "reason": "already in registry"
+    },
+    {
+      "name": "GitLab",
+      "reason": "already in registry"
+    },
+    {
+      "name": "GitHub",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "HashiCorp",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Canonical",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Confluent",
+      "reason": "already in registry"
+    },
+    {
+      "name": "dbt Labs",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Fivetran",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Airbyte",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Anthropic",
+      "reason": "already in registry"
+    },
+    {
+      "name": "OpenAI",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Hugging Face",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Scale AI",
+      "reason": "already in registry"
+    },
+    {
+      "name": "xAI",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Perplexity",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Cohere",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Cursor",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Glean",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Plaid",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Brex",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Ramp",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Mercury",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Affirm",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Klarna",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Wise",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "Revolut",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Chime",
+      "reason": "already in registry"
+    },
+    {
+      "name": "SoFi",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Block",
+      "reason": "already in registry"
+    },
+    {
+      "name": "PayPal",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Venmo",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Adyen",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Marqeta",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Walgreens",
+      "reason": "unrecognized vendor: Kenexa BrassRing"
+    },
+    {
+      "name": "Kaiser Permanente",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Mayo Clinic",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Johns Hopkins",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Northwell Health",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "UCSF Health",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Providence Health",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Ascension",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Tenet Healthcare",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Molina Healthcare",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Medtronic",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Boston Scientific",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Intuitive Surgical",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "BioNTech",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Amgen",
+      "reason": "already in registry"
+    },
+    {
+      "name": "AbbVie",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "Bristol Myers Squibb",
+      "reason": "already in registry"
+    },
+    {
+      "name": "AstraZeneca",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Bayer",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Teva Pharmaceuticals",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Quest Diagnostics",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "BCG",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "A.T. Kearney",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Roland Berger",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "L.E.K. Consulting",
+      "reason": "unrecognized vendor: Oleeo"
+    },
+    {
+      "name": "Capgemini",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Infosys",
+      "reason": "excluded (consultancy)"
+    },
+    {
+      "name": "Tata Consultancy Services",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Wipro",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "HCL Technologies",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Cognizant",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Genpact",
+      "reason": "already in registry"
+    },
+    {
+      "name": "WNS",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "ZS Associates",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "FTI Consulting",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Kroger",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Albertsons",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Publix",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Best Buy",
+      "reason": "unrecognized vendor: Kenexa BrassRing"
+    },
+    {
+      "name": "Macy's",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "JCPenney",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Ross Stores",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Burlington",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Dollar General",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Sephora",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Ulta Beauty",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Lululemon",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "American Eagle",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Abercrombie",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "H&M",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "Zara",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Wayfair",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Etsy",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Amazon Marketplace",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Alibaba",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "JD.com",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Shein",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Temu",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Mercado Libre",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Coupang",
+      "reason": "already in registry"
+    },
+    {
+      "name": "PepsiCo",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Nestle",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Kraft Heinz",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Kellogg's",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Hershey's",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Colgate-Palmolive",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Reckitt Benckiser",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Estee Lauder",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Beiersdorf",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "AB InBev",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "Heineken",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Molson Coors",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "JBS USA",
+      "reason": "unrecognized vendor: Jobvite"
+    },
+    {
+      "name": "Cargill",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "ADM",
+      "reason": "unrecognized vendor: Kenexa BrassRing"
+    },
+    {
+      "name": "Bunge",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "John Deere",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "AGCO",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Ford",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Honda",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Volkswagen",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "BMW",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Mercedes-Benz",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Volvo",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Hyundai",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Kia",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Subaru",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Rivian",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Lucid Motors",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Ferrari",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Audi",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Cummins",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Deere & Company",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Honeywell",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Emerson",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Eaton",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Whirlpool",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Dover",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Rockwell Automation",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Carrier",
+      "reason": "already in registry"
+    },
+    {
+      "name": "General Dynamics",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "L3Harris",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "BAE Systems",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "SAIC",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Anduril",
+      "reason": "already in registry"
+    },
+    {
+      "name": "SpaceX",
+      "reason": "unrecognized vendor: Jobvite"
+    },
+    {
+      "name": "Spirit AeroSystems",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Textron",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Embraer",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Bombardier",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "ExxonMobil",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Valero",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Phillips 66",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Halliburton",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Schlumberger",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "NextEra Energy",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Southern Company",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Dominion Energy",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Exelon",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "PG&E",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Sempra Energy",
+      "reason": "unrecognized vendor: ADP"
+    },
+    {
+      "name": "Kinder Morgan",
+      "reason": "unrecognized vendor: PeopleFluent"
+    },
+    {
+      "name": "First Solar",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Enphase Energy",
+      "reason": "unrecognized vendor: Jobvite"
+    },
+    {
+      "name": "Comcast",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Charter Communications",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Vodafone",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "BT Group",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "SoftBank",
+      "reason": "unrecognized vendor: Herp"
+    },
+    {
+      "name": "Telefonica",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "NBCUniversal",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "Paramount",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Lionsgate",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Bloomberg",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Hearst",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Vox Media",
+      "reason": "already in registry"
+    },
+    {
+      "name": "BuzzFeed",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Sony Music",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Marriott",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Hilton",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Hyatt",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "IHG",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Wyndham",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Accor",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "Mandarin Oriental",
+      "reason": "unrecognized vendor: PageUp"
+    },
+    {
+      "name": "Ritz-Carlton",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Wynn Resorts",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "Caesars Entertainment",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Royal Caribbean",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Carnival",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "McDonald's",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "Starbucks",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Yum! Brands",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "KFC",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Taco Bell",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Pizza Hut",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Wendy's",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Domino's",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "Chick-fil-A",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Sweetgreen",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Cava",
+      "reason": "unrecognized vendor: Harri"
+    },
+    {
+      "name": "Five Guys",
+      "reason": "unrecognized vendor: Phenom People"
+    },
+    {
+      "name": "Cheesecake Factory",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Texas Roadhouse",
+      "reason": "unrecognized vendor: Phenom People"
+    },
+    {
+      "name": "Darden Restaurants",
+      "reason": "unrecognized vendor: Paradox"
+    },
+    {
+      "name": "USPS",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "XPO Logistics",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Expeditors",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "Schneider National",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Knight-Swift",
+      "reason": "unrecognized vendor: Jobvite"
+    },
+    {
+      "name": "Kuehne+Nagel",
+      "reason": "unrecognized vendor: Cornerstone OnDemand"
+    },
+    {
+      "name": "United Airlines",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "American Airlines",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "JetBlue",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Alaska Airlines",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Spirit Airlines",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Frontier Airlines",
+      "reason": "unrecognized vendor: UKG Pro"
+    },
+    {
+      "name": "Hawaiian Airlines",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Emirates",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Qatar Airways",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Singapore Airlines",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Cathay Pacific",
+      "reason": "unrecognized vendor: Lumesse TalentLink"
+    },
+    {
+      "name": "Union Pacific",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "BNSF Railway",
+      "reason": "unrecognized vendor: Phenom People"
+    },
+    {
+      "name": "CSX",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Norfolk Southern",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Canadian National Railway",
+      "reason": "unrecognized vendor: Cornerstone OnDemand"
+    },
+    {
+      "name": "CBRE",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Newmark",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Marcus & Millichap",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Zillow",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Opendoor",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Keller Williams",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "RE/MAX",
+      "reason": "unrecognized vendor: UKG Pro"
+    },
+    {
+      "name": "Coldwell Banker",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Digital Realty",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Bechtel",
+      "reason": "unrecognized vendor: Kenexa BrassRing"
+    },
+    {
+      "name": "Fluor",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "AECOM",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "Jacobs",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Skanska",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Turner Construction",
+      "reason": "unrecognized vendor: Cornerstone OnDemand"
+    },
+    {
+      "name": "Whiting-Turner",
+      "reason": "unrecognized vendor: SilkRoad"
+    },
+    {
+      "name": "Suffolk Construction",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Hensel Phelps",
+      "reason": "unrecognized vendor: UKG Pro"
+    },
+    {
+      "name": "Mortenson",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "McCarthy Building",
+      "reason": "unrecognized vendor: Jobvite"
+    },
+    {
+      "name": "WSP",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Stantec",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "HDR",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "D.R. Horton",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "KB Home",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Toll Brothers",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "NVR",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "MLS",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Endeavor",
+      "reason": "already in registry"
+    },
+    {
+      "name": "FanDuel",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Penn Entertainment",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "EA Sports",
+      "reason": "unrecognized vendor: gr8people"
+    },
+    {
+      "name": "Riot Games",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Epic Games",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Roblox",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Niantic",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Discord",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Twitch",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "YouTube",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "TikTok",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Reddit",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Tumblr",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Quora",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Medium",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Substack",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Pearson",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "McGraw Hill",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Coursera",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Udemy",
+      "reason": "already in registry"
+    },
+    {
+      "name": "edX",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Khan Academy",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Duolingo",
+      "reason": "already in registry"
+    },
+    {
+      "name": "2U",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Booking.com",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "Tripadvisor",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Kayak",
+      "reason": "already in registry"
+    },
+    {
+      "name": "TripActions",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Hopper",
+      "reason": "already in registry"
+    },
+    {
+      "name": "U.S. Department of Defense",
+      "reason": "unrecognized vendor: USAJobs"
+    },
+    {
+      "name": "U.S. Department of State",
+      "reason": "unrecognized vendor: USAJobs"
+    },
+    {
+      "name": "NASA",
+      "reason": "unrecognized vendor: USAJobs"
+    },
+    {
+      "name": "FBI",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "CIA",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "NSA",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "DARPA",
+      "reason": "unrecognized vendor: USAJobs"
+    },
+    {
+      "name": "CDC",
+      "reason": "unrecognized vendor: USAJobs"
+    },
+    {
+      "name": "NIH",
+      "reason": "unrecognized vendor: USAJobs"
+    },
+    {
+      "name": "FDA",
+      "reason": "unrecognized vendor: USAJobs"
+    },
+    {
+      "name": "EPA",
+      "reason": "unrecognized vendor: USAJobs"
+    },
+    {
+      "name": "IRS",
+      "reason": "unrecognized vendor: USAJobs"
+    },
+    {
+      "name": "Department of Energy",
+      "reason": "unrecognized vendor: USAJobs"
+    },
+    {
+      "name": "World Bank",
+      "reason": "unrecognized vendor: Cornerstone OnDemand"
+    },
+    {
+      "name": "United Nations",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Snap Inc.",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Asana",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Monday.com",
+      "reason": "unrecognized vendor: Comeet"
+    },
+    {
+      "name": "Smartsheet",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Box",
+      "reason": "already in registry"
+    },
+    {
+      "name": "DocuSign",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "HubSpot",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Zendesk",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Freshworks",
+      "reason": "opaque-id vendor (SmartRecruiters) -- routed to s112"
+    },
+    {
+      "name": "Intuit",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "TurboTax",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "QuickBooks",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "SAP",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Sage",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Autodesk",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Cerner",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "Allscripts",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Charles River Laboratories",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Cintas",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Sherwin-Williams",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "PPG",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "LyondellBasell",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Linde",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Praxair",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "International Paper",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Owens Corning",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Mohawk Industries",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Steel Dynamics",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Nucor",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "U.S. Steel",
+      "reason": "unrecognized vendor: Kenexa BrassRing"
+    },
+    {
+      "name": "Westinghouse",
+      "reason": "unrecognized vendor: SuccessFactors"
+    },
+    {
+      "name": "Texas Instruments",
+      "reason": "unrecognized vendor: Oracle Cloud HCM"
+    },
+    {
+      "name": "AMD",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Micron",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Lam Research",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "TSMC",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "LG Electronics",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Panasonic",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Sharp",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Fujitsu",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "NetApp",
+      "reason": "opaque-id vendor (Eightfold) -- routed to s112"
+    },
+    {
+      "name": "Pure Storage",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Western Digital",
+      "reason": "unrecognized vendor: Taleo"
+    },
+    {
+      "name": "Garmin",
+      "reason": "unrecognized vendor: iCIMS"
+    },
+    {
+      "name": "Fitbit",
+      "reason": "unrecognized vendor: Internal ATS"
+    },
+    {
+      "name": "Roku",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Apple",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Comcast",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Tencent Holdings",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Intel",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Deutsche Telekom",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "IBM",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Oracle",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Dell Technologies",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Broadcom",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Orange",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Accenture",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Qualcomm",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Netflix",
+      "reason": "already in registry"
+    },
+    {
+      "name": "HP",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "NVIDIA",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Adobe",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Applied Materials",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "AT&T",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Tata Consultancy Services",
+      "reason": "excluded (consultancy)"
+    },
+    {
+      "name": "VMware",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Lenovo Group",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Infosys",
+      "reason": "excluded (consultancy)"
+    },
+    {
+      "name": "Fox",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Corning",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Analog Devices",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Amphenol",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Wipro",
+      "reason": "excluded (consultancy)"
+    },
+    {
+      "name": "KLA",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "WPP",
+      "reason": "already in registry"
+    },
+    {
+      "name": "TE Connectivity",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Autodesk",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Square",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Flex",
+      "reason": "already in registry"
+    },
+    {
+      "name": "VeriSign",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Shopify",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Veeva Systems",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "ServiceNow",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Snap",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Adyen",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Twitter",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Snowflake",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Twilio",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Workday",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Atlassian",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Pinterest",
+      "reason": "already in registry"
+    },
+    {
+      "name": "CrowdStrike",
+      "reason": "already in registry"
+    },
+    {
+      "name": "DoorDash",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Roblox",
+      "reason": "already in registry"
+    },
+    {
+      "name": "CoStar Group",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Palo Alto Networks",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Okta",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Datadog",
+      "reason": "already in registry"
+    },
+    {
+      "name": "HubSpot",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Walmart",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Amazon",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Apple",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Citigroup",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Nvidia",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Morgan Stanley",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Target",
+      "reason": "already in registry"
+    },
+    {
+      "name": "IBM",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Salesforce",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Visa",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Mastercard",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Airbnb",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Anthropic",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Google",
+      "reason": "already in registry"
+    },
+    {
+      "name": "OpenAI",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Netflix",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Bloomberg",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Barclays",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Two Sigma",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Jane Street",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Point72",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Citadel",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "DRW",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Akuna Capital",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Hudson River Trading",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Perplexity",
+      "reason": "already in registry"
+    },
+    {
+      "name": "xAI",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Figma",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Ramp",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Databricks",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Scale AI",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Notion",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Stripe",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Cohere",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Mistral AI",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Runway",
+      "reason": "already in registry"
+    },
+    {
+      "name": "ElevenLabs",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Groq",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Together AI",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Hugging Face",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Airtable",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Linear",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Vercel",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Retool",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Deel",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Brex",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Cloudflare",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Coinbase",
+      "reason": "already in registry"
+    },
+    {
+      "name": "DoorDash",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Instacart",
+      "reason": "already in registry"
+    },
+    {
+      "name": "LinkedIn",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Palantir",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Reddit",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Robinhood",
+      "reason": "already in registry"
+    },
+    {
+      "name": "SpaceX",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Spotify",
+      "reason": "already in registry"
+    },
+    {
+      "name": "GEICO",
+      "reason": "already in registry"
+    },
+    {
+      "name": "GitLab",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Discord",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Plaid",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Deloitte",
+      "reason": "already in registry"
+    },
+    {
+      "name": "KPMG",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "PwC",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "McKinsey & Company",
+      "reason": "already in registry"
+    },
+    {
+      "name": "Bain & Company",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Mars, Incorporated",
+      "reason": "duplicate across sources"
+    },
+    {
+      "name": "Fidelity Investments",
+      "reason": "duplicate across sources"
+    }
+  ],
+  "misses_after_probe": [
+    {
+      "name": "Nike",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "PwC",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Accenture",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Snap",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Twitter",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Square",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Slack",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Bank of America",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Johnson & Johnson",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Lockheed Martin",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Wells Fargo",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "BlackRock",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Fidelity Investments",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Vanguard",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "U.S. Bank",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "TD Bank",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Deutsche Bank",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Wells Fargo Advisors",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Bridgewater Associates",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Citadel",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Hudson River Trading",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Allstate",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "USAA",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Nationwide",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Marsh McLennan",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Hartford Financial",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Synchrony",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Discover",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Ally Financial",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "DigitalOcean",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Heroku",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Palo Alto Networks",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "SentinelOne",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Splunk",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Atlassian Jira",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Red Hat",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "MariaDB",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Snowflake AI",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Mistral AI",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "CVS Health",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Anthem",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Elevance Health",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Humana",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "HCA Healthcare",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Cleveland Clinic",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Mass General Brigham",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "NewYork-Presbyterian",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Stanford Health",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Sutter Health",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "AdventHealth",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Banner Health",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Centene",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "AmerisourceBergen",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Cardinal Health",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Becton Dickinson",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Illumina",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Moderna",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Genentech",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Biogen",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Vertex Pharmaceuticals",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Eli Lilly",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Merck",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Novartis",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Roche",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Danaher",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "KPMG",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Bain & Company",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Oliver Wyman",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Booz Allen Hamilton",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "DXC Technology",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Mu Sigma",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Home Depot",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Lowe's",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Trader Joe's",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Whole Foods",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Nordstrom",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Kohl's",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "TJX Companies",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Marshalls",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Dollar Tree",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Athleta",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Gap",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Old Navy",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Banana Republic",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Uniqlo",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "IKEA",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "eBay",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Pinduoduo",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Procter & Gamble",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Unilever",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Coca-Cola",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "General Mills",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Mondelez",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Kimberly-Clark",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "L'Oreal",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Diageo",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Constellation Brands",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Tyson Foods",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "General Motors",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Stellantis",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Toyota",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Nissan",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Mazda",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Porsche",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Polaris",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Harley-Davidson",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Caterpillar",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "3M",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "GE",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "GE Aerospace",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "GE Healthcare",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "GE Vernova",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Parker Hannifin",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Illinois Tool Works",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Stanley Black & Decker",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Trane Technologies",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Raytheon",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Northrop Grumman",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Booz Allen",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Maxar",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Sierra Space",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Pratt & Whitney",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Collins Aerospace",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Airbus",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Chevron",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "BP",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "TotalEnergies",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Marathon Petroleum",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Duke Energy",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Edison International",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "American Electric Power",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Enbridge",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Sunrun",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Plug Power",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "AT&T",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Verizon",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Cox Communications",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Deutsche Telekom",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Orange",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "NTT",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "America Movil",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Warner Bros. Discovery",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Fox",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Sony Pictures",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "AMC Networks",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Washington Post",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Wall Street Journal",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Reuters",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Conde Nast",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Universal Music Group",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Warner Music Group",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Live Nation",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Choice Hotels",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Four Seasons",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "MGM Resorts",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Las Vegas Sands",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Norwegian Cruise Line",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Subway",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Burger King",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Dunkin'",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Panera Bread",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "In-N-Out Burger",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Olive Garden",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Cracker Barrel",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "IHOP",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Applebee's",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Buffalo Wild Wings",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "FedEx",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "UPS",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "DHL",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "J.B. Hunt",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "YRC Worldwide",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Old Dominion Freight Line",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Werner Enterprises",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Maersk",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Delta Air Lines",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Southwest Airlines",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Lufthansa",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "British Airways",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Air France-KLM",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Cushman & Wakefield",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Colliers",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Compass",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Redfin",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Realtor.com",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Berkshire Hathaway HomeServices",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Prologis",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "DPR Construction",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "KBR",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Parsons",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Lennar",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "PulteGroup",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "NFL",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "NBA",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "MLB",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "NHL",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "WWE",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "UFC",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "ESPN",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Electronic Arts",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Activision Blizzard",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Unity",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Houghton Mifflin Harcourt",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Cengage",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Wiley",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Chegg",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Byju's",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "K12",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Stride",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Expedia",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Hotels.com",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Vrbo",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Sabre",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Amadeus",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "MITRE",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "HubSpot",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Pixar",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Epic Systems",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Lonza",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Ecolab",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "DuPont",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Air Products",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Westrock",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Smurfit Kappa",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Cleveland-Cliffs",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "ABB",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Siemens",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Schneider Electric",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "TE Connectivity",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Amphenol",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Corning",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Qualcomm",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Broadcom",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Applied Materials",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "KLA",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "ASML",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Samsung",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Sony",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Lenovo",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Dell Technologies",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "HPE",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Seagate",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "GoPro",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Samsung Electronics",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Alphabet",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Microsoft",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Verizon Communications",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Softbank",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "China Mobile",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Facebook",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Nippon Telegraph & Tel",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Cisco Systems",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Charter Communications",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Hon Hai Precision ",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "KDDI",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Vodafone",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "SAP",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Salesforce.com",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "SK Hynix",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "América Móvil",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "China Telecom",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Telefónica",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "ASML Holding",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "China Unicom",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "ViacomCBS",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "BT Group",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Ericsson",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Saudi Telecom",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Vivendi",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Etisalat",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Texas Instruments",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Walt Disney",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Fujitsu",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Telecom Italia",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Murata Manufacturing",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Telstra",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "DISH Network",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Meituan",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "NetEase",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "SK Telecom",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Capgemini",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Telenor",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Lam Research",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "China Tower Corp.",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Lufax Holding",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Naspers",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Cognizant",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "NEC",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "MediaTek",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "SingTel",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "TELUS",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Rogers Communications",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Tokyo Electron",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Discovery",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Kyocera",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Hikvision",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Intuit",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Legend Holding",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Omnicom Group",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "TCL",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Infineon Technologies",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "ASE Technology Holding",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Publicis Groupe",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "HCL Technologies",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "BOE Technology Group",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Hewlett Packard Enterprise",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Keyence",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Nokia",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "STMicroelectronics",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Bharti Airtel",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Luxshare Precision Industry",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Chunghwa Telecom",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Telkom Indonesia",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Samsung SDI",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Altice USA",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "TDK",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "MTN Group",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Fortive",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Lumen Technologies",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Pegatron",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Longi Green Energy Technology",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "ZTE",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Naver",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Seagate Technology",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Liberty Global",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "KT ",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "CGI",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Semiconductor Manufacturing International",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Hoya",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Dassault Systemes",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Asustek Computer",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "United Microelectronics",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "East Money Information  ",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "ATOS",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Jacobs",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Telia",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Skyworks Solutions",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Kuaishou Technology",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Wolters Kluwer",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Synopsys",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Sunny Optical Technology Group",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Garmin",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Liberty Broadband",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Maxim Integrated Products",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Xilinx",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Wingtech Technology",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "SS&C Technologies",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Teradyne",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Keysight Technologies",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Compal Electronics",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Cellnex Telecom",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "China Communications Services",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Jabil Circuit",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Interpublic Group",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "NEXON",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "NetApp",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Fortinet",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Goertek",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Check Point Software",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Zebra Technologies",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Wistron",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "LARGAN Precision",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Ansys",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Constellation Software",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Samsung Electro-Mechanics",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Samsung SDS",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Nomura Research Institute",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Dentsu",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "LG Uplus",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "News Corp",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Qorvo",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Shenzhen Transsion Holding",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "MercadoLibre",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Akamai Technologies",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Safaricom",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Advantest",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Xinyi Solar Holdings",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Citrix Systems",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "OMRON",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Tech Mahindra",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Ooredoo Q.P.S.C",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Oriental Land",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Kakao",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Will Semiconductor",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Zain",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Maroc Telecom",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Shaw Communications",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "China Railway Signal & Communication",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Bilibili",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Match Group",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Yandex NV",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "EPAM Systems",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Sistema",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Proximus",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Tele2",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Daou Data",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Inventec",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "RingCentral",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Amdocs",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Afterpay",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Unity Software",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Otsuka",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Vodafone Idea",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Zhejiang Dahua Technology",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Autohome",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Slack Technologies",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Digital China Group",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Paycom",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "JPMorgan Chase",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Goldman Sachs",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "State Farm Insurance",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Publix Super Markets",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Susquehanna International Group",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "D. E. Shaw",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Renaissance Technologies",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Millennium Management",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Optiver",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Anysphere",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Rippling",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Boston Consulting Group",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Cargill",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Koch Industries",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Reyes Holdings",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Love's Travel Stops",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "H-E-B",
+      "reason": "no candidate slug resolved"
+    },
+    {
+      "name": "Bechtel",
+      "reason": "no candidate slug resolved"
+    }
+  ]
+}

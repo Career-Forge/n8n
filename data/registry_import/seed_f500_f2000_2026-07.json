@@ -1,0 +1,721 @@
+{
+  "generated_at": "2026-07-18T01:19:38.969Z",
+  "source": "s109_ats_discovery.js",
+  "count": 102,
+  "rows": [
+    {
+      "name": "Disney",
+      "ats_type": "workday",
+      "slug": "disneycareer",
+      "api_base": "disney.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Zoom",
+      "ats_type": "workday",
+      "slug": "zoom",
+      "api_base": "zoom.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Pfizer",
+      "ats_type": "workday",
+      "slug": "pfizercareers",
+      "api_base": "pfizer.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Boeing",
+      "ats_type": "workday",
+      "slug": "external_careers",
+      "api_base": "boeing.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "PNC Financial",
+      "ats_type": "workday",
+      "slug": "External",
+      "api_base": "pnc.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Raymond James",
+      "ats_type": "workday",
+      "slug": "raymondjamescareers",
+      "api_base": "raymondjames.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "AQR Capital",
+      "ats_type": "greenhouse",
+      "slug": "aqr",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Prudential Financial",
+      "ats_type": "workday",
+      "slug": "prudential",
+      "api_base": "prudential.wd3",
+      "tier": "probe"
+    },
+    {
+      "name": "AIG",
+      "ats_type": "workday",
+      "slug": "aig",
+      "api_base": "aig.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Travelers",
+      "ats_type": "workday",
+      "slug": "External",
+      "api_base": "travelers.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Notion AI",
+      "ats_type": "ashby",
+      "slug": "notion",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Cigna",
+      "ats_type": "workday",
+      "slug": "cignacareers",
+      "api_base": "cigna.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "McKesson",
+      "ats_type": "workday",
+      "slug": "external_careers",
+      "api_base": "mckesson.wd3",
+      "tier": "probe"
+    },
+    {
+      "name": "Abbott",
+      "ats_type": "workday",
+      "slug": "abbottcareers",
+      "api_base": "abbott.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Stryker",
+      "ats_type": "workday",
+      "slug": "strykercareers",
+      "api_base": "stryker.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Baxter",
+      "ats_type": "workday",
+      "slug": "baxter",
+      "api_base": "baxter.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Edwards Lifesciences",
+      "ats_type": "workday",
+      "slug": "edwardscareers",
+      "api_base": "edwards.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Gilead Sciences",
+      "ats_type": "workday",
+      "slug": "gileadcareers",
+      "api_base": "gilead.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Regeneron",
+      "ats_type": "workday",
+      "slug": "Careers",
+      "api_base": "regeneron.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "GSK",
+      "ats_type": "workday",
+      "slug": "gskcareers",
+      "api_base": "gsk.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Sanofi",
+      "ats_type": "workday",
+      "slug": "sanoficareers",
+      "api_base": "sanofi.wd3",
+      "tier": "probe"
+    },
+    {
+      "name": "Takeda",
+      "ats_type": "workday",
+      "slug": "External",
+      "api_base": "takeda.wd3",
+      "tier": "probe"
+    },
+    {
+      "name": "LabCorp",
+      "ats_type": "workday",
+      "slug": "External",
+      "api_base": "labcorp.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Thermo Fisher",
+      "ats_type": "workday",
+      "slug": "thermofishercareers",
+      "api_base": "thermofisher.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "AlixPartners",
+      "ats_type": "greenhouse",
+      "slug": "alixpartners",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Huron Consulting",
+      "ats_type": "workday",
+      "slug": "huroncareers",
+      "api_base": "huron.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Five Below",
+      "ats_type": "workday",
+      "slug": "fivebelowcareers",
+      "api_base": "fivebelow.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Mars",
+      "ats_type": "workday",
+      "slug": "External",
+      "api_base": "mars.wd3",
+      "tier": "probe"
+    },
+    {
+      "name": "Clorox",
+      "ats_type": "workday",
+      "slug": "clorox",
+      "api_base": "clorox.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Corteva",
+      "ats_type": "workday",
+      "slug": "corteva",
+      "api_base": "corteva.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "FMC",
+      "ats_type": "workday",
+      "slug": "fmc",
+      "api_base": "fmc.wd12",
+      "tier": "probe"
+    },
+    {
+      "name": "Leidos",
+      "ats_type": "workday",
+      "slug": "External",
+      "api_base": "leidos.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "CACI",
+      "ats_type": "workday",
+      "slug": "External",
+      "api_base": "caci.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Blue Origin",
+      "ats_type": "workday",
+      "slug": "blueorigin",
+      "api_base": "blueorigin.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Shell",
+      "ats_type": "workday",
+      "slug": "shellcareers",
+      "api_base": "shell.wd3",
+      "tier": "probe"
+    },
+    {
+      "name": "ConocoPhillips",
+      "ats_type": "workday",
+      "slug": "External",
+      "api_base": "conocophillips.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Baker Hughes",
+      "ats_type": "workday",
+      "slug": "bakerhughes",
+      "api_base": "bakerhughes.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Xcel Energy",
+      "ats_type": "workday",
+      "slug": "External",
+      "api_base": "xcelenergy.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Williams Companies",
+      "ats_type": "workday",
+      "slug": "External",
+      "api_base": "williams.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Bloom Energy",
+      "ats_type": "workday",
+      "slug": "bloomenergycareers",
+      "api_base": "bloomenergy.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "T-Mobile",
+      "ats_type": "workday",
+      "slug": "External",
+      "api_base": "tmobile.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Dow Jones",
+      "ats_type": "workday",
+      "slug": "ExternalCareers",
+      "api_base": "dow.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Spotify Studios",
+      "ats_type": "lever",
+      "slug": "spotify",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Chipotle",
+      "ats_type": "workday",
+      "slug": "chipotlecareers",
+      "api_base": "chipotle.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Papa John's",
+      "ats_type": "workday",
+      "slug": "papajohnscareers",
+      "api_base": "papajohns.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Shake Shack",
+      "ats_type": "workday",
+      "slug": "External",
+      "api_base": "shakeshack.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Denny's",
+      "ats_type": "workday",
+      "slug": "dennys",
+      "api_base": "dennys.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "C.H. Robinson",
+      "ats_type": "workday",
+      "slug": "chrobinson",
+      "api_base": "chrobinson.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "JLL",
+      "ats_type": "workday",
+      "slug": "jllcareers",
+      "api_base": "jll.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Simon Property Group",
+      "ats_type": "workday",
+      "slug": "simon",
+      "api_base": "simon.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Equinix",
+      "ats_type": "workday",
+      "slug": "External",
+      "api_base": "equinix.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "DraftKings",
+      "ats_type": "workday",
+      "slug": "draftkings",
+      "api_base": "draftkings.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Take-Two Interactive",
+      "ats_type": "greenhouse",
+      "slug": "taketwo",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Priceline",
+      "ats_type": "workday",
+      "slug": "priceline",
+      "api_base": "priceline.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "RAND Corporation",
+      "ats_type": "workday",
+      "slug": "External_Career_Site",
+      "api_base": "rand.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Veeva Systems",
+      "ats_type": "lever",
+      "slug": "veeva",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "IQVIA",
+      "ats_type": "workday",
+      "slug": "iqvia",
+      "api_base": "iqvia.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Catalent",
+      "ats_type": "workday",
+      "slug": "External",
+      "api_base": "catalent.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Dow",
+      "ats_type": "workday",
+      "slug": "ExternalCareers",
+      "api_base": "dow.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Alcoa",
+      "ats_type": "workday",
+      "slug": "Careers",
+      "api_base": "alcoa.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Hitachi",
+      "ats_type": "workday",
+      "slug": "hitachi",
+      "api_base": "hitachi.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "HP Inc.",
+      "ats_type": "workday",
+      "slug": "ExternalCareerSite",
+      "api_base": "hp.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Logitech",
+      "ats_type": "workday",
+      "slug": "logitech",
+      "api_base": "logitech.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Sonos",
+      "ats_type": "workday",
+      "slug": "sonos",
+      "api_base": "sonos.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Taiwan Semiconductor",
+      "ats_type": "greenhouse",
+      "slug": "taiwan",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Micron Technology",
+      "ats_type": "workday",
+      "slug": "External",
+      "api_base": "micron.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Xiaomi  ",
+      "ats_type": "smartrecruiters",
+      "slug": "xiaomi",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Baidu",
+      "ats_type": "greenhouse",
+      "slug": "baidu",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "BCE",
+      "ats_type": "workable",
+      "slug": "bce",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Swisscom",
+      "ats_type": "recruitee",
+      "slug": "swisscom",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Advanced Micro Devices",
+      "ats_type": "recruitee",
+      "slug": "advanced",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Quanta Computer",
+      "ats_type": "ashby",
+      "slug": "quanta",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Uber",
+      "ats_type": "smartrecruiters",
+      "slug": "uber",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "CDW",
+      "ats_type": "workday",
+      "slug": "Careers",
+      "api_base": "cdw.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Delta Electronics",
+      "ats_type": "smartrecruiters",
+      "slug": "deltaelectronics",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Western Digital",
+      "ats_type": "smartrecruiters",
+      "slug": "westerndigital",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "NXP Semiconductors",
+      "ats_type": "workday",
+      "slug": "Careers",
+      "api_base": "nxp.wd3",
+      "tier": "probe"
+    },
+    {
+      "name": "Zoom Video Communications",
+      "ats_type": "workday",
+      "slug": "zoom",
+      "api_base": "zoom.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Spotify Technology",
+      "ats_type": "lever",
+      "slug": "spotify",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Cadence Design",
+      "ats_type": "workday",
+      "slug": "external_careers",
+      "api_base": "cadence.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Renesas Electronics",
+      "ats_type": "smartrecruiters",
+      "slug": "renesaselectronics",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Microchip Technology",
+      "ats_type": "smartrecruiters",
+      "slug": "microchip",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Advanced Info Service",
+      "ats_type": "recruitee",
+      "slug": "advanced",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Lens Technology",
+      "ats_type": "ashby",
+      "slug": "lens",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "KPN",
+      "ats_type": "smartrecruiters",
+      "slug": "kpn",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Logitech International",
+      "ats_type": "workday",
+      "slug": "logitech",
+      "api_base": "logitech.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Iliad",
+      "ats_type": "recruitee",
+      "slug": "iliad",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Olympus",
+      "ats_type": "ashby",
+      "slug": "olympus",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Arista Networks",
+      "ats_type": "smartrecruiters",
+      "slug": "aristanetworks",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Ubiquiti",
+      "ats_type": "greenhouse",
+      "slug": "ubiquiti",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "RTL Group",
+      "ats_type": "recruitee",
+      "slug": "rtl",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "DocuSign",
+      "ats_type": "smartrecruiters",
+      "slug": "docusign",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Trimble",
+      "ats_type": "workday",
+      "slug": "trimblecareers",
+      "api_base": "trimble.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Palantir Technologies",
+      "ats_type": "smartrecruiters",
+      "slug": "palantir",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Focus Media Information Technology",
+      "ats_type": "ashby",
+      "slug": "focus",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Trade Desk",
+      "ats_type": "smartrecruiters",
+      "slug": "tradedesk",
+      "api_base": "",
+      "tier": "probe"
+    },
+    {
+      "name": "Marvell Technology Group",
+      "ats_type": "workday",
+      "slug": "marvellcareers",
+      "api_base": "marvell.wd1",
+      "tier": "probe"
+    },
+    {
+      "name": "Nexstar Media Group",
+      "ats_type": "workday",
+      "slug": "nexstar",
+      "api_base": "nexstar.wd5",
+      "tier": "probe"
+    },
+    {
+      "name": "Meta",
+      "ats_type": "recruitee",
+      "slug": "meta",
+      "api_base": "",
+      "tier": "dream"
+    },
+    {
+      "name": "IMC Trading",
+      "ats_type": "greenhouse",
+      "slug": "imc",
+      "api_base": "",
+      "tier": "dream"
+    },
+    {
+      "name": "EY",
+      "ats_type": "recruitee",
+      "slug": "ey",
+      "api_base": "",
+      "tier": "dream"
+    },
+    {
+      "name": "Enterprise Holdings",
+      "ats_type": "recruitee",
+      "slug": "enterprise",
+      "api_base": "",
+      "tier": "dream"
+    }
+  ]
+}
