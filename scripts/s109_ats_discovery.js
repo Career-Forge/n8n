@@ -109,7 +109,14 @@ function slugVariants(name) {
   const hyphen = lower.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   const firstWord = lower.split(/\s+/)[0].replace(/[^a-z0-9]/g, '');
   const variants = [nospace, hyphen];
-  if (firstWord && firstWord !== nospace && firstWord.length >= 3) variants.push(firstWord);
+  // s110 bugfix: a live confirmation slipped through as a false positive --
+  // "The New York Times" -> firstWord "new" (3 chars, passed the old >=3
+  // guard) coincidentally matched an unrelated real company's Greenhouse
+  // board (a 1-job tenant with no connection to NYT). Generic short words
+  // are exactly the ones likely to collide with an unrelated real tenant;
+  // raised to >=5 to rule out "new"/"big"/"top"-class false-positive risk
+  // while still allowing real short brand-first-words ("jpmorgan", "chase").
+  if (firstWord && firstWord !== nospace && firstWord.length >= 5) variants.push(firstWord);
   return [...new Set(variants.filter(Boolean))];
 }
 
@@ -202,11 +209,21 @@ function loadCsvRows(file) {
 }
 
 function getRegistryNames() {
+  // s110 bugfix: this used to normalize with a SEPARATE, simpler SQL-side
+  // regex (lowercase + strip non-alphanumeric only) than normName() below
+  // (which also strips "the"/"inc"/"corp"/etc as whole words) -- a real
+  // false-negative slipped through because of the mismatch: "The New York
+  // Times" normalizes to "newyorktimes" via normName() but the registry's
+  // existing "thenewyorktimes" row normalized to "thenewyorktimes" via the
+  // old SQL-side regex, so they never matched and both got inserted. Now
+  // pulls RAW names and runs them through the EXACT SAME normName() as
+  // every candidate, so there is only one normalization function to keep
+  // correct, not two that can drift apart.
   const out = execSync(
-    `docker exec careerforge_postgres psql -U careerforge -d careerforge -t -A -c "SELECT lower(regexp_replace(name, '[^a-zA-Z0-9]', '', 'g')) FROM companies"`,
+    `docker exec careerforge_postgres psql -U careerforge -d careerforge -t -A -c "SELECT name FROM companies"`,
     { maxBuffer: 1024 * 1024 * 32 }
   ).toString();
-  return new Set(out.split('\n').map((s) => s.trim()).filter(Boolean));
+  return new Set(out.split('\n').map((s) => normName(s)).filter(Boolean));
 }
 
 // ════════════════════════ candidate assembly ════════════════════════
