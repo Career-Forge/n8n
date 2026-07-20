@@ -808,7 +808,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Store Apply Context — WS4: content-shape aware. Reads the merged plain-text\n// content from Pick Resume LaTeX (falls back to raw Parse Pass2 for older/legacy\n// executions); also now the sole writer of sd.last_resume_json (moved off Save\n// Apply Context, which ran mid-flight on the cover branch and needed a try/catch\n// guard since the resume branch might not have finished -- this node runs after\n// Merge PDFs, so both branches are always done).\nconst staticData = $getWorkflowStaticData('global');\nconst ctx = $('Prepare Apply Context').first().json;\n// s48: backfill display identity from Step0's JD extraction when the URL-paste\n// path produced 'unknown'/scrape-junk (Step0 always runs before this node).\ntry {\n  const s0 = ($('Parse Step0').first().json || {}).step0 || {};\n  if ((!ctx.company || ctx.company === 'unknown') && s0.companyName) ctx.company = s0.companyName;\n  if (ctx.job_number === 0 && s0.roleName) ctx.job_title = s0.roleName;\n} catch (e) {}\nlet resumeJson = null;\ntry {\n  const picked = $('Pick Resume LaTeX').first().json || {};\n  if (picked.content && Array.isArray(picked.content.experience)) resumeJson = picked.content;\n} catch (e) { resumeJson = null; }\nif (!resumeJson) {\n  try { const p = $('Parse Pass2').first().json || {}; resumeJson = p.pass2 || p || null; } catch (e) { resumeJson = null; }\n}\nlet coverJson = null;\ntry { coverJson = $('Parse Cover Pass2').first().json || null; } catch (e) { coverJson = null; }\nstaticData.last_apply = { job_id: ctx.job_id || ctx.job_number, job_title: ctx.job_title, company: ctx.company, seniority_mode: ctx.seniority_mode, resume_json: resumeJson, cover_json: coverJson, forge_score: ctx.forge_score || null, skeleton_mode: ctx.seniority_mode, resume_text: ctx.resume_text || '', personal: ctx.personal || {}, resume_skeleton: ctx.resume_skeleton || '', cover_skeleton: ctx.cover_skeleton || '', job_description: ctx.job_description || '', location: ctx.location || '', timestamp: new Date().toISOString() };\nif (resumeJson && Array.isArray(resumeJson.experience)) { staticData.last_resume_json = resumeJson; }\nstaticData.jd_generate_inflight = null;\nreturn [{ json: { chat_id: ctx.chat_id, message: \"\\u2705 *Done!* Resume and cover letter delivered.\\n\\nReply with changes ('shorter', 'more Python', 'swap bullet 2') or 'track' to save this application.\" } }];"
+        "jsCode": "// Store Apply Context — WS4: content-shape aware. Reads the merged plain-text\n// content from Pick Resume LaTeX (falls back to raw Parse Pass2 for older/legacy\n// executions); also now the sole writer of sd.last_resume_json (moved off Save\n// Apply Context, which ran mid-flight on the cover branch and needed a try/catch\n// guard since the resume branch might not have finished -- this node runs after\n// Merge PDFs, so both branches are always done).\nconst staticData = $getWorkflowStaticData('global');\nconst ctx = $('Prepare Apply Context').first().json;\n// s48: backfill display identity from Step0's JD extraction when the URL-paste\n// path produced 'unknown'/scrape-junk (Step0 always runs before this node).\ntry {\n  const s0 = ($('Parse Step0').first().json || {}).step0 || {};\n  if ((!ctx.company || ctx.company === 'unknown') && s0.companyName) ctx.company = s0.companyName;\n  if (ctx.job_number === 0 && s0.roleName) ctx.job_title = s0.roleName;\n} catch (e) {}\nlet resumeJson = null;\ntry {\n  const picked = $('Pick Resume LaTeX').first().json || {};\n  if (picked.content && Array.isArray(picked.content.experience)) resumeJson = picked.content;\n} catch (e) { resumeJson = null; }\nif (!resumeJson) {\n  try { const p = $('Parse Pass2').first().json || {}; resumeJson = p.pass2 || p || null; } catch (e) { resumeJson = null; }\n}\nlet coverJson = null;\ntry { coverJson = $('Parse Cover Pass2').first().json || null; } catch (e) { coverJson = null; }\nstaticData.last_apply = { job_id: ctx.job_id || ctx.job_number, job_title: ctx.job_title, company: ctx.company, url: ctx.job_url || null, seniority_mode: ctx.seniority_mode, resume_json: resumeJson, cover_json: coverJson, forge_score: ctx.forge_score || null, skeleton_mode: ctx.seniority_mode, resume_text: ctx.resume_text || '', personal: ctx.personal || {}, resume_skeleton: ctx.resume_skeleton || '', cover_skeleton: ctx.cover_skeleton || '', job_description: ctx.job_description || '', location: ctx.location || '', timestamp: new Date().toISOString() };\nif (resumeJson && Array.isArray(resumeJson.experience)) { staticData.last_resume_json = resumeJson; }\nstaticData.jd_generate_inflight = null;\nreturn [{ json: { chat_id: ctx.chat_id, message: \"\\u2705 *Done!* Resume and cover letter delivered.\\n\\nReply with changes ('shorter', 'more Python', 'swap bullet 2') or 'track' to save this application.\" } }];"
       },
       "id": "148106f3-296e-46e1-9ece-a0442d62f811",
       "name": "Store Apply Context",
@@ -821,7 +821,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $('Extract Input').first().json.chat_id;\nconst lastApply = staticData.last_apply;\nif (!lastApply) return [{ json: { chat_id: chatId, message: \"\\u274C Nothing to track. Apply to a job first.\" } }];\nif (!staticData.tracked_applications) staticData.tracked_applications = [];\nconst entry = { job_id: lastApply.job_id, job_title: lastApply.job_title, company: lastApply.company, status: 'applied', score: lastApply.forge_score ? lastApply.forge_score.overall_score : null, applied_at: new Date().toISOString() };\nconst exists = staticData.tracked_applications.some(a => a.job_id === entry.job_id);\nif (exists) return [{ json: { chat_id: chatId, message: \"\\u2139\\uFE0F Already tracking *\" + entry.job_title + \"* at *\" + entry.company + \"*.\" } }];\nstaticData.tracked_applications.push(entry);\nif (staticData.tracked_applications.length > 100) staticData.tracked_applications = staticData.tracked_applications.slice(-100);\nreturn [{ json: { chat_id: chatId, message: \"\\u2705 Tracking *\" + entry.job_title + \"* at *\" + entry.company + \"*.\\n\\nUse /status to see all tracked applications.\" } }];"
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $('Extract Input').first().json.chat_id;\nconst lastApply = staticData.last_apply;\nif (!lastApply) return [{ json: { chat_id: chatId, message: \"\\u274C Nothing to track. Apply to a job first.\" } }];\nif (!staticData.tracked_applications) staticData.tracked_applications = [];\nconst entry = { job_id: lastApply.job_id, job_title: lastApply.job_title, company: lastApply.company, url: lastApply.url || null, status: 'applied', score: lastApply.forge_score ? lastApply.forge_score.overall_score : null, applied_at: new Date().toISOString() };\nconst exists = staticData.tracked_applications.some(a => a.job_id === entry.job_id);\nif (exists) return [{ json: { chat_id: chatId, message: \"\\u2139\\uFE0F Already tracking *\" + entry.job_title + \"* at *\" + entry.company + \"*.\" } }];\nstaticData.tracked_applications.push(entry);\nif (staticData.tracked_applications.length > 100) staticData.tracked_applications = staticData.tracked_applications.slice(-100);\nreturn [{ json: { chat_id: chatId, message: \"\\u2705 Tracking *\" + entry.job_title + \"* at *\" + entry.company + \"*.\\n\\nUse /status to see all tracked applications.\", _pg_entry: { ...entry, chat_id: chatId, forge_score_detail: lastApply.forge_score || null } } }];"
       },
       "id": "2c147a10-4257-4da4-82d1-0a9fc9f96b3c",
       "name": "Track Application",
@@ -6790,6 +6790,30 @@
         22352,
         52800
       ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO applications (user_id, job_id, url, url_norm, job_title, company,\n                          source, status, forge_score, score_detail, status_history, applied_at)\nSELECT (e->>'chat_id')::bigint, NULLIF(e->>'job_id',''), NULLIF(e->>'url',''),\n       cf_url_norm(e->>'url'), COALESCE(e->>'job_title',''), COALESCE(e->>'company',''),\n       'bot', 'applied', (e->>'score')::numeric, e->'forge_score_detail',\n       jsonb_build_array(jsonb_build_object('from', null, 'to', 'applied',\n                                            'at', e->>'applied_at', 'via', 'bot')),\n       (e->>'applied_at')::timestamptz\nFROM jsonb_array_elements($1::jsonb) e\nON CONFLICT DO NOTHING",
+        "options": {
+          "queryReplacement": "={{ [ JSON.stringify($json._pg_entry ? [$json._pg_entry] : []) ] }}"
+        }
+      },
+      "id": "c4d8b6f2-1a9e-4c7d-8f3b-5a6e2d9c0b17",
+      "name": "Record Tracked Application",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        29424,
+        50640
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "caLsB31DYOphw0EV",
+          "name": "CareerForge_Postgres"
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "pinData": {},
@@ -7280,6 +7304,11 @@
         [
           {
             "node": "Send Generic Reply",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Record Tracked Application",
             "type": "main",
             "index": 0
           }
