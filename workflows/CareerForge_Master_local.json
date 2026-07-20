@@ -6744,6 +6744,52 @@
         29184,
         46300
       ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "miniapp-bridge",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "e2a6f4c1-9b3d-4a7e-8c5f-1d6e0b3a7f92",
+      "name": "Miniapp Bridge",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        21712,
+        52800
+      ],
+      "webhookId": "miniapp-bridge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Miniapp Bridge (s131) -- n8n stays the sole reader/writer of staticData;\n// this node serializes a READ-ONLY snapshot for the FastAPI sidecar.\n// Secret check first, before any staticData read -- this webhook path is\n// never mounted on the public Tailscale Funnel (only the Telegram webhook\n// is), so this is defense-in-depth, not the primary access control.\nconst req = $input.first().json;                       // Webhook node shape: {headers, params, query, body}\nconst secret = (req.headers || {})['x-miniapp-secret'];\nif (!$env.MINIAPP_BRIDGE_SECRET || secret !== $env.MINIAPP_BRIDGE_SECRET) {\n  return [{ json: { _status: 401, ok: false, error: 'unauthorized' } }];\n}\nconst action = (req.body || {}).action || 'snapshot';\nconst sd = $getWorkflowStaticData('global');\nif (action === 'snapshot') {\n  const la = sd.last_apply || null;\n  // STRIP the heavy fields -- resume_json/cover_json/skeletons/resume_text/\n  // job_description are hundreds of KB each and the app only needs the\n  // summary (it links to the PDFs already delivered in Telegram).\n  const lastApply = la ? {\n    job_id: la.job_id, job_title: la.job_title,\n    company: la.company, location: la.location || '',\n    url: la.url || null,\n    forge_score: la.forge_score || null,\n    seniority_mode: la.seniority_mode || null,\n    timestamp: la.timestamp || null\n  } : null;\n  return [{ json: {\n    _status: 200, ok: true, generated_at: new Date().toISOString(),\n    user_prefs: sd.user_prefs || null,\n    last_jobs: sd.last_jobs || {},\n    last_jobs_created_at: sd.last_jobs_created_at || null,\n    tracked_applications: sd.tracked_applications || [],\n    last_apply: lastApply,\n    last_search_intent: sd.last_search_intent || null\n  } }];\n}\nreturn [{ json: { _status: 400, ok: false, error: 'unknown action: ' + action } }];"
+      },
+      "id": "f3b7a5d2-0c4e-4b8f-9d6a-2e7f1c4b8a03",
+      "name": "Bridge Snapshot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        22032,
+        52800
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {
+          "responseCode": "={{ $json._status || 200 }}"
+        }
+      },
+      "id": "a1c9e6f4-3d8b-4e2a-8f5c-6b9d0e3a7c14",
+      "name": "Bridge Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        22352,
+        52800
+      ]
     }
   ],
   "pinData": {},
@@ -10203,6 +10249,28 @@
         [
           {
             "node": "Send Parse Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Miniapp Bridge": {
+      "main": [
+        [
+          {
+            "node": "Bridge Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bridge Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Bridge Respond",
             "type": "main",
             "index": 0
           }

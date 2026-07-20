@@ -176,3 +176,64 @@ CREATE TABLE IF NOT EXISTS app_settings (
 
 INSERT INTO app_settings (key, value) VALUES ('geo_reference', '{"countries":{"US":["usa","u.s.a","u.s.a.","u.s.","united states","united states of america","america"],"IN":["india"],"GB":["uk","u.k.","united kingdom","britain","england","scotland","wales"],"CA":["canada"],"AU":["australia"],"DE":["germany","deutschland"],"SG":["singapore"],"AE":["uae","united arab emirates","dubai","abu dhabi"],"NL":["netherlands","holland"],"FR":["france"],"IE":["ireland"],"NZ":["new zealand"]},"cities":{"new york":"US","san francisco":"US","seattle":"US","austin":"US","boston":"US","chicago":"US","los angeles":"US","san jose":"US","denver":"US","atlanta":"US","dallas":"US","houston":"US","washington":"US","miami":"US","portland":"US","hyderabad":"IN","bangalore":"IN","bengaluru":"IN","mumbai":"IN","pune":"IN","delhi":"IN","new delhi":"IN","gurgaon":"IN","gurugram":"IN","chennai":"IN","noida":"IN","kolkata":"IN","ahmedabad":"IN","london":"GB","manchester":"GB","edinburgh":"GB","birmingham":"GB","toronto":"CA","vancouver":"CA","montreal":"CA","ottawa":"CA","berlin":"DE","munich":"DE","frankfurt":"DE","hamburg":"DE","singapore":"SG","dublin":"IE","amsterdam":"NL","paris":"FR","sydney":"AU","melbourne":"AU","auckland":"NZ"}}')
   ON CONFLICT (key) DO NOTHING;
+
+-- ── Migration 001: applications (Mini App tracker) + cf_url_norm ──
+-- See db/migrations/001_applications.sql for the full comment/rationale.
+-- Kept byte-identical here so a fresh install matches a migrated one.
+CREATE OR REPLACE FUNCTION cf_url_norm(u TEXT) RETURNS TEXT
+LANGUAGE plpgsql IMMUTABLE AS $$
+DECLARE s TEXT; hostpart TEXT; pathpart TEXT; qs TEXT; kept TEXT[]; kv TEXT;
+BEGIN
+  IF u IS NULL OR btrim(u) = '' THEN RETURN NULL; END IF;
+  s := regexp_replace(btrim(u), '#.*$', '');
+  s := regexp_replace(s, '^[a-zA-Z][a-zA-Z0-9+.-]*://', '');
+  s := regexp_replace(s, '^www\.', '', 'i');
+  qs := NULLIF(split_part(s, '?', 2), '');
+  s  := split_part(s, '?', 1);
+  hostpart := lower(split_part(s, '/', 1));
+  hostpart := regexp_replace(hostpart, ':(80|443)$', '');
+  pathpart := CASE WHEN position('/' in s) > 0
+              THEN regexp_replace(substr(s, position('/' in s)), '/+$', '')
+              ELSE '' END;
+  kept := ARRAY[]::TEXT[];
+  IF qs IS NOT NULL THEN
+    FOREACH kv IN ARRAY string_to_array(qs, '&') LOOP
+      IF lower(split_part(kv, '=', 1)) IN
+         ('gh_jid','jid','job_id','jobid','id','requisitionid','req_id','rid') THEN
+        kept := kept || (lower(split_part(kv, '=', 1)) || '=' || split_part(kv, '=', 2));
+      END IF;
+    END LOOP;
+    kept := (SELECT array_agg(x ORDER BY x) FROM unnest(kept) x);
+  END IF;
+  RETURN hostpart || pathpart ||
+         CASE WHEN kept IS NOT NULL AND array_length(kept, 1) > 0
+              THEN '?' || array_to_string(kept, '&') ELSE '' END;
+END $$;
+
+CREATE TABLE IF NOT EXISTS applications (
+  id             BIGSERIAL PRIMARY KEY,
+  user_id        BIGINT      NOT NULL,
+  job_id         TEXT,
+  url            TEXT,
+  url_norm       TEXT,
+  job_title      TEXT        NOT NULL DEFAULT '',
+  company        TEXT        NOT NULL DEFAULT '',
+  location       TEXT,
+  source         TEXT        NOT NULL DEFAULT 'miniapp',
+  status         TEXT        NOT NULL DEFAULT 'saved'
+                   CHECK (status IN ('saved','applied','interviewing','offer','rejected')),
+  forge_score    NUMERIC,
+  score_detail   JSONB,
+  notes          TEXT,
+  status_history JSONB       NOT NULL DEFAULT '[]'::jsonb,
+  applied_at     TIMESTAMPTZ,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_applications_user_jobid
+  ON applications (user_id, job_id) WHERE job_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_applications_user_urlnorm
+  ON applications (user_id, url_norm) WHERE url_norm IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_applications_user_status
+  ON applications (user_id, status, updated_at DESC);

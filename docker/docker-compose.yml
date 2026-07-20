@@ -51,6 +51,11 @@ services:
       - YOUCOM_API_KEY=${YOUCOM_API_KEY}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
 
+      # Mini App bridge — shared secret checked by the "Bridge Snapshot" Code
+      # node (s131) before it reads staticData. The bridge webhook path is
+      # never mounted on the public Tailscale Funnel; this is defense-in-depth.
+      - MINIAPP_BRIDGE_SECRET=${MINIAPP_BRIDGE_SECRET}
+
       # ── ATS engine — job cache + embeddings + generation ──
       # (read in Code/HTTP nodes via $env; Postgres itself uses an n8n credential)
       - OLLAMA_URL=${OLLAMA_URL:-http://ollama-service:11434}
