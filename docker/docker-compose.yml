@@ -55,6 +55,13 @@ services:
       # node (s131) before it reads staticData. The bridge webhook path is
       # never mounted on the public Tailscale Funnel; this is defense-in-depth.
       - MINIAPP_BRIDGE_SECRET=${MINIAPP_BRIDGE_SECRET}
+      # Read directly by "Send Digest" (s133's web_app button URL) via
+      # $env.MINIAPP_PUBLIC_URL -- was only wired into the miniapp service's
+      # own env block, never n8n's, so this resolved empty and Telegram
+      # rejected the button ("can't parse InlineKeyboardButton: Can't find
+      # field 'url'") since n8n's collection-type field drops an empty
+      # value's key entirely rather than sending it as "".
+      - MINIAPP_PUBLIC_URL=${MINIAPP_PUBLIC_URL}
 
       # ── ATS engine — job cache + embeddings + generation ──
       # (read in Code/HTTP nodes via $env; Postgres itself uses an n8n credential)
