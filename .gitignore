@@ -70,3 +70,6 @@ data/backups/
 # Raw downloaded source files for build_reference_data.js (large, re-downloadable
 # from public sources -- only the built JSONs in data/reference/ are committed)
 data/reference/raw/
+*.tsbuildinfo
+miniapp/web/vite.config.js
+miniapp/web/vite.config.d.ts
