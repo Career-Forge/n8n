@@ -182,6 +182,43 @@ services:
     entrypoint: ["/bin/sh", "-c", "ollama pull bge-m3 && echo 'bge-m3 ready'"]
     restart: "no"
 
+  # ── Mini App — FastAPI sidecar + built frontend statics ────
+  #  Talks to n8n only via the internal "Miniapp Bridge" webhook (s131) and
+  #  the Telegram webhook (synthetic-update injection, api/app/inject.py) —
+  #  both over the compose network, never through the public tunnel. Owns
+  #  its own Postgres table (applications) for the tracker. Bound to
+  #  127.0.0.1 only — host port 5680 is already taken by an unrelated
+  #  container, and this is meant to be fronted by Tailscale Funnel, not
+  #  exposed directly.
+  miniapp:
+    build:
+      context: ../miniapp
+    container_name: careerforge_miniapp
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5681:5681"
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - OWNER_TG_USER_ID=${OWNER_TG_USER_ID}
+      - MINIAPP_BRIDGE_SECRET=${MINIAPP_BRIDGE_SECRET}
+      - N8N_INTERNAL_URL=http://n8n:5678
+      - N8N_TG_WEBHOOK_SECRET=${N8N_TG_WEBHOOK_SECRET}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-careerforge}:${POSTGRES_PASSWORD:-cf_local_dev}@postgres-service:5432/${POSTGRES_DB:-careerforge}
+      - MINIAPP_PUBLIC_URL=${MINIAPP_PUBLIC_URL}
+    volumes:
+      - ../user-data:/data/user-data:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      n8n:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5681/api/healthz')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
 volumes:
   n8n_data:
   pg_data:

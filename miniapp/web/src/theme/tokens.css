@@ -1,0 +1,64 @@
+/* Dark-first token set. html[data-scheme] is stamped by lib/telegram.ts from
+   Telegram.WebApp.colorScheme at boot and on the "themeChanged" event --
+   Telegram also injects --tg-theme-* vars natively into the webview, which
+   the light remap below defers to so the app matches whatever theme the
+   user actually has Telegram set to. */
+:root {
+  --bg: #0f1115;
+  --surface: #181b22;
+  --surface-2: #20242e;
+  --border: #2a3040;
+  --text: #e8eaef;
+  --text-dim: #9aa3b2;
+  --accent: #4c9eff;
+  --accent-dim: #2a4a75;
+  --ok: #34c77b;
+  --warn: #f5b83d;
+  --bad: #ef5b5b;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --gap: 12px;
+  --font: -apple-system, 'SF Pro Text', Roboto, system-ui, sans-serif;
+}
+
+html[data-scheme='light'] {
+  --bg: var(--tg-theme-bg-color, #f4f5f7);
+  --surface: var(--tg-theme-secondary-bg-color, #ffffff);
+  --surface-2: #eceef2;
+  --border: #dde1e8;
+  --text: var(--tg-theme-text-color, #111318);
+  --text-dim: var(--tg-theme-hint-color, #6b7280);
+  --accent: var(--tg-theme-button-color, #2481cc);
+  --accent-dim: #cfe3f5;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.status-saved { color: var(--text-dim); }
+.status-applied { color: var(--accent); }
+.status-interviewing { color: var(--warn); }
+.status-offer { color: var(--ok); }
+.status-rejected { color: var(--bad); }
+
+.status-border-saved { border-left-color: var(--border); }
+.status-border-applied { border-left-color: var(--accent); }
+.status-border-interviewing { border-left-color: var(--warn); }
+.status-border-offer { border-left-color: var(--ok); }
+.status-border-rejected { border-left-color: var(--bad); }
