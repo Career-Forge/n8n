@@ -54,12 +54,12 @@ const STYLE_1LINE = {
 };
 const TIER_PLANS = {
   senior: {
-    sectionOrder: ['summary', 'experience', 'skills', 'achievements', 'certifications', 'education'],
+    sectionOrder: ['summary', 'experience', 'projects', 'skills', 'achievements', 'certifications', 'education'],
     summaryLines: 3,
     bulletStyle: STYLE_2LINE,
     sections: {
-      experience: { maxEntries: 5, lineBudget: 22, minBulletsPerEntry: 2, maxBulletsPerEntry: 4, mostRecentMinBullets: 3 },
-      projects: { maxEntries: 0, lineBudget: 0 },
+      experience: { maxEntries: 4, lineBudget: 24, minBulletsPerEntry: 2, maxBulletsPerEntry: 4, mostRecentMinBullets: 3 },
+      projects: { maxEntries: 3, lineBudget: 8, minBulletsPerEntry: 2, maxBulletsPerEntry: 3 },
       internships: { maxEntries: 0, lineBudget: 0 },
       achievements: { maxEntries: 3 },
       skills: { maxCategories: 4 },
@@ -74,7 +74,7 @@ const TIER_PLANS = {
     bulletStyle: STYLE_2LINE,
     sections: {
       experience: { maxEntries: 4, lineBudget: 16, minBulletsPerEntry: 2, maxBulletsPerEntry: 4, mostRecentMinBullets: 3 },
-      projects: { maxEntries: 2, lineBudget: 6, minBulletsPerEntry: 1, maxBulletsPerEntry: 2 },
+      projects: { maxEntries: 2, lineBudget: 10, minBulletsPerEntry: 1, maxBulletsPerEntry: 3 },
       internships: { maxEntries: 0, lineBudget: 0 },
       achievements: { maxEntries: 2 },
       skills: { maxCategories: 4 },
@@ -88,7 +88,7 @@ const TIER_PLANS = {
     summaryLines: 0,
     bulletStyle: STYLE_1LINE,
     sections: {
-      experience: { maxEntries: 3, lineBudget: 16, minBulletsPerEntry: 3, maxBulletsPerEntry: 5, mostRecentMinBullets: 4 },
+      experience: { maxEntries: 3, lineBudget: 16, minBulletsPerEntry: 3, maxBulletsPerEntry: 4, mostRecentMinBullets: 4 },
       projects: { maxEntries: 3, lineBudget: 12, minBulletsPerEntry: 2, maxBulletsPerEntry: 4 },
       internships: { maxEntries: 0, lineBudget: 0 },
       achievements: { maxEntries: 0 },
@@ -115,7 +115,7 @@ const TIER_PLANS = {
     primaryPool: 'projects'
   }
 };
-const COUNT_PLANS = {"senior":{"experience":{"maxEntries":5,"shapes":{"1":[4],"2":[4,4],"3":[4,4,3],"4":[4,3,3,2],"5":[4,3,2,2,2]}},"internships":null,"projects":{"keyedOn":"experience","byCount":{"0":[3,2],"1":[3,2],"2":[3,2],"3":[2,2],"4":[2],"5":[]}},"summaryLines":3,"achievementsMax":3},"mid":{"experience":{"maxEntries":4,"shapes":{"1":[4],"2":[4,4],"3":[4,3,3],"4":[3,3,2,2]}},"internships":null,"projects":{"keyedOn":"experience","byCount":{"0":[3,3,2],"1":[3,3,2],"2":[3,2,2],"3":[2,2,2],"4":[2,2]}},"summaryLines":2,"achievementsMax":2},"junior":{"experience":{"maxEntries":3,"shapes":{"1":[5],"2":[5,4],"3":[5,4,4]}},"internships":null,"projects":{"keyedOn":"experience","byCount":{"0":[4,4,3,3],"1":[4,4,3],"2":[4,3,3],"3":[3,3]}},"summaryLines":0,"achievementsMax":0},"fresher":{"experience":null,"internships":{"maxEntries":2,"shapes":{"1":[4],"2":[3,3]}},"projects":{"keyedOn":"internships","byCount":{"0":[4,4,3,3,3],"1":[4,4,3,3],"2":[4,3,3]}},"summaryLines":0,"achievementsMax":0}};
+const COUNT_PLANS = {"senior":{"experience":{"maxEntries":4,"shapes":{"1":[4],"2":[4,4],"3":[4,4,3],"4":[4,3,3,2],"5":[4,3,2,2,2]}},"internships":null,"projects":{"keyedOn":"experience","byCount":{"0":[2,2],"1":[2,2],"2":[2,2],"3":[2,2,2],"4":[2,2],"5":[]}},"summaryLines":3,"achievementsMax":3},"mid":{"experience":{"maxEntries":4,"shapes":{"1":[4],"2":[4,4],"3":[4,3,3],"4":[3,3,2,2]}},"internships":null,"projects":{"keyedOn":"experience","byCount":{"0":[3,3,3],"1":[3,3,3],"2":[3,3,2],"3":[2,2,2],"4":[3,2]}},"summaryLines":2,"achievementsMax":2},"junior":{"experience":{"maxEntries":3,"shapes":{"1":[4],"2":[4,4],"3":[4,4,3]}},"internships":null,"projects":{"keyedOn":"experience","byCount":{"0":[4,4,3,3],"1":[4,4,3],"2":[4,3,3],"3":[3,3]}},"summaryLines":0,"achievementsMax":0},"fresher":{"experience":null,"internships":{"maxEntries":2,"shapes":{"1":[4],"2":[3,3]}},"projects":{"keyedOn":"internships","byCount":{"0":[4,4,3,3,3],"1":[4,4,3,3],"2":[4,3,3]}},"summaryLines":0,"achievementsMax":0}};
 const plan = JSON.parse(JSON.stringify(TIER_PLANS[tier] || TIER_PLANS.mid));
 plan.countPlan = JSON.parse(JSON.stringify(COUNT_PLANS[tier] || COUNT_PLANS.mid));
 const planBlock = '\n\n== TIER CONTENT PLAN (tier: ' + tier + ') =='

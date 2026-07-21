@@ -64,7 +64,7 @@ Return ONLY valid JSON (no markdown, no explanations) with this structure:
     {
       "id": "<unique short id>",
       "name": "<project name>",
-      "techStack": "<tech used>",
+      "techStack": "<the 3-4 technologies from this project MOST relevant to THIS JD, comma-separated, in JD-priority order -- not just an exhaustive tech list>",
       "date": "<date range or empty>",
       "relevanceScore": <0-100>,
       "bulletCount": <2-3>,
@@ -142,7 +142,7 @@ Detect the candidate's tier based on their TOTAL professional experience (exclud
 SECTION ORDER BY TIER (MANDATORY)
 ═══════════════════════════════════════════════════════════════
 
-- SENIOR: ["summary", "experience", "skills", "achievements", "certifications", "education"] — include "achievements" ONLY if the master resume has an ## ACHIEVEMENTS section
+- SENIOR: ["summary", "experience", "projects", "skills", "achievements", "certifications", "education"] — include "projects" if the candidate has any real projects worth showing (side projects, OSS, notable technical work outside employment); include "achievements" ONLY if the master resume has an ## ACHIEVEMENTS section
 - MID: ["summary", "experience", "projects", "skills", "achievements", "certifications", "education"] — summary is 2-3 sentences for mid; include "achievements" ONLY if the master resume has an ## ACHIEVEMENTS section
   - Only include "certifications" if industry-standard certs exist (AWS, PMP, CKA, etc.)
   - NEVER include Coursera/Udemy/LinkedIn Learning completion certificates for mid/senior
@@ -156,7 +156,7 @@ SECTION ORDER BY TIER (MANDATORY)
 SPACE ALLOCATION BY TIER
 ═══════════════════════════════════════════════════════════════
 
-- SENIOR: 60% Experience, 15% Skills, 10% Certs, 10% Education, 5% Summary
+- SENIOR: 45% Experience, 15% Projects, 15% Skills, 10% Certs, 10% Education, 5% Summary
 - MID: 45% Experience, 25% Projects, 15% Skills, 10% Education, 5% Certs (if present)
 - JUNIOR: 30% Experience, 30% Projects, 25% Education, 15% Skills
 - FRESHER: 35% Projects, 30% Education, 15% Skills, 10% Internships, 10% Activities
@@ -171,7 +171,7 @@ Selection priority (apply in order, skip if not applicable):
 3. Fill remaining slots by RECENCY (most recent first), up to the tier's capacity.
 
 Tier capacity:
-- SENIOR: Include up to 5 experiences (the TIER CONTENT PLAN entry caps are authoritative).
+- SENIOR: Include up to 4 experiences (the TIER CONTENT PLAN entry caps are authoritative).
 - MID: Include up to 4 experiences (the TIER CONTENT PLAN entry caps are authoritative).
 - JUNIOR: Include ALL available experiences (usually 1-2).
 - FRESHER: Include 0 experiences (use internships section instead if applicable).
@@ -184,6 +184,7 @@ MULTI-ROLE / PROGRESSION DETECTION
 
 If a candidate held MULTIPLE positions at the SAME company:
 - Count the entire company tenure for "longest tenure" calculation
+- If the master resume LISTS these as separate, dated positions (distinct titles and/or date ranges under the same company), keep them as SEPARATE entries in the companies[].positions[] array, most-recent-first -- this lets the resume show a real promotion/transfer as a stacked block. NEVER split ONE listed role into multiple invented titles/positions just because the tenure was long -- only reflect splits that are ALREADY present in the master resume's own structure.
 
 ═══════════════════════════════════════════════════════════════
 BULLET COUNT RULES (ADAPTIVE)
