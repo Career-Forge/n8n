@@ -29,8 +29,14 @@ def badge_label(source_tier) -> str:
     }.get(source_tier, "")
 
 
-def match_pct(fit_score) -> int | None:
-    """fit_score is 0-10 (Record Matches uses the same *10 conversion)."""
+def match_pct(score100, fit_score) -> int | None:
+    """Prefer the fine-grained 0-100 JobScorer score (score100) -- matches
+    what the bot's own digest text shows ("\U0001F4CA X/100"). Falls back to
+    fit_score*10 (a coarse 0-10 bucket) only for last_jobs entries written
+    before s134 started persisting score100 -- same precedence Record
+    Matches already uses (COALESCE(score100, fit_score*10))."""
+    if isinstance(score100, (int, float)):
+        return round(score100)
     if fit_score is None:
         return None
     try:
@@ -53,7 +59,8 @@ def reshape_last_jobs(last_jobs: dict) -> list[dict]:
             "location": job.get("location"),
             "url": job.get("url"),
             "fit_score": job.get("fit_score"),
-            "match_pct": match_pct(job.get("fit_score")),
+            "score100": job.get("score100"),
+            "match_pct": match_pct(job.get("score100"), job.get("fit_score")),
             "description_snippet": job.get("description_snippet"),
             "source": job.get("source"),
             "source_tier": source_tier,

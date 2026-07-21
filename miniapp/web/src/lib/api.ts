@@ -46,6 +46,7 @@ export interface JobItem {
   location: string | null;
   url: string | null;
   fit_score: number | null;
+  score100: number | null;
   match_pct: number | null;
   description_snippet: string | null;
   source: string | null;
