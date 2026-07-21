@@ -29,20 +29,19 @@ def badge_label(source_tier) -> str:
     }.get(source_tier, "")
 
 
-def match_pct(score100, fit_score) -> int | None:
-    """Prefer the fine-grained 0-100 JobScorer score (score100) -- matches
-    what the bot's own digest text shows ("\U0001F4CA X/100"). Falls back to
-    fit_score*10 (a coarse 0-10 bucket) only for last_jobs entries written
-    before s134 started persisting score100 -- same precedence Record
-    Matches already uses (COALESCE(score100, fit_score*10))."""
+def match_pct(score100) -> int | None:
+    """score100 (JobScorer's fine-grained 0-100 composite) is now the SOLE
+    source -- s138 removed the fit_score*10 fallback after confirming it was
+    dead code: rankedJobs (Build Telegraph Body) is built via scored.map(...)
+    over Parse Scorer Output's output, which computes score100
+    UNCONDITIONALLY for every scored job on every parse path. A live job can
+    never reach last_jobs with fit_score but no score100. A genuinely-stale
+    last_jobs entry (written before s134 started persisting score100 at all)
+    now correctly returns None instead of a fabricated fit_score*10 guess --
+    it ages out on the next digest run same as before."""
     if isinstance(score100, (int, float)):
         return round(score100)
-    if fit_score is None:
-        return None
-    try:
-        return round(float(fit_score) * 10)
-    except (TypeError, ValueError):
-        return None
+    return None
 
 
 def reshape_last_jobs(last_jobs: dict) -> list[dict]:
@@ -60,7 +59,7 @@ def reshape_last_jobs(last_jobs: dict) -> list[dict]:
             "url": job.get("url"),
             "fit_score": job.get("fit_score"),
             "score100": job.get("score100"),
-            "match_pct": match_pct(job.get("score100"), job.get("fit_score")),
+            "match_pct": match_pct(job.get("score100")),
             "description_snippet": job.get("description_snippet"),
             "source": job.get("source"),
             "source_tier": source_tier,

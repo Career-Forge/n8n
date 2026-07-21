@@ -161,7 +161,7 @@ if (providers.size > 0) {
 }
 
 for (const [i, job] of rankedJobs.entries()) {
-  const score = (job.score100 != null) ? job.score100 : (job.fit_score || 0) * 10;
+  const score = job.score100;
   const tg = tierGlyph(job.source_tier, job.source);
   const _pd = job.updated_at ? new Date(job.updated_at) : null;
   const posted = (_pd && !isNaN(_pd.getTime())) ? _pd.toLocaleDateString('en-US', {month:'short',day:'numeric'}) : '';
@@ -201,7 +201,7 @@ for (const [i, job] of top3.entries()) {
   const tg = tierGlyph(job.source_tier, job.source);
   top3Msg += '*' + (i+1) + '.* ' + (tg ? tg + ' ' : '') + '[' + titleClean + '](' + job.url + ')\n';
   top3Msg += '    🏢 ' + tierStar(job.company) + clean(job.company) + ' · 📍 ' + displayLocation(job) + '\n';
-  top3Msg += '    📊 ' + ((job.score100 != null) ? job.score100 : (job.fit_score || 0) * 10) + '/100 — ' + (job.one_liner || '') + '\n\n';
+  top3Msg += '    📊 ' + job.score100 + '/100 — ' + (job.one_liner || '') + '\n\n';
 }
 if (!top3.length) top3Msg += '_No direct job pages survived filtering. Try broadening the query._\n\n';
 
