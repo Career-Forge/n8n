@@ -28,7 +28,13 @@ function wrapResumeWithSkeleton(params) {
 function normalizeLatexForPdflatex(input) {
   if (!input) return input;
   let s = input.replace(/\r\n/g, '\n');
-  s = s.replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'").replace(/\u2026/g, '...').replace(/[\u2013\u2014]/g, '--').replace(/\u00A0/g, ' ');
+  s = s.replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'").replace(/\u2026/g, '...')
+       // s135: mirror of escapeLatexTextV2's 3-rule dash split -- spaced
+       // en/em dash FIRST (must run before the bare em-dash rule or it
+       // never matches), then unspaced em -> ' -- ', then unspaced en ->
+       // bare '-' (protects date ranges in cover-letter prose the same
+       // way the resume path is protected).
+       .replace(/\s+[\u2013\u2014]\s+/g, ' -- ').replace(/\u2014/g, ' -- ').replace(/\u2013/g, '-').replace(/\u00A0/g, ' ');
   s = s.replace(/\u20B9/g, 'INR ').replace(/\u20AC/g, 'EUR ').replace(/\u00A3/g, 'GBP ').replace(/(?<!\\)\$/g, '\\$');
   s = s.replace(/[^\x09\x0A\x0D\x20-\x7E]/g, '');
   return s;
@@ -59,5 +65,20 @@ contentLines.push('\\end{lettercontent}');
 const contentLatex = contentLines.join('\n');
 let fullLatex = wrapResumeWithSkeleton({ skeleton: coverSkeleton, headerLatex: '% Header omitted for cover letter', contentLatex });
 function normalizeUrlCoverV2(u) { u = String(u == null ? '' : u).trim(); if (!u) return ''; return /^https?:\/\//i.test(u) ? u : 'https://' + u; }
-fullLatex = fullLatex.replace('{{NAME}}', escapeLatexText(personal.name || 'Candidate')).replace('{{PHONE}}', escapeLatexText(personal.phone_display || personal.phone_primary || '')).replaceAll('{{EMAIL}}', personal.email || '').replace('{{LINKEDIN}}', normalizeUrlCoverV2(personal.linkedin || ''));
+// s135: cover-letter header parity -- single {{CONTACT_LINE}} placeholder,
+// built the SAME way as the resume's buildHeaderFromPersonal contact line
+// (visible URL text, mailto with visible address, ' ~$|$~ ' joiner, 9pt),
+// but phone/email/linkedin ONLY -- github/portfolio are resume-only fields,
+// not part of the cover letter per the locked scope.
+function visibleUrlCoverV2(u) {
+  const v = normalizeUrlCoverV2(u).replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '');
+  return escapeLatexText(v);
+}
+const contactPartsV2 = [];
+const phoneV2 = personal.phone_display || personal.phone_primary || '';
+if (phoneV2) contactPartsV2.push(escapeLatexText(phoneV2));
+if (personal.email) contactPartsV2.push('\\href{mailto:' + personal.email + '}{' + escapeLatexText(personal.email) + '}');
+if (personal.linkedin) contactPartsV2.push('\\href{' + normalizeUrlCoverV2(personal.linkedin) + '}{' + visibleUrlCoverV2(personal.linkedin) + '}');
+const contactLineV2 = contactPartsV2.length ? '{\\fontsize{9}{9}\\selectfont ' + contactPartsV2.join(' ~$|$~ ') + '}' : '';
+fullLatex = fullLatex.replace('{{NAME}}', escapeLatexText(personal.name || 'Candidate')).replace('{{CONTACT_LINE}}', contactLineV2);
 return [{ json: { latex: normalizeLatexForPdflatex(fullLatex).split("\\$|\\$").join("$|$"), chat_id: ctx.chat_id, job_title: ctx.job_title, company: ctx.company } }];

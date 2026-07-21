@@ -86,6 +86,26 @@ const SKELETON = String.raw`\documentclass[letterpaper,11pt]{article}
       \textit{\small#1} & \textit{\small #2} \\
     \end{tabular*}\vspace{-5pt}
 }
+% s135 RESUME FORMAT v2: single-line entry header for a standalone
+% experience/internship position -- \textbf{Title} $|$ Company (left),
+% dates (right). Distinct from \resumeSubheading (left unchanged --
+% still used by education's 4-arg call and the legacy fragment fallback).
+\newcommand{\resumeSubheadingOneLine}[3]{
+  \vspace{-1pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} $|$ #2 & \textit{\small #3} \\
+    \end{tabular*}\vspace{-5pt}
+}
+% s135: company header for a stacked multi-position run -- name ONLY, no
+% derived date range (per-position dates below, via \resumeSubSubheading,
+% already carry the truth; a computed range would fabricate continuity
+% across any real gap).
+\newcommand{\resumeCompanyHeading}[1]{
+  \vspace{-1pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & \\
+    \end{tabular*}\vspace{-5pt}
+}
 \newcommand{\resumeProjectHeading}[2]{
     \item
     \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
@@ -109,6 +129,28 @@ const SKELETON = String.raw`\documentclass[letterpaper,11pt]{article}
     \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
       \textbf{\footnotesize #1} & \footnotesize #2 \\
       \textit{\footnotesize#3} & \textit{\footnotesize #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+% s135: probe-confirmed 2026-07-21 (compact-mid fixture, real pdflatex,
+% see _s135_calibrate.js) -- these 3 compact variants copy the existing
+% normal/-5pt vs compact/-7pt convention already used above; the compile
+% confirms it holds unchanged in compact mode too.
+\newcommand{\resumeSubheadingOneLineCompact}[3]{
+  \vspace{-1pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{\footnotesize #1} $|$ \footnotesize #2 & \textit{\footnotesize #3} \\
+    \end{tabular*}\vspace{-7pt}
+}
+\newcommand{\resumeCompanyHeadingCompact}[1]{
+  \vspace{-1pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{\footnotesize #1} & \\
+    \end{tabular*}\vspace{-7pt}
+}
+\newcommand{\resumeSubSubheadingCompact}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \textit{\footnotesize#1} & \textit{\footnotesize #2} \\
     \end{tabular*}\vspace{-7pt}
 }
 \newcommand{\resumeItemListEndCompact}{\end{itemize}\vspace{-6pt}}
@@ -218,19 +260,33 @@ function normalizeUrl(u) {
   if (!u) return '';
   return /^https?:\/\//i.test(u) ? u : 'https://' + u;
 }
+// s135: visible link text -- normalizeUrl(u) with scheme, "www.", and a
+// trailing slash all stripped, then escaped. Never fed through
+// escapeLatexTextV2 for the href TARGET itself (only for what is shown).
+function visibleUrlTextV2(u) {
+  const v = normalizeUrl(u).replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '');
+  return escapeLatexTextV2(v);
+}
 function buildHeaderFromPersonal(p) {
   p = p || {};
   const name = escapeLatexTextV2(firstNonEmpty(p.name, 'Candidate'));
   const parts = [];
   const phone = firstNonEmpty(p.phone_display, p.phone);
   if (phone) parts.push(escapeLatexTextV2(phone));
-  if (p.email) parts.push('\\href{mailto:' + p.email + '}{\\underline{' + p.email + '}}');
-  if (p.linkedin) parts.push('\\href{' + normalizeUrl(p.linkedin) + '}{\\underline{LinkedIn}}');
-  if (p.github) parts.push('\\href{' + normalizeUrl(p.github) + '}{\\underline{GitHub}}');
-  if (p.portfolio) parts.push('\\href{' + normalizeUrl(p.portfolio) + '}{\\underline{Portfolio}}');
+  if (p.email) parts.push('\\href{mailto:' + p.email + '}{' + escapeLatexTextV2(p.email) + '}');
+  if (p.linkedin) parts.push('\\href{' + normalizeUrl(p.linkedin) + '}{' + visibleUrlTextV2(p.linkedin) + '}');
+  if (p.github) parts.push('\\href{' + normalizeUrl(p.github) + '}{' + visibleUrlTextV2(p.github) + '}');
+  if (p.portfolio) parts.push('\\href{' + normalizeUrl(p.portfolio) + '}{' + visibleUrlTextV2(p.portfolio) + '}');
   if (p.show_location && p.location) parts.push(escapeLatexTextV2(p.location));
-  const contact = parts.length ? '\\small ' + parts.join(' $|$ ') : '';
-  return '\\begin{center}\n  \\textbf{\\fontsize{20}{20}\\selectfont \\scshape ' + name + '} \\\\ \\vspace{4pt}\n  ' + contact + '\n\\end{center}';
+  // s135 RESUME FORMAT v2: ' ~$|$~ ' is emitted here as literal CODE, never
+  // passed through escapeLatexTextV2 (which would mangle the tilde into
+  // \textasciitilde{}).
+  const contact = parts.length ? '{\\fontsize{9}{9}\\selectfont ' + parts.join(' ~$|$~ ') + '}' : '';
+  // Probe-confirmed 2026-07-21 (contact-line-6-fields fixture, real
+  // pdflatex, see _s135_calibrate.js): 4pt between name and contact line
+  // holds cleanly against the new 18pt/9pt sizing, incl. all 6 contact
+  // fields present at once -- no overflow of the 0.97\textwidth line.
+  return '\\begin{center}\n  {\\fontsize{18}{18}\\selectfont \\textbf{' + name + '}} \\\\ \\vspace{4pt}\n  ' + contact + '\n\\end{center}\\vspace{-6pt}';
 }
 
 // command-center buildFallbackSlots 1409-1455 (non-compact only; bot has no compact template)
@@ -378,7 +434,10 @@ function escapeLatexTextV2(value) {
   let s = String(value == null ? '' : value);
   s = s.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
   s = s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/…/g, '...')
-       .replace(/[–—]/g, '--').replace(/ /g, ' ')
+       // s135: spaced en/em dash FIRST (must run before the bare em-dash
+       // rule or it never matches), then unspaced em -> spaced double
+       // hyphen, then unspaced en -> bare hyphen (protects date ranges).
+       .replace(/\s+[–—]\s+/g, ' -- ').replace(/—/g, ' -- ').replace(/–/g, '-').replace(/ /g, ' ')
        .replace(/[→➔➡]/g, '->').replace(/•/g, '-')
        .replace(/₹/g, 'INR ').replace(/€/g, 'EUR ').replace(/£/g, 'GBP ');
   s = s.replace(/\\/g, ' ')
@@ -395,20 +454,41 @@ function truncateBullet(t, reserve) {
   if (t.length <= MAX) return t;
   const cut = t.slice(0, MAX);
   const bal = (s) => { let d = 0; for (let k = 0; k < s.length; k++) { if (s[k] === '(') d++; else if (s[k] === ')') d--; } return d === 0; };
-  const floor = Math.floor(MAX * 0.55);
+  // s135: sentence-boundary check FIRST, mirroring truncateSummary's own
+  // pattern -- a complete sentence beats any clause fragment, no ellipsis.
+  const period = cut.lastIndexOf('. ');
+  if (period > MAX * 0.5) return cut.slice(0, period + 1);
+  const floor = Math.floor(MAX * 0.45);
+  // s135: bounded (max 3 passes) trailing-fragment stripper -- eats a
+  // dangling function word OR a dangling numeric/unit token (e.g. "121+"),
+  // re-checking paren balance every pass so it never strips into an
+  // unbalanced state. Fixes the live Bayer bug: a bullet cut right after
+  // "...121+ behavior" used to render as "...121+ behavior..." (ellipsis
+  // mid-noun-phrase, dropping "metrics" and everything after it).
+  const stripTrailingFragment = (s) => {
+    const wordRe = /\s+(and|or|with|for|to|of|by|in|on|at|via|across|per|from|into|over|within|the|a|an|using)$/i;
+    const numRe = /\s+\d[\d,.]*[+%~]?x?$/i;
+    for (let pass = 0; pass < 3; pass++) {
+      let next = s.replace(wordRe, '').replace(numRe, '').replace(/[,;:.\s]+$/, '');
+      if (next === s) break;
+      if (!bal(next)) break;
+      s = next;
+    }
+    return s;
+  };
   // Prefer a clean clause end (a balanced ')' or a comma/semicolon OUTSIDE any
   // parenthetical) -- reads as a complete thought, no ellipsis needed.
   for (let i = cut.length - 1; i > floor; i--) {
     const ch = cut[i];
     if (ch === ')' && bal(cut.slice(0, i + 1))) return cut.slice(0, i + 1);
     if ((ch === ',' || ch === ';') && bal(cut.slice(0, i))) {
-      return cut.slice(0, i).replace(/\s+(and|or|with|for|to|of|by|in|on|at|via|across|the|a|an|using)$/i, '').replace(/[,;:.\s]+$/, '');
+      return stripTrailingFragment(cut.slice(0, i));
     }
   }
   const sp = cut.lastIndexOf(' ');
   let base = cut.slice(0, sp > MAX - 30 ? sp : MAX);
   if (!bal(base) && base.lastIndexOf('(') > 0) base = base.slice(0, base.lastIndexOf('('));
-  base = base.replace(/\s+(and|or|with|for|to|of|by|in|on|at|via|across|the|a|an|using)$/i, '').replace(/[,;:.\s]+$/, '');
+  base = stripTrailingFragment(base);
   return base + '...';
 }
 function truncateSummary(t) {
@@ -652,12 +732,43 @@ function renderResume(content, personal, isCompact) {
   const itemCmd = isCompact ? '\\resumeItemCompact' : '\\resumeItem';
   const slots = {};
   slots.summary = content.summary ? escapeLatexTextV2(truncateSummary(content.summary)) : '';
-  slots.experience = (content.experience || []).map((e) =>
-    subheadingCmd + '{' + escapeLatexTextV2(e.title) + '}{' + escapeLatexTextV2((e.startDate || '') + ' -- ' + (e.endDate || '')) + '}{' + escapeLatexTextV2(e.company) + '}{' + escapeLatexTextV2(e.location) + '}\n' + itemStart + '\n' + bulletRenderV2(e.bullets, isCompact) + '\n' + itemEnd
-  ).join('\n');
-  slots.internships = (content.internships || []).map((e) =>
-    subheadingCmd + '{' + escapeLatexTextV2(e.title) + '}{' + escapeLatexTextV2((e.startDate || '') + ' -- ' + (e.endDate || '')) + '}{' + escapeLatexTextV2(e.company) + '}{' + escapeLatexTextV2(e.location) + '}\n' + itemStart + '\n' + bulletRenderV2(e.bullets, isCompact) + '\n' + itemEnd
-  ).join('\n');
+  const companyKeyOf = (name) => String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+  // s135: >=2 CONSECUTIVE (adjacent-by-construction) entries sharing a
+  // company (case-insensitive, non-alphanumeric-stripped) render as one
+  // \resumeCompanyHeading + a \resumeSubSubheading per position (title/
+  // dates only -- no derived total date range, per-position dates already
+  // carry the truth). Non-adjacent same-company "boomerang" entries never
+  // merge across a gap. Everything else (incl. every singleton) renders as
+  // one line via \resumeSubheadingOneLine{title}{company}{dates}. Location
+  // is dropped from entry headers entirely (still present on
+  // content.experience/internships, just unused by this renderer).
+  const renderEntriesV3 = (entries) => {
+    const oneLineCmd = isCompact ? '\\resumeSubheadingOneLineCompact' : '\\resumeSubheadingOneLine';
+    const companyCmd = isCompact ? '\\resumeCompanyHeadingCompact' : '\\resumeCompanyHeading';
+    const subSubCmd = isCompact ? '\\resumeSubSubheadingCompact' : '\\resumeSubSubheading';
+    const list = entries || [];
+    const out = [];
+    let i = 0;
+    while (i < list.length) {
+      const e = list[i];
+      const key = companyKeyOf(e.company);
+      let j = i + 1;
+      while (j < list.length && key && companyKeyOf(list[j].company) === key) j++;
+      const run = list.slice(i, j);
+      if (run.length >= 2) {
+        out.push(companyCmd + '{' + escapeLatexTextV2(e.company) + '}');
+        for (const pos of run) {
+          out.push(subSubCmd + '{' + escapeLatexTextV2(pos.title) + '}{' + escapeLatexTextV2((pos.startDate || '') + ' -- ' + (pos.endDate || '')) + '}\n' + itemStart + '\n' + bulletRenderV2(pos.bullets, isCompact) + '\n' + itemEnd);
+        }
+      } else {
+        out.push(oneLineCmd + '{' + escapeLatexTextV2(e.title) + '}{' + escapeLatexTextV2(e.company) + '}{' + escapeLatexTextV2((e.startDate || '') + ' -- ' + (e.endDate || '')) + '}\n' + itemStart + '\n' + bulletRenderV2(e.bullets, isCompact) + '\n' + itemEnd);
+      }
+      i = j;
+    }
+    return out.join('\n');
+  };
+  slots.experience = renderEntriesV3(content.experience || []);
+  slots.internships = renderEntriesV3(content.internships || []);
   slots.projects = (content.projects || []).map((p) =>
     '\\resumeProjectHeading{\\textbf{' + escapeLatexTextV2(p.name) + '} $|$ \\emph{' + escapeLatexTextV2(capTechStackV2(p.name, p.techStack)) + '}}{' + escapeLatexTextV2(p.date) + '}\n' + itemStart + '\n' + bulletRenderV2(p.bullets, isCompact) + '\n' + itemEnd
   ).join('\n');
