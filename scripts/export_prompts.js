@@ -58,6 +58,7 @@ const PROMPT_MAP = {
   'Intent Router':         { file: 'IntentRouter.md',       extract: getAgentSystemMessage },
   'JobScorer':             { file: 'JobScorer.md',          extract: getChainLlmMessage },
   'SeniorityDetector':     { file: 'SeniorityDetector.md',  extract: getChainLlmMessage },
+  'Compute Candidate YOE': { file: 'ComputeCandidateYOE.md', extract: getChainLlmMessage },
   'Pass1 Selection':       { file: 'Pass1_Resume.md',       extract: getChainLlmMessage },
   'Pass2 Generate':        { file: 'Pass2_Resume.md',       extract: getChainLlmMessage },
   // Previously undocumented live nodes -- adding coverage, not just fixing drift.

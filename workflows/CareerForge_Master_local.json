@@ -1787,7 +1787,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const rawInput = $input.first().json;\nconst raw = typeof rawInput.text === 'string' ? rawInput.text.trim() : JSON.stringify(rawInput);\nconst expectedJobs = $('Build Scorer Input').first().json.jobs || [];\nconst jobById = Object.fromEntries(expectedJobs.map(j => [j.job_id, j]));\nlet scored = [];\nlet strategy = 'none';\nlet parseError = null;\nfunction normalizeScore(jobId, fit) {\n  let score = Math.max(0, Math.min(10, Math.round(Number(fit) || 0)));\n  if (jobById[jobId] && jobById[jobId].source_tier === 3) score = Math.min(score, 3);\n  return score;\n}\nfunction validate(items) {\n  if (!Array.isArray(items)) return null;\n  const valid = items.filter(s => s && typeof s.job_id === 'string' && s.job_id.length > 0).map(s => ({\n    job_id: String(s.job_id),\n    fit_score: normalizeScore(String(s.job_id), s.fit_score),\n    one_liner: String(s.one_liner || 'No summary').substring(0, 100),\n    yoe_compatibility: s.yoe_compatibility ?? null,\n    detected_location: (s.detected_location != null ? String(s.detected_location).substring(0, 80) : null),\n    location_match: (['match','mismatch','unknown'].indexOf(s.location_match) !== -1 ? s.location_match : 'unknown'),\n    skills_score: (s.skills_score != null ? Number(s.skills_score) : null),\n    experience_score: (s.experience_score != null ? Number(s.experience_score) : null),\n    workauth_score: (s.workauth_score != null ? Number(s.workauth_score) : null)\n  }));\n  return valid.length > 0 ? valid : null;\n}\n// Strategy 0 — chainLlm's attached output parser puts the validated object under .output\nif (!scored.length && rawInput && rawInput.output) { const o = rawInput.output; const v = validate(o.scored) || validate(o); if (v) { scored = v; strategy = 'parsed_output'; } }\nif (!scored.length) { try { const parsed = JSON.parse(raw); const result = validate(parsed?.scored); if (result) { scored = result; strategy = 'direct'; } } catch(e) {} }\nif (!scored.length) { try { const match = raw.match(/```(?:json)?\\s*([\\s\\S]+?)\\s*```/); if (match) { const parsed = JSON.parse(match[1].trim()); const result = validate(parsed?.scored); if (result) { scored = result; strategy = 'markdown_fence'; } } } catch(e) {} }\nif (!scored.length) { try { const match = raw.match(/\\{[\\s\\S]*\\}/); if (match) { const parsed = JSON.parse(match[0]); const result = validate(parsed?.scored); if (result) { scored = result; strategy = 'regex_object'; } } } catch(e) { parseError = e.message; } }\nif (!scored.length) { try { const items = []; const pat = /\\{\\s*\"job_id\"\\s*:\\s*\"([^\"]+)\"\\s*,\\s*\"fit_score\"\\s*:\\s*(\\d+)\\s*,\\s*\"one_liner\"\\s*:\\s*\"([^\"]*)\"\\s*\\}/g; let m; while ((m = pat.exec(raw)) !== null) { items.push({ job_id: m[1], fit_score: normalizeScore(m[1], m[2]), one_liner: m[3].substring(0, 100) }); } if (items.length > 0) { scored = items; strategy = 'item_regex'; } } catch(e) {} }\nif (!scored.length) { scored = expectedJobs.map(j => ({ job_id: j.job_id, fit_score: j.source_tier === 3 ? 3 : 5, one_liner: 'Scoring unavailable — showing by source quality' })); strategy = 'neutral_fallback'; parseError = parseError || 'All 4 parsing strategies exhausted'; }\n// S3: deterministic /100 composite with explainable sub-scores\nconst _eq = (() => { try { return $('Parse Expand Query').first().json || {}; } catch(_) { return {}; } })();\nconst _floor = Number(_eq.salary_min || (_eq.compensation && _eq.compensation.salary_min) || 0) || 0;\nconst _clamp = n => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));\n// s99: normalized-name lookup against company_tiers.json -- mirrored from\n// build_reference_data.js/seed_company_tier_weights.js (keep the normalizer\n// in sync if any of those change). Fail-open: returns null on any read/parse\n// error, callers treat null as \"untiered.\"\nconst NAME_SUFFIX_RX = /\\b(incorporated|corporation|company|limited|holdings?|group|llc|inc|corp|co|ltd|llp|plc|gmbh|ag|sa|nv|bv)\\b\\.?/g;\nfunction normalizeCompanyName(raw) {\n  return String(raw || '').toLowerCase().replace(/&/g, 'and').replace(/[.,'\"()]/g, '').replace(NAME_SUFFIX_RX, '').replace(/\\s+/g, ' ').trim();\n}\nlet COMPANY_TIERS = null;\ntry { COMPANY_TIERS = JSON.parse(require('fs').readFileSync('/home/node/.n8n-files/companies/reference/company_tiers.json', 'utf8')).companies || {}; } catch (e) { COMPANY_TIERS = null; }\nfunction tierLookup(companyName) {\n  if (!COMPANY_TIERS) return null;\n  return COMPANY_TIERS[normalizeCompanyName(companyName)] || null;\n}\nconst _W = { skills: 0.35, experience: 0.20, workauth: 0.15, location: 0.10, company_health: 0.10, compensation: 0.10 };\nconst _locSpecific = !!_eq.location_canonical && _eq.remote_preference !== 'remote_only';\nconst _locMap = _locSpecific ? { match: 100, unknown: 35, mismatch: 0 } : { match: 100, unknown: 60, mismatch: 20 };\nfunction _comp(job) { if (!_floor) return 60; const lo = job && job.salary_min; if (!lo) return 60; if (lo >= _floor) return 100; return Math.max(20, Math.round((lo / _floor) * 100)); }\nscored = scored.map(s => {\n  const job = jobById[s.job_id] || {};\n  const base = (Number(s.fit_score) || 0) * 10;\n  const sub = {\n    skills: _clamp(s.skills_score != null ? s.skills_score : base),\n    experience: _clamp(s.experience_score != null ? s.experience_score : base),\n    // s100: code-level floor/cap when real H1B data is available for this\n    // job's company -- same s82 precedent this codebase already established\n    // (never trust the LLM alone on a numeric floor once a hard signal\n    // exists; a retry can land on a different backend with different\n    // compliance). appr >= 50 -> floor 85 (clearly sponsors at scale);\n    // 1-49 -> floor 65 (some real history); explicit need stated + no H1B\n    // record found at all -> cap 40 (a real signal, not neutral).\n    workauth: (() => {\n      const llmScore = _clamp(s.workauth_score != null ? s.workauth_score : base);\n      if (job.h1b === null && (_eq.sponsorship_required || (_eq.visa_signals || []).some((v) => /h1b|h-1b|sponsor/i.test(String(v)))) && _eq.country === 'US') return Math.min(llmScore, 40);\n      if (job.h1b && job.h1b.appr >= 50) return Math.max(llmScore, 85);\n      if (job.h1b && job.h1b.appr >= 1) return Math.max(llmScore, 65);\n      return llmScore;\n    })(),\n    // s98: prefer Aggregate Jobs' own gazetteer-grounded location_verified\n    // (s96) over JobScorer's LLM-guessed location_match when a location\n    // filter was actually active for this search -- same precedent s57\n    // already established for Build Telegraph Body (deterministic signal\n    // beats LLM guess). Falls back to the LLM's judgment, unchanged, when no\n    // location filter ran at all (location_verified undefined).\n    location: (job.location_verified === true ? 100 : job.location_verified === null ? (_locSpecific ? 35 : 60) : (_locMap[s.location_match] != null ? _locMap[s.location_match] : 60)),\n    company_health: (() => { const t = tierLookup(job.company); return t ? Math.round(50 + t.w * 50) : 60; })(),\n    compensation: _comp(job)\n  };\n  const score100 = Math.round(sub.skills*_W.skills + sub.experience*_W.experience + sub.workauth*_W.workauth + sub.location*_W.location + sub.company_health*_W.company_health + sub.compensation*_W.compensation);\n  let _bn = null, _bv = 101; for (const k of Object.keys(sub)) { if (sub[k] < _bv) { _bv = sub[k]; _bn = k; } }\n  const bin = score100 >= 70 ? 'Strong' : score100 >= 55 ? 'Good' : score100 >= 40 ? 'Mixed' : 'Poor';\n  return Object.assign({}, s, { sub_scores: sub, score100: score100, bin: bin, bottleneck: _bn });\n});\nconst _ordLoc = { match: 0, unknown: 1, mismatch: 2 };\nscored.sort((a, b) => (b.score100 - a.score100) || ((_ordLoc[a.location_match] != null ? _ordLoc[a.location_match] : 1) - (_ordLoc[b.location_match] != null ? _ordLoc[b.location_match] : 1)));\nreturn [{ json: { scored, total: scored.length, strategy, parse_error: parseError } }];\n"
+        "jsCode": "const rawInput = $input.first().json;\nconst raw = typeof rawInput.text === 'string' ? rawInput.text.trim() : JSON.stringify(rawInput);\nconst expectedJobs = $('Build Scorer Input').first().json.jobs || [];\nconst jobById = Object.fromEntries(expectedJobs.map(j => [j.job_id, j]));\nlet scored = [];\nlet strategy = 'none';\nlet parseError = null;\nfunction normalizeScore(jobId, fit) {\n  let score = Math.max(0, Math.min(10, Math.round(Number(fit) || 0)));\n  if (jobById[jobId] && jobById[jobId].source_tier === 3) score = Math.min(score, 3);\n  return score;\n}\nfunction validate(items) {\n  if (!Array.isArray(items)) return null;\n  const valid = items.filter(s => s && typeof s.job_id === 'string' && s.job_id.length > 0).map(s => ({\n    job_id: String(s.job_id),\n    fit_score: normalizeScore(String(s.job_id), s.fit_score),\n    one_liner: String(s.one_liner || 'No summary').substring(0, 100),\n    yoe_compatibility: s.yoe_compatibility ?? null,\n    detected_location: (s.detected_location != null ? String(s.detected_location).substring(0, 80) : null),\n    location_match: (['match','mismatch','unknown'].indexOf(s.location_match) !== -1 ? s.location_match : 'unknown'),\n    skills_score: (s.skills_score != null ? Number(s.skills_score) : null),\n    experience_score: (s.experience_score != null ? Number(s.experience_score) : null),\n    workauth_score: (s.workauth_score != null ? Number(s.workauth_score) : null)\n  }));\n  return valid.length > 0 ? valid : null;\n}\n// Strategy 0 — chainLlm's attached output parser puts the validated object under .output\nif (!scored.length && rawInput && rawInput.output) { const o = rawInput.output; const v = validate(o.scored) || validate(o); if (v) { scored = v; strategy = 'parsed_output'; } }\nif (!scored.length) { try { const parsed = JSON.parse(raw); const result = validate(parsed?.scored); if (result) { scored = result; strategy = 'direct'; } } catch(e) {} }\nif (!scored.length) { try { const match = raw.match(/```(?:json)?\\s*([\\s\\S]+?)\\s*```/); if (match) { const parsed = JSON.parse(match[1].trim()); const result = validate(parsed?.scored); if (result) { scored = result; strategy = 'markdown_fence'; } } } catch(e) {} }\nif (!scored.length) { try { const match = raw.match(/\\{[\\s\\S]*\\}/); if (match) { const parsed = JSON.parse(match[0]); const result = validate(parsed?.scored); if (result) { scored = result; strategy = 'regex_object'; } } } catch(e) { parseError = e.message; } }\nif (!scored.length) { try { const items = []; const pat = /\\{\\s*\"job_id\"\\s*:\\s*\"([^\"]+)\"\\s*,\\s*\"fit_score\"\\s*:\\s*(\\d+)\\s*,\\s*\"one_liner\"\\s*:\\s*\"([^\"]*)\"\\s*\\}/g; let m; while ((m = pat.exec(raw)) !== null) { items.push({ job_id: m[1], fit_score: normalizeScore(m[1], m[2]), one_liner: m[3].substring(0, 100) }); } if (items.length > 0) { scored = items; strategy = 'item_regex'; } } catch(e) {} }\nif (!scored.length) { scored = expectedJobs.map(j => ({ job_id: j.job_id, fit_score: j.source_tier === 3 ? 3 : 5, one_liner: 'Scoring unavailable — showing by source quality' })); strategy = 'neutral_fallback'; parseError = parseError || 'All 4 parsing strategies exhausted'; }\n// S3: deterministic /100 composite with explainable sub-scores\nconst _eq = (() => { try { return $('Parse Expand Query').first().json || {}; } catch(_) { return {}; } })();\n// s139: candidate's real total years of experience, computed once per search\n// (job-independent) by the new \"Compute Candidate YOE\" node -- see that\n// node's own header comment for why it runs once, not once per job.\nconst _candidateYoe = (() => { try { const v = $('Parse Candidate YOE').first().json.candidate_yoe; return (typeof v === 'number') ? v : null; } catch (_) { return null; } })();\nconst _floor = Number(_eq.salary_min || (_eq.compensation && _eq.compensation.salary_min) || 0) || 0;\nconst _clamp = n => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));\n// s99: normalized-name lookup against company_tiers.json -- mirrored from\n// build_reference_data.js/seed_company_tier_weights.js (keep the normalizer\n// in sync if any of those change). Fail-open: returns null on any read/parse\n// error, callers treat null as \"untiered.\"\nconst NAME_SUFFIX_RX = /\\b(incorporated|corporation|company|limited|holdings?|group|llc|inc|corp|co|ltd|llp|plc|gmbh|ag|sa|nv|bv)\\b\\.?/g;\nfunction normalizeCompanyName(raw) {\n  return String(raw || '').toLowerCase().replace(/&/g, 'and').replace(/[.,'\"()]/g, '').replace(NAME_SUFFIX_RX, '').replace(/\\s+/g, ' ').trim();\n}\nlet COMPANY_TIERS = null;\ntry { COMPANY_TIERS = JSON.parse(require('fs').readFileSync('/home/node/.n8n-files/companies/reference/company_tiers.json', 'utf8')).companies || {}; } catch (e) { COMPANY_TIERS = null; }\nfunction tierLookup(companyName) {\n  if (!COMPANY_TIERS) return null;\n  return COMPANY_TIERS[normalizeCompanyName(companyName)] || null;\n}\nconst _W = { skills: 0.35, experience: 0.20, workauth: 0.15, location: 0.10, company_health: 0.10, compensation: 0.10 };\nconst _locSpecific = !!_eq.location_canonical && _eq.remote_preference !== 'remote_only';\nconst _locMap = _locSpecific ? { match: 100, unknown: 35, mismatch: 0 } : { match: 100, unknown: 60, mismatch: 20 };\nfunction _comp(job) { if (!_floor) return 60; const lo = job && job.salary_min; if (!lo) return 60; if (lo >= _floor) return 100; return Math.max(20, Math.round((lo / _floor) * 100)); }\nscored = scored.map(s => {\n  const job = jobById[s.job_id] || {};\n  const base = (Number(s.fit_score) || 0) * 10;\n  const sub = {\n    skills: _clamp(s.skills_score != null ? s.skills_score : base),\n    // s139: deterministic floor/cap on top of the LLM's own experience_score,\n    // same precedent as workauth (s100) and location (s98) just below --\n    // never trust the LLM alone on a numeric floor once a hard signal\n    // exists. required_yoe_min (Experience Filter's regex extraction) and\n    // _candidateYoe (the new per-search node) are both real, already-\n    // computed signals; only engage when BOTH are present. Overqualification\n    // (gap <= 0) gets no penalty -- this pass only addresses the reported\n    // underqualification problem. Thresholds loosely mirror\n    // SeniorityDetector's own slightly_under (1-2)/mismatch (>3) bands for\n    // conceptual consistency across the two scoring stages, without being\n    // bound to reuse the exact same numbers (0-100 score caps vs 0-10\n    // qualitative labels are a different unit) -- tune if these don't feel\n    // right in practice.\n    experience: (() => {\n      const llmScore = _clamp(s.experience_score != null ? s.experience_score : base);\n      const reqMin = job.required_yoe_min;\n      if (reqMin != null && _candidateYoe != null) {\n        const gap = reqMin - _candidateYoe;\n        if (gap >= 6) return Math.min(llmScore, 25);\n        if (gap >= 3) return Math.min(llmScore, 45);\n        if (gap >= 1) return Math.min(llmScore, 65);\n      }\n      return llmScore;\n    })(),\n    // s100: code-level floor/cap when real H1B data is available for this\n    // job's company -- same s82 precedent this codebase already established\n    // (never trust the LLM alone on a numeric floor once a hard signal\n    // exists; a retry can land on a different backend with different\n    // compliance). appr >= 50 -> floor 85 (clearly sponsors at scale);\n    // 1-49 -> floor 65 (some real history); explicit need stated + no H1B\n    // record found at all -> cap 40 (a real signal, not neutral).\n    workauth: (() => {\n      const llmScore = _clamp(s.workauth_score != null ? s.workauth_score : base);\n      if (job.h1b === null && (_eq.sponsorship_required || (_eq.visa_signals || []).some((v) => /h1b|h-1b|sponsor/i.test(String(v)))) && _eq.country === 'US') return Math.min(llmScore, 40);\n      if (job.h1b && job.h1b.appr >= 50) return Math.max(llmScore, 85);\n      if (job.h1b && job.h1b.appr >= 1) return Math.max(llmScore, 65);\n      return llmScore;\n    })(),\n    // s98: prefer Aggregate Jobs' own gazetteer-grounded location_verified\n    // (s96) over JobScorer's LLM-guessed location_match when a location\n    // filter was actually active for this search -- same precedent s57\n    // already established for Build Telegraph Body (deterministic signal\n    // beats LLM guess). Falls back to the LLM's judgment, unchanged, when no\n    // location filter ran at all (location_verified undefined).\n    location: (job.location_verified === true ? 100 : job.location_verified === null ? (_locSpecific ? 35 : 60) : (_locMap[s.location_match] != null ? _locMap[s.location_match] : 60)),\n    company_health: (() => { const t = tierLookup(job.company); return t ? Math.round(50 + t.w * 50) : 60; })(),\n    compensation: _comp(job)\n  };\n  const score100 = Math.round(sub.skills*_W.skills + sub.experience*_W.experience + sub.workauth*_W.workauth + sub.location*_W.location + sub.company_health*_W.company_health + sub.compensation*_W.compensation);\n  let _bn = null, _bv = 101; for (const k of Object.keys(sub)) { if (sub[k] < _bv) { _bv = sub[k]; _bn = k; } }\n  const bin = score100 >= 70 ? 'Strong' : score100 >= 55 ? 'Good' : score100 >= 40 ? 'Mixed' : 'Poor';\n  return Object.assign({}, s, { sub_scores: sub, score100: score100, bin: bin, bottleneck: _bn });\n});\nconst _ordLoc = { match: 0, unknown: 1, mismatch: 2 };\nscored.sort((a, b) => (b.score100 - a.score100) || ((_ordLoc[a.location_match] != null ? _ordLoc[a.location_match] : 1) - (_ordLoc[b.location_match] != null ? _ordLoc[b.location_match] : 1)));\nreturn [{ json: { scored, total: scored.length, strategy, parse_error: parseError } }];\n"
       },
       "id": "b3d86dfb-04f7-4544-a4b8-a96de26332f0",
       "name": "Parse Scorer Output",
@@ -4114,7 +4114,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "WITH q AS (SELECT $1::vector AS qvec, websearch_to_tsquery('english', COALESCE($2,'')) AS qtext), vec AS (SELECT id, row_number() OVER (ORDER BY dist) AS rnk FROM ((SELECT j.id, j.embedding <=> (SELECT qvec FROM q) AS dist FROM jobs j WHERE $5 = '' AND j.status='active' AND j.embedding IS NOT NULL AND (SELECT qvec FROM q) IS NOT NULL AND ($3 = '' OR j.remote = true OR j.location IS NULL OR j.location = '' OR EXISTS (SELECT 1 FROM unnest(string_to_array(lower($3), ',')) AS term WHERE lower(j.location) LIKE '%' || term || '%')) AND ($4 <> 'true' OR j.remote = true) ORDER BY j.embedding <=> (SELECT qvec FROM q) LIMIT 200) UNION ALL (SELECT j.id, (j.embedding <=> (SELECT qvec FROM q)) * 1.0 AS dist FROM jobs j WHERE $5 <> '' AND j.status='active' AND j.embedding IS NOT NULL AND (SELECT qvec FROM q) IS NOT NULL AND ($3 = '' OR j.remote = true OR j.location IS NULL OR j.location = '' OR EXISTS (SELECT 1 FROM unnest(string_to_array(lower($3), ',')) AS term WHERE lower(j.location) LIKE '%' || term || '%')) AND ($4 <> 'true' OR j.remote = true) AND EXISTS (SELECT 1 FROM companies tc WHERE tc.id = j.company_id AND lower(tc.name) = ANY(string_to_array(lower($5), ','))) ORDER BY dist LIMIT 200)) u), kw AS (SELECT j.id, row_number() OVER (ORDER BY ts_rank(j.jd_tsv,(SELECT qtext FROM q)) DESC) AS rnk FROM jobs j WHERE j.status='active' AND (SELECT qtext FROM q)::text <> '' AND j.jd_tsv @@ (SELECT qtext FROM q) AND ($3 = '' OR j.remote = true OR j.location IS NULL OR j.location = '' OR EXISTS (SELECT 1 FROM unnest(string_to_array(lower($3), ',')) AS term WHERE lower(j.location) LIKE '%' || term || '%')) AND ($4 <> 'true' OR j.remote = true) AND ($5 = '' OR EXISTS (SELECT 1 FROM companies tc WHERE tc.id = j.company_id AND lower(tc.name) = ANY(string_to_array(lower($5), ',')))) ORDER BY ts_rank(j.jd_tsv,(SELECT qtext FROM q)) DESC LIMIT 200), fused AS (SELECT COALESCE(v.id,k.id) AS id, COALESCE(1.0/(60+v.rnk),0)+COALESCE(1.0/(60+k.rnk),0) AS score FROM vec v FULL OUTER JOIN kw k ON v.id=k.id) SELECT j.id AS job_id, j.title, c.name AS company, j.location, j.remote, j.apply_url, left(j.jd_text,1200) AS jd_text, j.posted_at, (f.score * (1 - LEAST(0.3, GREATEST(0, 50 - COALESCE(ci.health_score,60))::numeric/100))) AS rrf_score FROM fused f JOIN jobs j ON j.id=f.id JOIN companies c ON c.id=j.company_id LEFT JOIN company_intel ci ON ci.company_key = lower(regexp_replace(c.name,'[,.].*$','')) ORDER BY rrf_score DESC LIMIT 150",
+        "query": "WITH q AS (SELECT $1::vector AS qvec, websearch_to_tsquery('english', COALESCE($2,'')) AS qtext), vec AS (SELECT id, row_number() OVER (ORDER BY dist) AS rnk FROM ((SELECT j.id, j.embedding <=> (SELECT qvec FROM q) AS dist FROM jobs j WHERE $5 = '' AND j.status='active' AND j.embedding IS NOT NULL AND (SELECT qvec FROM q) IS NOT NULL AND ($3 = '' OR j.remote = true OR j.location IS NULL OR j.location = '' OR EXISTS (SELECT 1 FROM unnest(string_to_array(lower($3), ',')) AS term WHERE lower(j.location) LIKE '%' || term || '%')) AND ($4 <> 'true' OR j.remote = true) ORDER BY j.embedding <=> (SELECT qvec FROM q) LIMIT 200) UNION ALL (SELECT j.id, (j.embedding <=> (SELECT qvec FROM q)) * 1.0 AS dist FROM jobs j WHERE $5 <> '' AND j.status='active' AND j.embedding IS NOT NULL AND (SELECT qvec FROM q) IS NOT NULL AND ($3 = '' OR j.remote = true OR j.location IS NULL OR j.location = '' OR EXISTS (SELECT 1 FROM unnest(string_to_array(lower($3), ',')) AS term WHERE lower(j.location) LIKE '%' || term || '%')) AND ($4 <> 'true' OR j.remote = true) AND EXISTS (SELECT 1 FROM companies tc WHERE tc.id = j.company_id AND lower(tc.name) = ANY(string_to_array(lower($5), ','))) ORDER BY dist LIMIT 200)) u), kw AS (SELECT j.id, row_number() OVER (ORDER BY ts_rank(j.jd_tsv,(SELECT qtext FROM q)) DESC) AS rnk FROM jobs j WHERE j.status='active' AND (SELECT qtext FROM q)::text <> '' AND j.jd_tsv @@ (SELECT qtext FROM q) AND ($3 = '' OR j.remote = true OR j.location IS NULL OR j.location = '' OR EXISTS (SELECT 1 FROM unnest(string_to_array(lower($3), ',')) AS term WHERE lower(j.location) LIKE '%' || term || '%')) AND ($4 <> 'true' OR j.remote = true) AND ($5 = '' OR EXISTS (SELECT 1 FROM companies tc WHERE tc.id = j.company_id AND lower(tc.name) = ANY(string_to_array(lower($5), ',')))) ORDER BY ts_rank(j.jd_tsv,(SELECT qtext FROM q)) DESC LIMIT 200), fused AS (SELECT COALESCE(v.id,k.id) AS id, COALESCE(1.0/(60+v.rnk),0)+COALESCE(1.0/(60+k.rnk),0) AS score FROM vec v FULL OUTER JOIN kw k ON v.id=k.id) SELECT j.id AS job_id, j.title, c.name AS company, j.location, j.remote, j.apply_url, left(j.jd_text,3000) AS jd_text, j.posted_at, (f.score * (1 - LEAST(0.3, GREATEST(0, 50 - COALESCE(ci.health_score,60))::numeric/100))) AS rrf_score FROM fused f JOIN jobs j ON j.id=f.id JOIN companies c ON c.id=j.company_id LEFT JOIN company_intel ci ON ci.company_key = lower(regexp_replace(c.name,'[,.].*$','')) ORDER BY rrf_score DESC LIMIT 150",
         "options": {
           "queryReplacement": "={{ [ ($json.embeddings && $json.embeddings[0] && $json.embeddings[0].length===1024) ? ('[' + $json.embeddings[0].join(',') + ']') : null, (($('Pre-flight: Providers').first().json.role_families)||[]).join(' '), $('Pre-flight: Providers').first().json.cache_loc_terms || '', $('Pre-flight: Providers').first().json.cache_remote_only || '', $('Pre-flight: Providers').first().json.cache_target_companies || '' ] }}"
         }
@@ -4138,7 +4138,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && r.job_id);\nconst NEG = /(u\\.?s\\.?\\s*citizen(ship)?\\s*(required|only)|must\\s*be\\s*a\\s*(u\\.?s\\.?\\s*)?citizen|security\\s*clearance|active\\s*clearance|ts\\/sci|secret\\s*clearance|no\\s*sponsorship|not?\\s*(able|willing)\\s*to\\s*sponsor|unable\\s*to\\s*sponsor)/i;\nconst seen = new Set();\nconst jobs = [];\nfor (const r of rows) {\n  const jd = String(r.jd_text || '');\n  if (NEG.test(jd)) continue;\n  const url = r.apply_url || '';\n  if (!url) continue;\n  const key = url.replace(/[?#].*$/,'').replace(/\\/+$/,'').toLowerCase();\n  if (seen.has(key)) continue;\n  seen.add(key);\n  jobs.push({ job_id: 'cache_' + r.job_id, title: r.title || '', company: r.company || '', location: r.location || '', remote: !!r.remote, url: url, updated_at: r.posted_at || null, source: 'cache', source_tier: 1, description_snippet: jd.slice(0,600), rrf_score: r.rrf_score || 0 });\n}\nreturn [{ json: { jobs: jobs, source: 'cache', count: jobs.length } }];"
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && r.job_id);\nconst NEG = /(u\\.?s\\.?\\s*citizen(ship)?\\s*(required|only)|must\\s*be\\s*a\\s*(u\\.?s\\.?\\s*)?citizen|security\\s*clearance|active\\s*clearance|ts\\/sci|secret\\s*clearance|no\\s*sponsorship|not?\\s*(able|willing)\\s*to\\s*sponsor|unable\\s*to\\s*sponsor)/i;\nconst seen = new Set();\nconst jobs = [];\nfor (const r of rows) {\n  const jd = String(r.jd_text || '');\n  if (NEG.test(jd)) continue;\n  const url = r.apply_url || '';\n  if (!url) continue;\n  const key = url.replace(/[?#].*$/,'').replace(/\\/+$/,'').toLowerCase();\n  if (seen.has(key)) continue;\n  seen.add(key);\n  jobs.push({ job_id: 'cache_' + r.job_id, title: r.title || '', company: r.company || '', location: r.location || '', remote: !!r.remote, url: url, updated_at: r.posted_at || null, source: 'cache', source_tier: 1, description_snippet: jd.slice(0,2500), rrf_score: r.rrf_score || 0 });\n}\nreturn [{ json: { jobs: jobs, source: 'cache', count: jobs.length } }];"
       },
       "id": "077d61c7-d4b5-4b1c-a1bb-b563d6beadeb",
       "name": "Cache Prefilter",
@@ -4262,7 +4262,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Normalize RemoteOK -> canonical job objects (+salary). RemoteOK returns ALL\n// recent remote jobs unfiltered, so filter by role_families client-side.\nconst intent = $('Parse Expand Query').first().json || {};\nconst roles = (intent.role_families || []).map(r => String(r).toLowerCase());\nlet raw = $input.all().map(i => i.json);\nif (raw.length === 1 && Array.isArray(raw[0])) raw = raw[0];\nif (raw.length === 1 && raw[0] && Array.isArray(raw[0].data)) raw = raw[0].data;\nconst entries = raw.filter(j => j && j.position && (j.id || j.slug));\nfunction relevant(hay) {\n  if (!roles.length) return true;\n  return roles.some(r => r.split(/\\s+/).filter(w => w.length > 2).every(w => hay.includes(w)));\n}\nconst jobs = [];\nfor (const j of entries) {\n  const title = String(j.position || '');\n  const hay = (title + ' ' + (j.tags || []).join(' ') + ' ' + String(j.description || '')).toLowerCase();\n  if (!relevant(hay)) continue;\n  jobs.push({\n    job_id: 'remoteok-' + (j.id || j.slug),\n    title,\n    company: j.company || '',\n    location: (j.location && String(j.location).trim()) ? j.location : 'Remote',\n    department: '',\n    url: j.url || j.apply_url || '',\n    description_snippet: String(j.description || '').replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim().substring(0, 500),\n    salary_min: j.salary_min || null,\n    salary_max: j.salary_max || null,\n    salary_currency: 'USD',\n    updated_at: j.date || '',\n    source: 'remoteok',\n    source_tier: 2,\n    tier_label: 'curated:remoteok'\n  });\n}\nreturn [{ json: { jobs, source: 'remoteok', count: jobs.length } }];"
+        "jsCode": "// Normalize RemoteOK -> canonical job objects (+salary). RemoteOK returns ALL\n// recent remote jobs unfiltered, so filter by role_families client-side.\nconst intent = $('Parse Expand Query').first().json || {};\nconst roles = (intent.role_families || []).map(r => String(r).toLowerCase());\nlet raw = $input.all().map(i => i.json);\nif (raw.length === 1 && Array.isArray(raw[0])) raw = raw[0];\nif (raw.length === 1 && raw[0] && Array.isArray(raw[0].data)) raw = raw[0].data;\nconst entries = raw.filter(j => j && j.position && (j.id || j.slug));\nfunction relevant(hay) {\n  if (!roles.length) return true;\n  return roles.some(r => r.split(/\\s+/).filter(w => w.length > 2).every(w => hay.includes(w)));\n}\nconst jobs = [];\nfor (const j of entries) {\n  const title = String(j.position || '');\n  const hay = (title + ' ' + (j.tags || []).join(' ') + ' ' + String(j.description || '')).toLowerCase();\n  if (!relevant(hay)) continue;\n  jobs.push({\n    job_id: 'remoteok-' + (j.id || j.slug),\n    title,\n    company: j.company || '',\n    location: (j.location && String(j.location).trim()) ? j.location : 'Remote',\n    department: '',\n    url: j.url || j.apply_url || '',\n    description_snippet: String(j.description || '').replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim().substring(0, 2000),\n    salary_min: j.salary_min || null,\n    salary_max: j.salary_max || null,\n    salary_currency: 'USD',\n    updated_at: j.date || '',\n    source: 'remoteok',\n    source_tier: 2,\n    tier_label: 'curated:remoteok'\n  });\n}\nreturn [{ json: { jobs, source: 'remoteok', count: jobs.length } }];"
       },
       "id": "f0636061-57b4-4d3d-b2e1-f3dd506f07fc",
       "name": "Normalize RemoteOK",
@@ -5590,7 +5590,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Normalize JSearch (/search-v2) -> canonical jobs. Prefers direct employer apply links.\nlet raw = $input.all().map(i => i.json);\nlet results = [];\nfor (const r of raw) {\n  if (!r) continue;\n  if (r.data && Array.isArray(r.data.jobs)) results = results.concat(r.data.jobs);\n  else if (Array.isArray(r.data)) results = results.concat(r.data);\n  else if (r.job_id && r.job_title) results.push(r);\n}\nconst jobs = [];\nfor (const r of results) {\n  if (!r || !r.job_title) continue;\n  let url = r.job_apply_link || '';\n  if (Array.isArray(r.apply_options)) {\n    const direct = r.apply_options.find(o => o && o.is_direct && o.apply_link);\n    if (direct) url = direct.apply_link;\n  }\n  if (!url) continue;\n  jobs.push({\n    job_id: 'jsearch-' + (r.job_id || jobs.length),\n    title: r.job_title || '',\n    company: r.employer_name || '',\n    location: [r.job_city, r.job_state, r.job_country].filter(Boolean).join(', '),\n    department: '',\n    url,\n    description_snippet: String(r.job_description || '').replace(/\\s+/g, ' ').trim().substring(0, 500),\n    salary_min: r.job_min_salary || null,\n    salary_max: r.job_max_salary || null,\n    salary_currency: r.job_salary_currency || null,\n    updated_at: r.job_posted_at_datetime_utc || '',\n    source: 'jsearch',\n    source_tier: 2,\n    tier_label: 'api:jsearch'\n  });\n}\nreturn [{ json: { jobs, source: 'jsearch', count: jobs.length } }];"
+        "jsCode": "// Normalize JSearch (/search-v2) -> canonical jobs. Prefers direct employer apply links.\nlet raw = $input.all().map(i => i.json);\nlet results = [];\nfor (const r of raw) {\n  if (!r) continue;\n  if (r.data && Array.isArray(r.data.jobs)) results = results.concat(r.data.jobs);\n  else if (Array.isArray(r.data)) results = results.concat(r.data);\n  else if (r.job_id && r.job_title) results.push(r);\n}\nconst jobs = [];\nfor (const r of results) {\n  if (!r || !r.job_title) continue;\n  let url = r.job_apply_link || '';\n  if (Array.isArray(r.apply_options)) {\n    const direct = r.apply_options.find(o => o && o.is_direct && o.apply_link);\n    if (direct) url = direct.apply_link;\n  }\n  if (!url) continue;\n  jobs.push({\n    job_id: 'jsearch-' + (r.job_id || jobs.length),\n    title: r.job_title || '',\n    company: r.employer_name || '',\n    location: [r.job_city, r.job_state, r.job_country].filter(Boolean).join(', '),\n    department: '',\n    url,\n    description_snippet: String(r.job_description || '').replace(/\\s+/g, ' ').trim().substring(0, 2000),\n    salary_min: r.job_min_salary || null,\n    salary_max: r.job_max_salary || null,\n    salary_currency: r.job_salary_currency || null,\n    updated_at: r.job_posted_at_datetime_utc || '',\n    source: 'jsearch',\n    source_tier: 2,\n    tier_label: 'api:jsearch'\n  });\n}\nreturn [{ json: { jobs, source: 'jsearch', count: jobs.length } }];"
       },
       "id": "00e49ccb-5919-4ad9-b251-e3fc5f3e5f3f",
       "name": "Normalize JSearch",
@@ -6833,6 +6833,86 @@
         }
       },
       "onError": "continueRegularOutput"
+    },
+    {
+      "id": "a1e9f3d0-c139-4a1e-9c1e-139000000001",
+      "name": "Prep Candidate YOE Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        33632,
+        46400
+      ],
+      "parameters": {
+        "jsCode": "function parseMaybe(v) {\n  if (!v) return null;\n  if (typeof v === 'string') { try { return JSON.parse(v); } catch(e) { return v; } }\n  return v;\n}\nconst sd = $getWorkflowStaticData('global');\nconst rows = $input.all().map(i => i.json || {});\nlet row = rows.find(r => r && (r.id === 'global:resume_structured' || r.value)) || rows[0] || {};\nlet resume = parseMaybe(row.value || null);\nif (resume && resume.resume_doc) resume = resume.resume_doc;\nif ((!resume || typeof resume !== 'object' || !resume.personal) && sd.last_resume_structured) resume = sd.last_resume_structured;\nif ((!resume || typeof resume !== 'object') && sd.last_resume_json) resume = sd.last_resume_json;\nconst experience = (resume && Array.isArray(resume.experience)) ? resume.experience.slice(0, 12).map((e) => ({\n  title: e.title || '', company: e.company || e.organization || '',\n  start_date: e.start_date || null, end_date: e.end_date || null, is_current: !!e.is_current\n})) : [];\nreturn [{ json: { experience, valid: experience.length > 0 } }];"
+      }
+    },
+    {
+      "id": "a1e9f3d0-c139-4a1e-9c1e-139000000002",
+      "name": "Compute Candidate YOE Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        33700,
+        46600
+      ],
+      "parameters": {
+        "model": "deepseek/deepseek-v4-flash",
+        "options": {}
+      }
+    },
+    {
+      "id": "a1e9f3d0-c139-4a1e-9c1e-139000000003",
+      "name": "Candidate YOE Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        33850,
+        46600
+      ],
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"candidate_yoe\":{\"type\":[\"integer\",\"number\",\"null\"]},\"reasoning\":{\"type\":\"string\"}},\"required\":[\"reasoning\"]}"
+      }
+    },
+    {
+      "id": "a1e9f3d0-c139-4a1e-9c1e-139000000004",
+      "name": "Compute Candidate YOE",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        33840,
+        46400
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json) }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "SystemMessagePromptTemplate",
+              "message": "You are computing a candidate's total years of professional experience for job-search scoring purposes -- NOT for resume writing, just a single number used once per search.\n\nYou will receive: { \"experience\": [ {title, company, start_date, end_date, is_current}, ... ], \"valid\": true|false }\n\nIf \"valid\" is false or \"experience\" is empty, return candidate_yoe: null.\n\nOtherwise:\n- Sum all professional role durations (start_date to end_date, or to today if is_current).\n- Count internships (title/company language indicating an internship) at 0.5x weight.\n- Teaching Assistant / Research Assistant / Grader roles at a university do NOT count toward professional experience -- exclude them entirely.\n- If two roles overlap in time, count the overlapping period only once (do not double-count).\n- Round to the nearest integer.\n\nOutput ONLY:\n{ \"candidate_yoe\": <integer or null>, \"reasoning\": \"<1 sentence>\" }"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a1e9f3d0-c139-4a1e-9c1e-139000000005",
+      "name": "Parse Candidate YOE",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        34050,
+        46400
+      ],
+      "parameters": {
+        "jsCode": "const rawInput = $input.first().json;\nlet candidateYoe = null;\ntry {\n  const o = (rawInput && rawInput.output) ? rawInput.output : rawInput;\n  if (o && typeof o.candidate_yoe === 'number' && isFinite(o.candidate_yoe)) candidateYoe = Math.round(o.candidate_yoe);\n} catch (e) {}\nreturn [{ json: { candidate_yoe: candidateYoe } }];"
+      }
     }
   ],
   "pinData": {},
@@ -8787,6 +8867,11 @@
             "node": "Build Scorer Input",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Prep Candidate YOE Input",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -10319,6 +10404,50 @@
         [
           {
             "node": "Bridge Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Candidate YOE Input": {
+      "main": [
+        [
+          {
+            "node": "Compute Candidate YOE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Candidate YOE Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Compute Candidate YOE",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Candidate YOE Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Compute Candidate YOE",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Candidate YOE": {
+      "main": [
+        [
+          {
+            "node": "Parse Candidate YOE",
             "type": "main",
             "index": 0
           }
