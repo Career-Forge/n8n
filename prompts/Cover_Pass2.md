@@ -7,7 +7,7 @@ INPUT: { "selection": <Pass-1 decisions object>, "jd": "<job description>", "com
 OUTPUT SCHEMA — return EXACTLY this, strict minified JSON, no markdown fences:
 {
   "title": "<catchy 6-12 word headline tying the candidate to this role>",
-  "salutation": "Dear <Company> Hiring Team,",
+  "salutation": "<a greeting matching the input's locale_salutation_hint if non-empty (e.g. 'Dear Hiring Manager,'), otherwise 'Dear <Company> Hiring Team,'>",
   "hook": "<2-3 sentence opening. Lead with the candidate's unique_differentiator from competitivePositioning, then connect it to something specific about the company (its mission, product, or recent work from companyResearch). Flowing prose.>",
   "bullets": [ { "keyword": "<3-5 word bold lead-in>", "text": "<1-2 sentence STAR achievement with a quantified metric, drawn ONLY from the selected achievements; weave a JD keyword naturally>" } ],
   "cta": "<2-3 sentence close: one specific contribution you would make in the first 90 days + a confident sign-off>",
@@ -24,6 +24,7 @@ RULES:
 - No flattery. BANNED phrases: "passionate about", "excited to apply", "dynamic environment", "fast-paced", "team player", "hit the ground running".
 - CTA location rule: if candidate_location and job_location clearly differ (different metro or country), the cta must acknowledge it naturally in ONE clause (relocation readiness or remote-work experience) -- never apologetic, never more than a clause. If same/unknown, do not mention location.
 - Plain professional prose inside field values. No LaTeX, no markdown.
+- If locale_structure_hint is non-empty, follow its guidance for overall tone (e.g. more formal and fact-dense, less promotional language) without changing the bullet-count/word-count/STAR rules above.
 
 
 BIOGRAPHICAL GROUNDING (hard rule): NEVER state or imply the candidate's place of residence, citizenship, work authorization, relocation readiness, or time zone unless that exact fact appears in the provided candidate data. If the candidate's location is empty or unknown, make ZERO claims about where they are based or authorized to work -- do not derive residence from the job's location, the phone country code, or any authorization field. A fabricated biographical fact is a disqualifying error.

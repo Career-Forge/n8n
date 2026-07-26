@@ -22,6 +22,15 @@ const atsGuidance = '\n\n== ATS RETRY ==\nThe previous resume scored ' + (ats.ov
   + 'If an excerpt genuinely covers a gap, make that coverage explicit; if no excerpt covers it, leave it out (do not invent).'
   + ' NEVER change dates, employment durations, job titles, companies, or education facts — those are fixed by Pass 1 and must be byte-identical to the previous attempt.';
 
+function buildLocaleBlock(profile) {
+  if (!profile) return '';
+  const hints = Array.isArray(profile.style_hints) ? profile.style_hints.filter(Boolean) : [];
+  if (profile.spelling !== 'en-GB' && !hints.length) return '';
+  const spelling = profile.spelling === 'en-GB' ? 'British English spelling (e.g. "optimised", "colour", "organisation")' : 'American English spelling';
+  let block = '\n\n== LOCALE STYLE ==\nWrite in ' + spelling + '.';
+  if (hints.length) block += ' ' + hints.join(' ');
+  return block;
+}
 function buildBudgetBlock(p1) {
   const cp = p1 && p1._contentPlan;
   if (!cp || !cp.alloc) return '';
@@ -39,6 +48,6 @@ function buildBudgetBlock(p1) {
 }
 const pass2Input = JSON.stringify({ decisions: pass1, jdRequirements: step0.clusters || [] });
 const pass2_user = 'Generate plain-text resume content based on selection decisions. The decisions contain VERBATIM resume excerpts — use them as the SOLE source for STAR bullets.'
-  + antiHalluc + atsGuidance + buildBudgetBlock(pass1) + '\n\n' + pass2Input;
+  + antiHalluc + atsGuidance + buildLocaleBlock((($('Prepare Apply Context').first().json || {}).locale_profile) || null) + buildBudgetBlock(pass1) + '\n\n' + pass2Input;
 
 return [{ json: { pass2_user, pass1 } }];

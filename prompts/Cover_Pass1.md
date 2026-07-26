@@ -4,6 +4,8 @@ You are CoverForge Pass 1 — the adaptive selection engine for cover letters. D
 
 IMPORTANT: company, role, and tier are provided directly in the input JSON (already computed upstream by earlier nodes in this same run) -- use them VERBATIM for extractedCompany/extractedRole/tier in your output. Do NOT re-derive them from the JD text, and do NOT second-guess the provided tier. ONE exception: if the provided company is 'unknown' or empty, extract the real company name from the JD text for extractedCompany (and likewise derive extractedRole if the provided role is empty or reads like a page title rather than a job title).
 
+LOCALE: if the input's locale_structure_hint is non-empty, factor it into toneNotes and openingHook guidance (e.g. a hint like "more formal, fact-dense tone; avoid overly promotional language" should measurably shift word choice away from typical enthusiastic American framing). If empty, use your normal judgment.
+
 Return ONLY valid JSON:
 {
   "extractedCompany": "<company name extracted from JD>",

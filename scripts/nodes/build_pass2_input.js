@@ -20,6 +20,15 @@ const antiHalluc = '\n\nCRITICAL ANTI-HALLUCINATION RULES:\n'
   + '- The resume should work equally well for ANY company — no company-specific framing\n'
   + '- Use ONLY the verbatim excerpts from Pass 1 decisions as source material — do NOT invent metrics, technologies, or achievements';
 
+function buildLocaleBlock(profile) {
+  if (!profile) return '';
+  const hints = Array.isArray(profile.style_hints) ? profile.style_hints.filter(Boolean) : [];
+  if (profile.spelling !== 'en-GB' && !hints.length) return '';
+  const spelling = profile.spelling === 'en-GB' ? 'British English spelling (e.g. "optimised", "colour", "organisation")' : 'American English spelling';
+  let block = '\n\n== LOCALE STYLE ==\nWrite in ' + spelling + '.';
+  if (hints.length) block += ' ' + hints.join(' ');
+  return block;
+}
 function buildBudgetBlock(p1) {
   const cp = p1 && p1._contentPlan;
   if (!cp || !cp.alloc) return '';
@@ -37,6 +46,6 @@ function buildBudgetBlock(p1) {
 }
 const pass2Input = JSON.stringify({ decisions: pass1, jdRequirements: step0.clusters || [] });
 const pass2_user = 'Generate plain-text resume content based on selection decisions. The decisions contain VERBATIM resume excerpts — use them as the SOLE source for STAR bullets.'
-  + antiHalluc + buildBudgetBlock(pass1) + '\n\n' + pass2Input;
+  + antiHalluc + buildLocaleBlock((($('Prepare Apply Context').first().json || {}).locale_profile) || null) + buildBudgetBlock(pass1) + '\n\n' + pass2Input;
 
 return [{ json: { pass2_user, pass1 } }];
