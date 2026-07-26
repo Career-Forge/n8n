@@ -118,6 +118,57 @@ const TIER_PLANS = {
 const COUNT_PLANS = {"senior":{"experience":{"maxEntries":4,"shapes":{"1":[4],"2":[4,4],"3":[4,4,3],"4":[4,3,3,2],"5":[4,3,2,2,2]}},"internships":null,"projects":{"keyedOn":"experience","byCount":{"0":[2,2],"1":[2,2],"2":[2,2],"3":[2,2,2],"4":[2,2],"5":[]}},"summaryLines":3,"achievementsMax":3},"mid":{"experience":{"maxEntries":4,"shapes":{"1":[4],"2":[4,4],"3":[4,3,3],"4":[3,3,2,2]}},"internships":null,"projects":{"keyedOn":"experience","byCount":{"0":[3,3,3],"1":[3,3,3],"2":[3,3,2],"3":[2,2,2],"4":[3,2]}},"summaryLines":2,"achievementsMax":2},"junior":{"experience":{"maxEntries":3,"shapes":{"1":[4],"2":[4,4],"3":[4,4,3]}},"internships":null,"projects":{"keyedOn":"experience","byCount":{"0":[4,4,3,3],"1":[4,4,3],"2":[4,3,3],"3":[3,3]}},"summaryLines":0,"achievementsMax":0},"fresher":{"experience":null,"internships":{"maxEntries":2,"shapes":{"1":[4],"2":[3,3]}},"projects":{"keyedOn":"internships","byCount":{"0":[4,4,3,3,3],"1":[4,4,3,3],"2":[4,3,3]}},"summaryLines":0,"achievementsMax":0}};
 const plan = JSON.parse(JSON.stringify(TIER_PLANS[tier] || TIER_PLANS.mid));
 plan.countPlan = JSON.parse(JSON.stringify(COUNT_PLANS[tier] || COUNT_PLANS.mid));
+// s142: page-budget scaling by locale -- applied BEFORE s141's header-line
+// compensation below (a fixed per-apply subtraction must act on the
+// already-scaled budget, never get multiplied itself). No-ops whenever the
+// resolved page target is 1 (byte-identical for DEFAULT/US/CA and most
+// junior/fresher tiers).
+const _pagesProfile = c.locale_profile || null;
+const _pagesCfg = (_pagesProfile && _pagesProfile.pages && (_pagesProfile.pages[tier] || _pagesProfile.pages.default)) || null;
+if (_pagesCfg && _pagesCfg.max > 1) {
+  const _mult = _pagesCfg.line_budget_multiplier || 1;
+  const _entryBonus = _pagesCfg.entry_bonus || 0;
+  const _bulletBonus = _pagesCfg.bullet_bonus || 0;
+  for (const _secKey of Object.keys(plan.sections)) {
+    const _sec = plan.sections[_secKey];
+    if (!_sec || !_sec.lineBudget) continue;
+    _sec.lineBudget = Math.round(_sec.lineBudget * _mult);
+    if (_sec.maxEntries) _sec.maxEntries += _entryBonus;
+    if (_sec.maxBulletsPerEntry) _sec.maxBulletsPerEntry += _bulletBonus;
+    if (_sec.mostRecentMinBullets) _sec.mostRecentMinBullets += _bulletBonus;
+  }
+  // Mirror into countPlan -- shapes are the real page-FILL mechanism (see
+  // header comment); scaling lineBudget alone would under-fill a 2nd page.
+  if (plan.countPlan) {
+    for (const _poolKey of ['experience', 'internships']) {
+      const _pool = plan.countPlan[_poolKey];
+      if (!_pool) continue;
+      if (_entryBonus > 0 && _pool.maxEntries) _pool.maxEntries += _entryBonus;
+      if (_bulletBonus > 0 && _pool.shapes) {
+        const _cap = (plan.sections[_poolKey] && plan.sections[_poolKey].maxBulletsPerEntry) || 99;
+        for (const _countKey of Object.keys(_pool.shapes)) {
+          _pool.shapes[_countKey] = _pool.shapes[_countKey].map((v) => Math.min(_cap, v + _bulletBonus));
+        }
+      }
+    }
+    if (_bulletBonus > 0 && plan.countPlan.projects && plan.countPlan.projects.byCount) {
+      const _projCap = (plan.sections.projects && plan.sections.projects.maxBulletsPerEntry) || 99;
+      for (const _countKey of Object.keys(plan.countPlan.projects.byCount)) {
+        plan.countPlan.projects.byCount[_countKey] = plan.countPlan.projects.byCount[_countKey].map((v) => Math.min(_projCap, v + _bulletBonus));
+      }
+    }
+    if (plan.countPlan.projects && plan.countPlan.projects.byCount && plan.sections.experience) {
+      const _bc = plan.countPlan.projects.byCount;
+      const _bumpedMax = plan.sections.experience.maxEntries;
+      const _keys = Object.keys(_bc).map(Number).filter((k) => !isNaN(k));
+      const _hasRealRow = _bc[_bumpedMax] && _bc[_bumpedMax].length > 0;
+      if (!_hasRealRow && _keys.length) {
+        const _nonEmpty = _keys.filter((k) => _bc[k] && _bc[k].length > 0).sort((a, b) => b - a);
+        if (_nonEmpty.length) _bc[_bumpedMax] = _bc[_nonEmpty[0]].slice();
+      }
+    }
+  }
+}
 // s141: header-line budget compensation -- interim measure until s142
 // scales page budgets by locale. localeGateAllows is DELIBERATELY
 // duplicated from the LaTeX render nodes (Code nodes can't share modules;

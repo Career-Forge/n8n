@@ -1,8 +1,16 @@
 {
   "schema_version": 1,
   "generated_at": "2026-07-26",
-  "aliases": { "UK": "GB" },
-  "multinational_tiers": ["maango", "maang_remainder", "top_fintech_quant", "big4_consulting", "hot_ai_startup"],
+  "aliases": {
+    "UK": "GB"
+  },
+  "multinational_tiers": [
+    "maango",
+    "maang_remainder",
+    "top_fintech_quant",
+    "big4_consulting",
+    "hot_ai_startup"
+  ],
   "multinational_w_min": 0.9,
   "country_to_profile": {
     "US": "US",
@@ -33,7 +41,14 @@
       "label": "Default (neutral / unresolved)",
       "doc_term": "Resume",
       "paper": "letterpaper",
-      "pages": { "default": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 } },
+      "pages": {
+        "default": {
+          "max": 1,
+          "line_budget_multiplier": 1.0,
+          "entry_bonus": 0,
+          "bullet_bonus": 0
+        }
+      },
       "fields": {
         "photo": "forbidden",
         "dob": "forbidden",
@@ -42,7 +57,12 @@
         "signature_line": "forbidden",
         "work_authorization_status": "forbidden"
       },
-      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "header_line_costs": {
+        "pii_line": 1,
+        "work_auth_line": 1,
+        "photo": 5,
+        "signature_block": 3
+      },
       "section_titles": {},
       "spelling": "en-US",
       "style_hints": [],
@@ -57,7 +77,14 @@
       "label": "United States",
       "doc_term": "Resume",
       "paper": "letterpaper",
-      "pages": { "default": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 } },
+      "pages": {
+        "default": {
+          "max": 1,
+          "line_budget_multiplier": 1.0,
+          "entry_bonus": 0,
+          "bullet_bonus": 0
+        }
+      },
       "fields": {
         "photo": "forbidden",
         "dob": "forbidden",
@@ -66,7 +93,12 @@
         "signature_line": "forbidden",
         "work_authorization_status": "forbidden"
       },
-      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "header_line_costs": {
+        "pii_line": 1,
+        "work_auth_line": 1,
+        "photo": 5,
+        "signature_block": 3
+      },
       "section_titles": {},
       "spelling": "en-US",
       "style_hints": [],
@@ -81,7 +113,14 @@
       "label": "Canada",
       "doc_term": "Resume",
       "paper": "letterpaper",
-      "pages": { "default": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 } },
+      "pages": {
+        "default": {
+          "max": 1,
+          "line_budget_multiplier": 1.0,
+          "entry_bonus": 0,
+          "bullet_bonus": 0
+        }
+      },
       "fields": {
         "photo": "forbidden",
         "dob": "forbidden",
@@ -90,7 +129,12 @@
         "signature_line": "forbidden",
         "work_authorization_status": "forbidden"
       },
-      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "header_line_costs": {
+        "pii_line": 1,
+        "work_auth_line": 1,
+        "photo": 5,
+        "signature_block": 3
+      },
       "section_titles": {},
       "spelling": "en-US",
       "style_hints": [],
@@ -106,8 +150,18 @@
       "doc_term": "CV",
       "paper": "a4paper",
       "pages": {
-        "default": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 },
-        "senior": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 0 }
+        "default": {
+          "max": 1,
+          "line_budget_multiplier": 1.0,
+          "entry_bonus": 0,
+          "bullet_bonus": 0
+        },
+        "senior": {
+          "max": 2,
+          "line_budget_multiplier": 1.9,
+          "entry_bonus": 1,
+          "bullet_bonus": 1
+        }
       },
       "fields": {
         "photo": "forbidden",
@@ -117,10 +171,19 @@
         "signature_line": "forbidden",
         "work_authorization_status": "forbidden"
       },
-      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
-      "section_titles": { "summary": "Personal Statement" },
+      "header_line_costs": {
+        "pii_line": 1,
+        "work_auth_line": 1,
+        "photo": 5,
+        "signature_block": 3
+      },
+      "section_titles": {
+        "summary": "Personal Statement"
+      },
       "spelling": "en-GB",
-      "style_hints": ["understated tone over promotional language"],
+      "style_hints": [
+        "understated tone over promotional language"
+      ],
       "cover": {
         "closing": "Kind regards,",
         "salutation_hint": "Dear Hiring Manager,",
@@ -133,8 +196,18 @@
       "doc_term": "Resume",
       "paper": "a4paper",
       "pages": {
-        "default": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 1 },
-        "senior": { "max": 3, "line_budget_multiplier": 2.75, "entry_bonus": 2, "bullet_bonus": 1 }
+        "default": {
+          "max": 2,
+          "line_budget_multiplier": 1.9,
+          "entry_bonus": 1,
+          "bullet_bonus": 1
+        },
+        "senior": {
+          "max": 3,
+          "line_budget_multiplier": 2.75,
+          "entry_bonus": 2,
+          "bullet_bonus": 2
+        }
       },
       "fields": {
         "photo": "forbidden",
@@ -144,10 +217,17 @@
         "signature_line": "forbidden",
         "work_authorization_status": "optional"
       },
-      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "header_line_costs": {
+        "pii_line": 1,
+        "work_auth_line": 1,
+        "photo": 5,
+        "signature_block": 3
+      },
       "section_titles": {},
       "spelling": "en-GB",
-      "style_hints": ["2-3 pages is normal here -- a 1-page resume reads as incomplete, not concise"],
+      "style_hints": [
+        "2-3 pages is normal here -- a 1-page resume reads as incomplete, not concise"
+      ],
       "cover": {
         "closing": "Kind regards,",
         "salutation_hint": "Dear Hiring Team,",
@@ -160,8 +240,18 @@
       "doc_term": "CV",
       "paper": "a4paper",
       "pages": {
-        "default": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 0 },
-        "fresher": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 }
+        "default": {
+          "max": 2,
+          "line_budget_multiplier": 1.9,
+          "entry_bonus": 1,
+          "bullet_bonus": 1
+        },
+        "fresher": {
+          "max": 1,
+          "line_budget_multiplier": 1.0,
+          "entry_bonus": 0,
+          "bullet_bonus": 0
+        }
       },
       "fields": {
         "photo": "expected",
@@ -171,10 +261,18 @@
         "signature_line": "expected",
         "work_authorization_status": "forbidden"
       },
-      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "header_line_costs": {
+        "pii_line": 1,
+        "work_auth_line": 1,
+        "photo": 5,
+        "signature_block": 3
+      },
       "section_titles": {},
       "spelling": "en-US",
-      "style_hints": ["precise, factual tone over promotional language", "quantify scope and team size explicitly"],
+      "style_hints": [
+        "precise, factual tone over promotional language",
+        "quantify scope and team size explicitly"
+      ],
       "cover": {
         "closing": "Kind regards,",
         "salutation_hint": "Dear Hiring Team,",
@@ -186,7 +284,14 @@
       "label": "France",
       "doc_term": "CV",
       "paper": "a4paper",
-      "pages": { "default": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 } },
+      "pages": {
+        "default": {
+          "max": 1,
+          "line_budget_multiplier": 1.0,
+          "entry_bonus": 0,
+          "bullet_bonus": 0
+        }
+      },
       "fields": {
         "photo": "optional",
         "dob": "optional",
@@ -195,7 +300,12 @@
         "signature_line": "optional",
         "work_authorization_status": "forbidden"
       },
-      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "header_line_costs": {
+        "pii_line": 1,
+        "work_auth_line": 1,
+        "photo": 5,
+        "signature_block": 3
+      },
       "section_titles": {},
       "spelling": "en-US",
       "style_hints": [],
@@ -211,8 +321,18 @@
       "doc_term": "CV",
       "paper": "a4paper",
       "pages": {
-        "default": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 },
-        "senior": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 0 }
+        "default": {
+          "max": 1,
+          "line_budget_multiplier": 1.0,
+          "entry_bonus": 0,
+          "bullet_bonus": 0
+        },
+        "senior": {
+          "max": 2,
+          "line_budget_multiplier": 1.9,
+          "entry_bonus": 1,
+          "bullet_bonus": 1
+        }
       },
       "fields": {
         "photo": "forbidden",
@@ -222,10 +342,17 @@
         "signature_line": "forbidden",
         "work_authorization_status": "forbidden"
       },
-      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "header_line_costs": {
+        "pii_line": 1,
+        "work_auth_line": 1,
+        "photo": 5,
+        "signature_block": 3
+      },
       "section_titles": {},
       "spelling": "en-US",
-      "style_hints": ["direct, low-hierarchy tone -- avoid overstated titles/claims"],
+      "style_hints": [
+        "direct, low-hierarchy tone -- avoid overstated titles/claims"
+      ],
       "cover": {
         "closing": "Kind regards,",
         "salutation_hint": "Dear Hiring Team,",
@@ -238,8 +365,18 @@
       "doc_term": "CV",
       "paper": "a4paper",
       "pages": {
-        "default": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 0 },
-        "fresher": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 }
+        "default": {
+          "max": 2,
+          "line_budget_multiplier": 1.9,
+          "entry_bonus": 1,
+          "bullet_bonus": 1
+        },
+        "fresher": {
+          "max": 1,
+          "line_budget_multiplier": 1.0,
+          "entry_bonus": 0,
+          "bullet_bonus": 0
+        }
       },
       "fields": {
         "photo": "optional",
@@ -249,10 +386,17 @@
         "signature_line": "forbidden",
         "work_authorization_status": "expected"
       },
-      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "header_line_costs": {
+        "pii_line": 1,
+        "work_auth_line": 1,
+        "photo": 5,
+        "signature_block": 3
+      },
       "section_titles": {},
       "spelling": "en-GB",
-      "style_hints": ["state visa/work-authorization transferability clearly when known"],
+      "style_hints": [
+        "state visa/work-authorization transferability clearly when known"
+      ],
       "cover": {
         "closing": "Best regards,",
         "salutation_hint": "Dear Hiring Team,",
@@ -265,8 +409,18 @@
       "doc_term": "Resume",
       "paper": "a4paper",
       "pages": {
-        "default": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 },
-        "senior": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 0 }
+        "default": {
+          "max": 1,
+          "line_budget_multiplier": 1.0,
+          "entry_bonus": 0,
+          "bullet_bonus": 0
+        },
+        "senior": {
+          "max": 2,
+          "line_budget_multiplier": 1.9,
+          "entry_bonus": 1,
+          "bullet_bonus": 1
+        }
       },
       "fields": {
         "photo": "optional",
@@ -276,7 +430,12 @@
         "signature_line": "forbidden",
         "work_authorization_status": "optional"
       },
-      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "header_line_costs": {
+        "pii_line": 1,
+        "work_auth_line": 1,
+        "photo": 5,
+        "signature_block": 3
+      },
       "section_titles": {},
       "spelling": "en-GB",
       "style_hints": [],
@@ -292,8 +451,18 @@
       "doc_term": "CV",
       "paper": "a4paper",
       "pages": {
-        "default": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 0 },
-        "fresher": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 }
+        "default": {
+          "max": 2,
+          "line_budget_multiplier": 1.9,
+          "entry_bonus": 1,
+          "bullet_bonus": 1
+        },
+        "fresher": {
+          "max": 1,
+          "line_budget_multiplier": 1.0,
+          "entry_bonus": 0,
+          "bullet_bonus": 0
+        }
       },
       "fields": {
         "photo": "optional",
@@ -303,7 +472,12 @@
         "signature_line": "forbidden",
         "work_authorization_status": "forbidden"
       },
-      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "header_line_costs": {
+        "pii_line": 1,
+        "work_auth_line": 1,
+        "photo": 5,
+        "signature_block": 3
+      },
       "section_titles": {},
       "spelling": "en-US",
       "style_hints": [],
@@ -319,8 +493,18 @@
       "doc_term": "CV",
       "paper": "a4paper",
       "pages": {
-        "default": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 0 },
-        "fresher": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 }
+        "default": {
+          "max": 2,
+          "line_budget_multiplier": 1.9,
+          "entry_bonus": 1,
+          "bullet_bonus": 1
+        },
+        "fresher": {
+          "max": 1,
+          "line_budget_multiplier": 1.0,
+          "entry_bonus": 0,
+          "bullet_bonus": 0
+        }
       },
       "fields": {
         "photo": "optional",
@@ -330,7 +514,12 @@
         "signature_line": "forbidden",
         "work_authorization_status": "forbidden"
       },
-      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "header_line_costs": {
+        "pii_line": 1,
+        "work_auth_line": 1,
+        "photo": 5,
+        "signature_block": 3
+      },
       "section_titles": {},
       "spelling": "en-US",
       "style_hints": [],
@@ -346,9 +535,24 @@
       "doc_term": "Resume",
       "paper": "a4paper",
       "pages": {
-        "fresher": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 },
-        "junior": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 },
-        "default": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 0 }
+        "fresher": {
+          "max": 1,
+          "line_budget_multiplier": 1.0,
+          "entry_bonus": 0,
+          "bullet_bonus": 0
+        },
+        "junior": {
+          "max": 1,
+          "line_budget_multiplier": 1.0,
+          "entry_bonus": 0,
+          "bullet_bonus": 0
+        },
+        "default": {
+          "max": 2,
+          "line_budget_multiplier": 1.9,
+          "entry_bonus": 1,
+          "bullet_bonus": 1
+        }
       },
       "fields": {
         "photo": "forbidden",
@@ -358,7 +562,12 @@
         "signature_line": "forbidden",
         "work_authorization_status": "forbidden"
       },
-      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "header_line_costs": {
+        "pii_line": 1,
+        "work_auth_line": 1,
+        "photo": 5,
+        "signature_block": 3
+      },
       "section_titles": {},
       "spelling": "en-GB",
       "style_hints": [],
