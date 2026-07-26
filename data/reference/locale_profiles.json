@@ -1,0 +1,373 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-26",
+  "aliases": { "UK": "GB" },
+  "multinational_tiers": ["maango", "maang_remainder", "top_fintech_quant", "big4_consulting", "hot_ai_startup"],
+  "multinational_w_min": 0.9,
+  "country_to_profile": {
+    "US": "US",
+    "CA": "CA",
+    "GB": "UK_IE",
+    "IE": "UK_IE",
+    "AU": "AU_NZ",
+    "NZ": "AU_NZ",
+    "DE": "DACH",
+    "AT": "DACH",
+    "CH": "DACH",
+    "FR": "FR",
+    "NL": "ANTI_PHOTO_EU",
+    "NO": "ANTI_PHOTO_EU",
+    "SE": "ANTI_PHOTO_EU",
+    "DK": "ANTI_PHOTO_EU",
+    "FI": "ANTI_PHOTO_EU",
+    "AE": "GULF",
+    "SA": "GULF",
+    "SG": "SEA_HUB",
+    "HK": "SEA_HUB",
+    "BR": "BR",
+    "MX": "LATAM_MULTI",
+    "IN": "IN"
+  },
+  "profiles": {
+    "DEFAULT": {
+      "label": "Default (neutral / unresolved)",
+      "doc_term": "Resume",
+      "paper": "letterpaper",
+      "pages": { "default": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 } },
+      "fields": {
+        "photo": "forbidden",
+        "dob": "forbidden",
+        "nationality": "forbidden",
+        "marital_status": "forbidden",
+        "signature_line": "forbidden",
+        "work_authorization_status": "forbidden"
+      },
+      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "section_titles": {},
+      "spelling": "en-US",
+      "style_hints": [],
+      "cover": {
+        "closing": "Warm regards,",
+        "salutation_hint": "Dear [Hiring Team],",
+        "structure_hint": "hook, 2-3 value bullets, brief company-fit close"
+      },
+      "heavy_local_convention": false
+    },
+    "US": {
+      "label": "United States",
+      "doc_term": "Resume",
+      "paper": "letterpaper",
+      "pages": { "default": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 } },
+      "fields": {
+        "photo": "forbidden",
+        "dob": "forbidden",
+        "nationality": "forbidden",
+        "marital_status": "forbidden",
+        "signature_line": "forbidden",
+        "work_authorization_status": "forbidden"
+      },
+      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "section_titles": {},
+      "spelling": "en-US",
+      "style_hints": [],
+      "cover": {
+        "closing": "Warm regards,",
+        "salutation_hint": "Dear [Hiring Team],",
+        "structure_hint": "hook, 2-3 value bullets, brief company-fit close"
+      },
+      "heavy_local_convention": false
+    },
+    "CA": {
+      "label": "Canada",
+      "doc_term": "Resume",
+      "paper": "letterpaper",
+      "pages": { "default": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 } },
+      "fields": {
+        "photo": "forbidden",
+        "dob": "forbidden",
+        "nationality": "forbidden",
+        "marital_status": "forbidden",
+        "signature_line": "forbidden",
+        "work_authorization_status": "forbidden"
+      },
+      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "section_titles": {},
+      "spelling": "en-US",
+      "style_hints": [],
+      "cover": {
+        "closing": "Warm regards,",
+        "salutation_hint": "Dear [Hiring Team],",
+        "structure_hint": "hook, 2-3 value bullets, brief company-fit close"
+      },
+      "heavy_local_convention": false
+    },
+    "UK_IE": {
+      "label": "United Kingdom / Ireland",
+      "doc_term": "CV",
+      "paper": "a4paper",
+      "pages": {
+        "default": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 },
+        "senior": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 0 }
+      },
+      "fields": {
+        "photo": "forbidden",
+        "dob": "forbidden",
+        "nationality": "forbidden",
+        "marital_status": "forbidden",
+        "signature_line": "forbidden",
+        "work_authorization_status": "forbidden"
+      },
+      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "section_titles": { "summary": "Personal Statement" },
+      "spelling": "en-GB",
+      "style_hints": ["understated tone over promotional language"],
+      "cover": {
+        "closing": "Kind regards,",
+        "salutation_hint": "Dear Hiring Manager,",
+        "structure_hint": "hook, 2-3 value bullets, brief company-fit close"
+      },
+      "heavy_local_convention": false
+    },
+    "AU_NZ": {
+      "label": "Australia / New Zealand",
+      "doc_term": "Resume",
+      "paper": "a4paper",
+      "pages": {
+        "default": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 1 },
+        "senior": { "max": 3, "line_budget_multiplier": 2.75, "entry_bonus": 2, "bullet_bonus": 1 }
+      },
+      "fields": {
+        "photo": "forbidden",
+        "dob": "forbidden",
+        "nationality": "forbidden",
+        "marital_status": "forbidden",
+        "signature_line": "forbidden",
+        "work_authorization_status": "optional"
+      },
+      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "section_titles": {},
+      "spelling": "en-GB",
+      "style_hints": ["2-3 pages is normal here -- a 1-page resume reads as incomplete, not concise"],
+      "cover": {
+        "closing": "Kind regards,",
+        "salutation_hint": "Dear Hiring Team,",
+        "structure_hint": "hook, 2-3 value bullets, brief company-fit close"
+      },
+      "heavy_local_convention": false
+    },
+    "DACH": {
+      "label": "Germany / Austria / Switzerland",
+      "doc_term": "CV",
+      "paper": "a4paper",
+      "pages": {
+        "default": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 0 },
+        "fresher": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 }
+      },
+      "fields": {
+        "photo": "expected",
+        "dob": "expected",
+        "nationality": "expected",
+        "marital_status": "expected",
+        "signature_line": "expected",
+        "work_authorization_status": "forbidden"
+      },
+      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "section_titles": {},
+      "spelling": "en-US",
+      "style_hints": ["precise, factual tone over promotional language", "quantify scope and team size explicitly"],
+      "cover": {
+        "closing": "Kind regards,",
+        "salutation_hint": "Dear Hiring Team,",
+        "structure_hint": "more formal, fact-dense tone; avoid overly promotional language"
+      },
+      "heavy_local_convention": true
+    },
+    "FR": {
+      "label": "France",
+      "doc_term": "CV",
+      "paper": "a4paper",
+      "pages": { "default": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 } },
+      "fields": {
+        "photo": "optional",
+        "dob": "optional",
+        "nationality": "optional",
+        "marital_status": "forbidden",
+        "signature_line": "optional",
+        "work_authorization_status": "forbidden"
+      },
+      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "section_titles": {},
+      "spelling": "en-US",
+      "style_hints": [],
+      "cover": {
+        "closing": "Kind regards,",
+        "salutation_hint": "Dear Hiring Team,",
+        "structure_hint": "hook, 2-3 value bullets, brief company-fit close"
+      },
+      "heavy_local_convention": false
+    },
+    "ANTI_PHOTO_EU": {
+      "label": "Netherlands / Nordics",
+      "doc_term": "CV",
+      "paper": "a4paper",
+      "pages": {
+        "default": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 },
+        "senior": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 0 }
+      },
+      "fields": {
+        "photo": "forbidden",
+        "dob": "forbidden",
+        "nationality": "forbidden",
+        "marital_status": "forbidden",
+        "signature_line": "forbidden",
+        "work_authorization_status": "forbidden"
+      },
+      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "section_titles": {},
+      "spelling": "en-US",
+      "style_hints": ["direct, low-hierarchy tone -- avoid overstated titles/claims"],
+      "cover": {
+        "closing": "Kind regards,",
+        "salutation_hint": "Dear Hiring Team,",
+        "structure_hint": "hook, 2-3 value bullets, brief company-fit close"
+      },
+      "heavy_local_convention": false
+    },
+    "GULF": {
+      "label": "UAE / Saudi Arabia",
+      "doc_term": "CV",
+      "paper": "a4paper",
+      "pages": {
+        "default": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 0 },
+        "fresher": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 }
+      },
+      "fields": {
+        "photo": "optional",
+        "dob": "optional",
+        "nationality": "expected",
+        "marital_status": "optional",
+        "signature_line": "forbidden",
+        "work_authorization_status": "expected"
+      },
+      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "section_titles": {},
+      "spelling": "en-GB",
+      "style_hints": ["state visa/work-authorization transferability clearly when known"],
+      "cover": {
+        "closing": "Best regards,",
+        "salutation_hint": "Dear Hiring Team,",
+        "structure_hint": "hook, 2-3 value bullets, brief company-fit close"
+      },
+      "heavy_local_convention": true
+    },
+    "SEA_HUB": {
+      "label": "Singapore / Hong Kong",
+      "doc_term": "Resume",
+      "paper": "a4paper",
+      "pages": {
+        "default": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 },
+        "senior": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 0 }
+      },
+      "fields": {
+        "photo": "optional",
+        "dob": "forbidden",
+        "nationality": "optional",
+        "marital_status": "forbidden",
+        "signature_line": "forbidden",
+        "work_authorization_status": "optional"
+      },
+      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "section_titles": {},
+      "spelling": "en-GB",
+      "style_hints": [],
+      "cover": {
+        "closing": "Best regards,",
+        "salutation_hint": "Dear Hiring Team,",
+        "structure_hint": "hook, 2-3 value bullets, brief company-fit close"
+      },
+      "heavy_local_convention": false
+    },
+    "BR": {
+      "label": "Brazil",
+      "doc_term": "CV",
+      "paper": "a4paper",
+      "pages": {
+        "default": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 0 },
+        "fresher": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 }
+      },
+      "fields": {
+        "photo": "optional",
+        "dob": "optional",
+        "nationality": "forbidden",
+        "marital_status": "optional",
+        "signature_line": "forbidden",
+        "work_authorization_status": "forbidden"
+      },
+      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "section_titles": {},
+      "spelling": "en-US",
+      "style_hints": [],
+      "cover": {
+        "closing": "Best regards,",
+        "salutation_hint": "Dear Hiring Team,",
+        "structure_hint": "hook, 2-3 value bullets, brief company-fit close"
+      },
+      "heavy_local_convention": true
+    },
+    "LATAM_MULTI": {
+      "label": "Mexico / Latin America",
+      "doc_term": "CV",
+      "paper": "a4paper",
+      "pages": {
+        "default": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 0 },
+        "fresher": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 }
+      },
+      "fields": {
+        "photo": "optional",
+        "dob": "optional",
+        "nationality": "forbidden",
+        "marital_status": "optional",
+        "signature_line": "forbidden",
+        "work_authorization_status": "forbidden"
+      },
+      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "section_titles": {},
+      "spelling": "en-US",
+      "style_hints": [],
+      "cover": {
+        "closing": "Best regards,",
+        "salutation_hint": "Dear Hiring Team,",
+        "structure_hint": "hook, 2-3 value bullets, brief company-fit close"
+      },
+      "heavy_local_convention": true
+    },
+    "IN": {
+      "label": "India",
+      "doc_term": "Resume",
+      "paper": "a4paper",
+      "pages": {
+        "fresher": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 },
+        "junior": { "max": 1, "line_budget_multiplier": 1.0, "entry_bonus": 0, "bullet_bonus": 0 },
+        "default": { "max": 2, "line_budget_multiplier": 1.9, "entry_bonus": 1, "bullet_bonus": 0 }
+      },
+      "fields": {
+        "photo": "forbidden",
+        "dob": "forbidden",
+        "nationality": "forbidden",
+        "marital_status": "forbidden",
+        "signature_line": "forbidden",
+        "work_authorization_status": "forbidden"
+      },
+      "header_line_costs": { "pii_line": 1, "work_auth_line": 1, "photo": 5, "signature_block": 3 },
+      "section_titles": {},
+      "spelling": "en-GB",
+      "style_hints": [],
+      "cover": {
+        "closing": "Warm regards,",
+        "salutation_hint": "Dear Hiring Team,",
+        "structure_hint": "hook, 2-3 value bullets, brief company-fit close"
+      },
+      "heavy_local_convention": false
+    }
+  }
+}
