@@ -126,6 +126,7 @@ const LATEX_HELPER_BLOCKS = [
   { block: 'truncateSummary',         start: 'function truncateSummary(t) {',                 end: '\n}' },
   { block: 'bulletRenderV2',          start: 'function bulletRenderV2(bullets, isCompact) {',  end: '\n}' },
   { block: 'renderResume',            start: 'function renderResume(content, personal, isCompact) {', end: '\n}\n' },
+  { block: 'applyLocaleLatex',        start: 'function applyLocaleLatex(latex, profile) {', end: '\n}' },
 ];
 
 function extractLatexBlock(code, start, end) {
@@ -345,6 +346,7 @@ function run() {
       ['scrub', ['Prep Apply Body', 'Prep Save Pending Body', 'Restore Apply Row For Save']],
       ['cleanString', ['Prep Apply Body', 'Prep Save Pending Body', 'Restore Apply Row For Save']],
       ['normalizePass2', ['Parse Pass2', 'Parse Pass2 Regen']],
+      ['localeGateAllows', ['Assemble Resume LaTeX', 'Assemble Regen', 'Build Revised LaTeX', 'Build Pass1 Context']],
     ];
     const extractFnBlock = (code, name) => {
       if (!code) return null;

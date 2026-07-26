@@ -16,6 +16,16 @@ function clean(v) { return asStr(v).replace(/\p{C}/gu, ch => (ch === '\n' || ch 
 function uniq(a) { const s = new Set(), o = []; for (const v of a || []) { const t = clean(v); if (!t) continue; const k = t.toLowerCase(); if (!s.has(k)) { s.add(k); o.push(t); } } return o; }
 function slug(s) { return asStr(s).toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 70) || 'item'; }
 function needTemplate(reason) { return [{ json: { chat_id: chatId, _error: reason, _needs_template: true } }]; }
+function normWorkAuthStatus(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return {};
+  const out = {};
+  for (const [k, val] of Object.entries(v)) {
+    const code = asStr(k).toUpperCase().trim();
+    const text = clean(val);
+    if (/^[A-Z]{2}$/.test(code) && text) out[code] = text;
+  }
+  return out;
+}
 
 // 1) Get raw JSON text (file upload or paste) and parse robustly.
 const rawText = asStr(j.upload_text || j.resume_json || j.resume_text || j.message_text || j.text || extractCtx.message_text || '').trim();
@@ -46,7 +56,17 @@ const profile = {
   emails: normEmails(personalIn.emails), phones: normPhones(personalIn.phones),
   links, locations: locObj ? [locObj] : [],
   work_authorization: clean(personalIn.work_authorization),
-  show_location: !!(locIn && locIn.show_on_resume)
+  show_location: !!(locIn && locIn.show_on_resume),
+  // s141: render-only locale fields -- distinct from work_authorization
+  // above (which stays free-text/LLM-context-only). These NEVER enter any
+  // LLM prompt; buildHeaderFromPersonal renders each ONLY if the resolved
+  // locale profile's disclosure gate allows it AND a real value exists here.
+  dob: clean(personalIn.dob),
+  nationality: clean(personalIn.nationality),
+  marital_status: clean(personalIn.marital_status),
+  work_authorization_status: normWorkAuthStatus(personalIn.work_authorization_status),
+  photo: clean(personalIn.photo),
+  signature: personalIn.signature === true
 };
 
 // 4) Typed bubbles from structured entries.

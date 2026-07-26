@@ -118,6 +118,28 @@ const TIER_PLANS = {
 const COUNT_PLANS = {"senior":{"experience":{"maxEntries":4,"shapes":{"1":[4],"2":[4,4],"3":[4,4,3],"4":[4,3,3,2],"5":[4,3,2,2,2]}},"internships":null,"projects":{"keyedOn":"experience","byCount":{"0":[2,2],"1":[2,2],"2":[2,2],"3":[2,2,2],"4":[2,2],"5":[]}},"summaryLines":3,"achievementsMax":3},"mid":{"experience":{"maxEntries":4,"shapes":{"1":[4],"2":[4,4],"3":[4,3,3],"4":[3,3,2,2]}},"internships":null,"projects":{"keyedOn":"experience","byCount":{"0":[3,3,3],"1":[3,3,3],"2":[3,3,2],"3":[2,2,2],"4":[3,2]}},"summaryLines":2,"achievementsMax":2},"junior":{"experience":{"maxEntries":3,"shapes":{"1":[4],"2":[4,4],"3":[4,4,3]}},"internships":null,"projects":{"keyedOn":"experience","byCount":{"0":[4,4,3,3],"1":[4,4,3],"2":[4,3,3],"3":[3,3]}},"summaryLines":0,"achievementsMax":0},"fresher":{"experience":null,"internships":{"maxEntries":2,"shapes":{"1":[4],"2":[3,3]}},"projects":{"keyedOn":"internships","byCount":{"0":[4,4,3,3,3],"1":[4,4,3,3],"2":[4,3,3]}},"summaryLines":0,"achievementsMax":0}};
 const plan = JSON.parse(JSON.stringify(TIER_PLANS[tier] || TIER_PLANS.mid));
 plan.countPlan = JSON.parse(JSON.stringify(COUNT_PLANS[tier] || COUNT_PLANS.mid));
+// s141: header-line budget compensation -- interim measure until s142
+// scales page budgets by locale. localeGateAllows is DELIBERATELY
+// duplicated from the LaTeX render nodes (Code nodes can't share modules;
+// tracked in export_prompts.js's HELPER_SETS) so this stays a real ESTIMATE
+// of what buildHeaderFromPersonal will actually render, not a guess.
+function localeGateAllows(fields, key) {
+  return !!fields && (fields[key] === 'optional' || fields[key] === 'expected');
+}
+const _locProfile = c.locale_profile || null;
+const _personal = c.personal || {};
+let _extraHeaderLines = 0;
+if (_locProfile && _locProfile.fields) {
+  const _costs = _locProfile.header_line_costs || { pii_line: 1, work_auth_line: 1, photo: 5, signature_block: 3 };
+  const _hasPii = (localeGateAllows(_locProfile.fields, 'dob') && _personal.dob) || (localeGateAllows(_locProfile.fields, 'nationality') && _personal.nationality) || (localeGateAllows(_locProfile.fields, 'marital_status') && _personal.marital_status);
+  if (_hasPii) _extraHeaderLines += _costs.pii_line || 1;
+  const _jobCountryCode = (c.locale && c.locale.code) || null;
+  if (localeGateAllows(_locProfile.fields, 'work_authorization_status') && _jobCountryCode && _personal.work_authorization_status && _personal.work_authorization_status[_jobCountryCode]) _extraHeaderLines += _costs.work_auth_line || 1;
+  if (localeGateAllows(_locProfile.fields, 'signature_line') && _personal.signature === true) _extraHeaderLines += _costs.signature_block || 3;
+}
+if (_extraHeaderLines > 0 && plan.sections[plan.primaryPool]) {
+  plan.sections[plan.primaryPool].lineBudget = Math.max(4, plan.sections[plan.primaryPool].lineBudget - _extraHeaderLines);
+}
 const planBlock = '\n\n== TIER CONTENT PLAN (tier: ' + tier + ') =='
   + '\nDefault sectionOrder (user overrides take priority): ' + JSON.stringify(plan.sectionOrder)
   + '\nEntry caps: experience ' + plan.sections.experience.maxEntries

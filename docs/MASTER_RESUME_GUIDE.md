@@ -19,7 +19,9 @@ Text your bot **"set up my resume"** (or send it a resume file directly, or just
     "phones": [{ "number": "", "primary": true, "region": "US" }],
     "links": { "linkedin": "", "github": "", "portfolio": "" },
     "location": { "city": "", "region": "", "country": "", "show_on_resume": false },
-    "work_authorization": ""
+    "work_authorization": "",
+    "dob": "", "nationality": "", "marital_status": "",
+    "work_authorization_status": {}, "photo": "", "signature": false
   },
   "summary_bullets": [],
   "experience": [
@@ -65,6 +67,14 @@ When you then trigger `apply` on a job:
 7. Reply "make it shorter" or "more Python" to iterate — chat memory preserves context (the `revise` intent).
 
 The same master resume also feeds `score` (resume-vs-JD scoring standalone), `intel`-adjacent outreach personalization, and `salary`.
+
+## Locale-Specific Fields (Optional)
+
+Six `personal` fields (`dob`, `nationality`, `marital_status`, `work_authorization_status`, `photo`, `signature`) exist purely for locale correctness -- most countries (US, India, UK, Canada...) forbid all of them on a resume, and they're never invented or inferred. A field only ever renders if BOTH are true: the job's resolved locale allows it (e.g. DACH expects a DOB/nationality/signature; Gulf countries expect a work-authorization line) AND you've explicitly provided a real value here. Leave them blank/empty/false unless you know you need them.
+
+`work_authorization_status` is an ISO-country-keyed map, e.g. `{"AE": "Employment Visa (Transferable)"}` -- it renders only when the job's country matches a key in the map exactly, and is a different field from the free-text `work_authorization` above (which stays internal context, never printed on the document itself).
+
+None of these six ever reach any LLM prompt -- they're read directly at render time, nowhere else.
 
 ## What If Fields Are Missing?
 

@@ -2,7 +2,7 @@
 // Edits here don't get read back in -- the live node is the source of truth.
 
 // Build Revised LaTeX -- WS4 rewrite (SKELETON/SECTION_LATEX/SLOT_MARKER copied verbatim from Assemble Resume LaTeX)
-const SKELETON = String.raw`\documentclass[letterpaper,11pt]{article}
+const SKELETON = String.raw`\documentclass[{{PAPER}},11pt]{article}
 
 \usepackage{latexsym}
 \usepackage[empty]{fullpage}
@@ -136,43 +136,43 @@ const SKELETON = String.raw`\documentclass[letterpaper,11pt]{article}
 
 // ─── SECTION_LATEX (command-center 124-173; uses bot-compatible macros) ───
 const SECTION_LATEX = {
-  summary: String.raw`\section{Summary}
+  summary: String.raw`\section{{{TITLE:summary}}}
 \resumeSubHeadingListStart
   \small{\item{
 %%% SLOT: summary_content
   }}
 \resumeSubHeadingListEnd`,
-  experience: String.raw`\section{Experience}
+  experience: String.raw`\section{{{TITLE:experience}}}
 \resumeSubHeadingListStart
 %%% SLOT: experience_entries
 \resumeSubHeadingListEnd`,
-  internships: String.raw`\section{Internships}
+  internships: String.raw`\section{{{TITLE:internships}}}
 \resumeSubHeadingListStart
 %%% SLOT: internship_entries
 \resumeSubHeadingListEnd`,
-  projects: String.raw`\section{Projects}
+  projects: String.raw`\section{{{TITLE:projects}}}
 \resumeSubHeadingListStart
 %%% SLOT: project_entries
 \resumeSubHeadingListEnd`,
-  skills: String.raw`\section{Technical Skills}
+  skills: String.raw`\section{{{TITLE:skills}}}
 \resumeSubHeadingListStart
   \small{\item{
 %%% SLOT: skills_content
   }}
 \resumeSubHeadingListEnd`,
-  education: String.raw`\section{Education}
+  education: String.raw`\section{{{TITLE:education}}}
 \resumeSubHeadingListStart
 %%% SLOT: education_entries
 \resumeSubHeadingListEnd`,
-  certifications: String.raw`\section{Certifications}
+  certifications: String.raw`\section{{{TITLE:certifications}}}
 \resumeSubHeadingListStart
 %%% SLOT: certification_entries
 \resumeSubHeadingListEnd`,
-  achievements: String.raw`\section{Achievements}
+  achievements: String.raw`\section{{{TITLE:achievements}}}
 \resumeSubHeadingListStart
 %%% SLOT: achievement_entries
 \resumeSubHeadingListEnd`,
-  activities: String.raw`\section{Activities \& Leadership}
+  activities: String.raw`\section{{{TITLE:activities}}}
 \resumeSubHeadingListStart
 %%% SLOT: activity_entries
 \resumeSubHeadingListEnd`,
@@ -225,7 +225,32 @@ function buildHeaderFromPersonal(p) {
   // pdflatex, see _s135_calibrate.js): 4pt between name and contact line
   // holds cleanly against the new 18pt/9pt sizing, incl. all 6 contact
   // fields present at once -- no overflow of the 0.97\textwidth line.
-  return '\\begin{center}\n  {\\fontsize{18}{18}\\selectfont \\textbf{' + name + '}} \\\\ \\vspace{4pt}\n  ' + contact + '\n\\end{center}\\vspace{-6pt}';
+
+  // s141: locale disclosure gate. A field renders ONLY IF the resolved
+  // locale profile allows it (optional|expected, never forbidden) AND the
+  // candidate explicitly provided a real value -- never inferred, never
+  // LLM-decided. __localeProfile/__jobCountryCode are glue set OUTSIDE this
+  // tracked block (see the Main section) so this function's own signature
+  // stays a stable drift anchor; localeGateAllows is a new shared block,
+  // deliberately duplicated in Build Pass1 Context for budget estimation.
+  const __locFields = (__localeProfile && __localeProfile.fields) || {};
+  const __piiBits = [];
+  if (localeGateAllows(__locFields, 'dob') && p.dob) __piiBits.push('DOB: ' + escapeLatexTextV2(p.dob));
+  if (localeGateAllows(__locFields, 'nationality') && p.nationality) __piiBits.push('Nationality: ' + escapeLatexTextV2(p.nationality));
+  if (localeGateAllows(__locFields, 'marital_status') && p.marital_status) __piiBits.push('Marital Status: ' + escapeLatexTextV2(p.marital_status));
+  const __piiLine = __piiBits.length ? (" \\\\ {\\\\fontsize{9}{9}\\\\selectfont " + __piiBits.join(' ~$|$~ ') + '}') : '';
+  let __workAuthLine = '';
+  if (localeGateAllows(__locFields, 'work_authorization_status') && __jobCountryCode && p.work_authorization_status && typeof p.work_authorization_status === 'object') {
+    const __wa = p.work_authorization_status[__jobCountryCode];
+    if (__wa) __workAuthLine = " \\\\ {\\\\fontsize{9}{9}\\\\selectfont " + escapeLatexTextV2(String(__wa)) + '}';
+  }
+  let __signatureBlock = '';
+  if (localeGateAllows(__locFields, 'signature_line') && p.signature === true) {
+    const __sigBits = [name];
+    if (p.show_location && p.location) __sigBits.push(escapeLatexTextV2(p.location));
+    __signatureBlock = "\\vspace{6pt}\\\\ " + "{\\\\fontsize{9}{9}\\\\selectfont " + __sigBits.join(', ') + '}';
+  }
+  return '\\begin{center}\n  {\\fontsize{18}{18}\\selectfont \\textbf{' + name + '}} \\\\ \\vspace{4pt}\n  ' + contact + __piiLine + __workAuthLine + '\n\\end{center}\\vspace{-6pt}' + __signatureBlock;
 }
 function escapeLatexTextV2(value) {
   let s = String(value == null ? '' : value);
@@ -428,6 +453,38 @@ function renderResume(content, personal, isCompact) {
   return SKELETON.split('%%% SLOT: header').join(headerLatex).split('%%% CONTENT_SECTIONS').join(contentSections);
 }
 
+// s141: locale disclosure-gate predicate -- DELIBERATELY duplicated in Build
+// Pass1 Context for header-line budget estimation (Code nodes can't share
+// modules); keep both copies in sync (tracked in export_prompts.js's
+// HELPER_SETS).
+function localeGateAllows(fields, key) {
+  return !!fields && (fields[key] === 'optional' || fields[key] === 'expected');
+}
+// s141: applies {{PAPER}}/{{TITLE:<slotKey>}} tokens as the FINAL step of
+// every render path. Throws on a surviving token -- a real bug (missing
+// profile data), never silently shipped. New tracked block
+// (LATEX_HELPER_BLOCKS in export_prompts.js).
+function applyLocaleLatex(latex, profile) {
+  const DEFAULT_SECTION_TITLES = { summary: 'Summary', experience: 'Experience', internships: 'Internships', projects: 'Projects', skills: 'Technical Skills', education: 'Education', certifications: 'Certifications', achievements: 'Achievements', activities: 'Activities & Leadership' };
+  const paper = (profile && profile.paper) || 'letterpaper';
+  let out = latex.split('{{PAPER}}').join(paper);
+  const overrides = (profile && profile.section_titles) || {};
+  for (const key of Object.keys(DEFAULT_SECTION_TITLES)) {
+    const token = '{{TITLE:' + key + '}}';
+    const title = overrides[key] || DEFAULT_SECTION_TITLES[key];
+    out = out.split(token).join(escapeLatexTextV2(title));
+  }
+  const survivor = out.match(/\{\{(PAPER|TITLE:[a-z_]+)\}\}/);
+  if (survivor) throw new Error('applyLocaleLatex: unsubstituted locale token survived: ' + survivor[0]);
+  return out;
+}
+// s141: per-node glue for locale profile source -- kept OUTSIDE the tracked
+// blocks above so buildHeaderFromPersonal's own signature never changes (a
+// drift anchor). Assigned in the Main section below, before any render
+// call, so buildHeaderFromPersonal's closure sees the real value.
+let __localeProfile = null;
+let __jobCountryCode = null;
+
 // ─── Main -- WS4 rewrite. Renders the ReviseForge-edited content JSON (same
 // schema Assemble Resume LaTeX/Regen produce) via the identical renderResume --
 // no separate skeleton-marker mechanism, no dependency on ctx.last_apply.resume_skeleton.
@@ -441,6 +498,8 @@ const revised = $input.first().json.output || {};
 const _priorBudget = (ctx.last_apply && ctx.last_apply.resume_json && ctx.last_apply.resume_json._budget) || null;
 if (_priorBudget && !revised._budget) revised._budget = _priorBudget;
 const personal = (ctx.last_apply && ctx.last_apply.personal) || {};
+__localeProfile = (ctx.last_apply && ctx.last_apply.locale_profile) || null;
+__jobCountryCode = (ctx.last_apply && ctx.last_apply.locale && ctx.last_apply.locale.code) || null;
 
 if (!revised || !Array.isArray(revised.experience)) {
   return [{ json: { chat_id: ctx.chat_id, error: "That revision came back in an unexpected shape -- nothing was changed. Try rephrasing, or apply again to refresh." } }];
@@ -456,7 +515,7 @@ for (const _sec of ['experience', 'internships', 'projects']) {
   }
 }
 const isCompact = ((($getWorkflowStaticData('global').user_prefs) || {}).template) === 'compact';
-const latex = renderResume(revised, personal, isCompact);
+const latex = applyLocaleLatex(renderResume(revised, personal, isCompact), __localeProfile);
 const body = (latex.match(/\\begin\{document\}([\s\S]*?)\\end\{document\}/) || [])[1] || '';
 const bodyClean = body.replace(/%.*$/gm, '').replace(/\\(begin|end)\{center\}/g, '').trim();
 if (!bodyClean) {

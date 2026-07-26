@@ -2,11 +2,37 @@
   "personal": {
     "name": "",
     "headline": "",
-    "emails": [{ "address": "", "primary": true }],
-    "phones": [{ "number": "", "primary": true, "region": "US" }],
-    "links": { "linkedin": "", "github": "", "portfolio": "" },
-    "location": { "city": "", "region": "", "country": "", "show_on_resume": false },
-    "work_authorization": ""
+    "emails": [
+      {
+        "address": "",
+        "primary": true
+      }
+    ],
+    "phones": [
+      {
+        "number": "",
+        "primary": true,
+        "region": "US"
+      }
+    ],
+    "links": {
+      "linkedin": "",
+      "github": "",
+      "portfolio": ""
+    },
+    "location": {
+      "city": "",
+      "region": "",
+      "country": "",
+      "show_on_resume": false
+    },
+    "work_authorization": "",
+    "dob": "",
+    "nationality": "",
+    "marital_status": "",
+    "work_authorization_status": {},
+    "photo": "",
+    "signature": false
   },
   "summary_bullets": [],
   "experience": [
