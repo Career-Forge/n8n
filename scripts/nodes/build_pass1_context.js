@@ -187,6 +187,7 @@ if (_locProfile && _locProfile.fields) {
   const _jobCountryCode = (c.locale && c.locale.code) || null;
   if (localeGateAllows(_locProfile.fields, 'work_authorization_status') && _jobCountryCode && _personal.work_authorization_status && _personal.work_authorization_status[_jobCountryCode]) _extraHeaderLines += _costs.work_auth_line || 1;
   if (localeGateAllows(_locProfile.fields, 'signature_line') && _personal.signature === true) _extraHeaderLines += _costs.signature_block || 3;
+  if (localeGateAllows(_locProfile.fields, 'photo') && _personal.photo) _extraHeaderLines += _costs.photo || 5;
 }
 if (_extraHeaderLines > 0 && plan.sections[plan.primaryPool]) {
   plan.sections[plan.primaryPool].lineBudget = Math.max(4, plan.sections[plan.primaryPool].lineBudget - _extraHeaderLines);

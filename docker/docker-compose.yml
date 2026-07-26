@@ -120,6 +120,8 @@ services:
     container_name: careerforge_latex
     hostname: latex-service
     restart: unless-stopped
+    volumes:
+      - ../user-data:/data/user-data:ro
     ports:
       - "5679:5679"
     healthcheck:

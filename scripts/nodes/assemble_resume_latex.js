@@ -44,6 +44,7 @@ const SKELETON = String.raw`\documentclass[{{PAPER}},11pt]{article}
 \usepackage{fancyhdr}
 \usepackage[english]{babel}
 \usepackage{tabularx}
+\usepackage{graphicx}
 \input{glyphtounicode}
 
 \usepackage[default]{lato}
@@ -311,7 +312,13 @@ function buildHeaderFromPersonal(p) {
     if (p.show_location && p.location) __sigBits.push(escapeLatexTextV2(p.location));
     __signatureBlock = "\\vspace{6pt}\\\\ " + "{\\\\fontsize{9}{9}\\\\selectfont " + __sigBits.join(', ') + '}';
   }
-  return '\\begin{center}\n  {\\fontsize{18}{18}\\selectfont \\textbf{' + name + '}} \\\\ \\vspace{4pt}\n  ' + contact + __piiLine + __workAuthLine + '\n\\end{center}\\vspace{-6pt}' + __signatureBlock;
+  const __headerLatexBase = '\\begin{center}\n  {\\fontsize{18}{18}\\selectfont \\textbf{' + name + '}} \\\\ \\vspace{4pt}\n  ' + contact + __piiLine + __workAuthLine + '\n\\end{center}\\vspace{-6pt}' + __signatureBlock;
+    const __photoPath = '/data/user-data/profile_photo.jpg';
+    let __headerLatex = __headerLatexBase;
+    if (localeGateAllows(__locFields, 'photo') && p.photo && require('fs').existsSync(__photoPath)) {
+      __headerLatex = "\\noindent\\begin{minipage}[c]{0.78\\textwidth}\n" + __headerLatexBase + "\n\\end{minipage}\\hfill\\begin{minipage}[c]{0.18\\textwidth}\\includegraphics[height=2.5cm]{" + __photoPath + "}\\end{minipage}";
+    }
+    return __headerLatex;
 }
 
 // command-center buildFallbackSlots 1409-1455 (non-compact only; bot has no compact template)
