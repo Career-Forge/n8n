@@ -163,7 +163,7 @@ careerforge-n8n/
 |-- DEPLOYMENT.md                      # 5 hosting tiers (local to cloud)
 |-- API.md                             # External services + cost math
 |-- ROADMAP.md                         # What's live, what's next
-|-- LICENSE                            # MIT
+|-- LICENSE                            # AGPL-3.0
 |
 |-- docs/
 |   |-- QUICKSTART.md                  # Docker + ngrok 10-min setup
@@ -221,7 +221,7 @@ careerforge-n8n/
 |   |-- .env.example                   # All API keys documented
 |   +-- README.md
 |
-+-- scripts/                           # Patch scripts (deploy history, s1-s101+) + one-off utilities + build_reference_data.js
++-- scripts/                           # Patch scripts (deploy history, s1-s144+) + one-off utilities + build_reference_data.js
     +-- uptime_ping.sh                 # Keep-alive ping for Render free tier
 ```
 
@@ -285,4 +285,4 @@ Issues and PRs welcome. See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for system d
 
 ## License
 
-[MIT](LICENSE)
+[AGPL-3.0](LICENSE)
