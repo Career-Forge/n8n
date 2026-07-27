@@ -25,6 +25,16 @@ class Settings:
         # a real Telegram initData blob. OFF unless explicitly set — never
         # default-on, this bypasses the owner-allowlist auth entirely.
         self.dev_mode = os.environ.get("MINIAPP_DEV_MODE", "").lower() in ("1", "true", "yes")
+        # dev_mode + a public URL together means the auth bypass in auth.py's
+        # require_owner is reachable from the internet, not just localhost --
+        # fail loudly at boot instead of trusting a deploy config to remember
+        # to unset one of the two.
+        if self.dev_mode and self.miniapp_public_url:
+            raise RuntimeError(
+                "MINIAPP_DEV_MODE is on while MINIAPP_PUBLIC_URL is set -- this "
+                "would expose the owner-only auth bypass publicly. Unset "
+                "MINIAPP_DEV_MODE (or MINIAPP_PUBLIC_URL) before starting."
+            )
 
 
 settings = Settings()
