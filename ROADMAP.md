@@ -10,6 +10,7 @@ What's live, and what's next. For deep implementation history, see git log and c
 - **Company intel, cold outreach, salary data, application tracking** — all sourced from live multi-provider search with reciprocal-rank-fusion merge, cached with a TTL to avoid re-researching the same company repeatedly.
 - **A self-growing job registry** — every search that surfaces a job from a known ATS (Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Eightfold, Avature, and a few single-company integrations) permanently adds that company to the background poller's coverage. Workday's seeded-tenant list covers Intel, Adobe, Target, Walmart, Visa, and Mastercard today.
 - **Resume section customization** — `sections:`/`order:` text commands, or a tap-to-toggle inline keyboard (send "sections") for the same thing.
+- **A Telegram Mini App** — a FastAPI + React UI (job digest table, application tracker kanban, resume/ForgeScore view, settings) with its own HMAC-validated auth, reachable from the bot's Telegram menu button. See [miniapp/README.md](miniapp/README.md).
 - **18 intents**, all documented in the bot's own `/help` text and in [README.md](README.md)'s Features table.
 - **5 deployment tiers** — local Docker, Render free tier, Railway, a small Hetzner VPS, and n8n Cloud (with real caveats about what n8n Cloud can't run, documented in [DEPLOYMENT.md](DEPLOYMENT.md)).
 

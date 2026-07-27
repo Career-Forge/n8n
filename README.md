@@ -66,6 +66,22 @@ flowchart TD
 
 ---
 
+## Mini App
+
+Everything above also works as a real UI, not just chat. The bot's Telegram menu button opens a **Mini App** — a FastAPI sidecar + React frontend rendered inside Telegram, with its own HMAC-validated auth (initData signature check + a hard owner allowlist, since this is still a single-user bot):
+
+| Screen | What it shows |
+|--------|---------------|
+| **Home** | Stats strip — jobs found, applications tracked, resume ForgeScore |
+| **Jobs** | The last digest as a real table — source-trust badges, match %, status color-coding |
+| **Tracker** | A 5-column kanban (saved → applied → interviewing → offer → rejected), drag to update |
+| **Resume** | Your ForgeScore as a ring, plus the underlying resume data |
+| **Settings** | A read-only view of your saved preferences |
+
+Actions taken in the app (mark applied, run a search, log a tracked application) go through the exact same pipeline as typing in chat — the app POSTs a synthetic Telegram update to the bot's own webhook, so there's no second copy of any logic to keep in sync. See [miniapp/README.md](miniapp/README.md) for the architecture, and the Quick Start below for exposing it.
+
+---
+
 ## Cost
 
 | Service | Cost | What you get |
@@ -151,6 +167,10 @@ In n8n **Settings > Credentials**, create:
 
 Activate the workflow. Text your bot "help" to verify.
 
+### 6. (Optional) Turn on the Mini App
+
+`docker compose up -d` already started it (`docker/.env.example` documents the extra required vars: `MINIAPP_BRIDGE_SECRET`, `OWNER_TG_USER_ID`, `N8N_TG_WEBHOOK_SECRET`, `MINIAPP_PUBLIC_URL`) — it just isn't reachable from Telegram until you expose it over HTTPS and point the bot's menu button at it. See [miniapp/README.md](miniapp/README.md) for the exposure step (Tailscale Funnel or similar) and BotFather setup.
+
 ---
 
 ## Project Structure
@@ -201,6 +221,10 @@ careerforge-n8n/
 |   +-- latex/
 |       |-- Dockerfile
 |       +-- app.py                     # Flask + pdflatex PDF compiler
+|
+|-- miniapp/                           # Telegram Mini App -- rich UI (see miniapp/README.md)
+|   |-- api/                           # FastAPI sidecar: HMAC-validated Telegram auth, snapshot/actions/tracker routes
+|   +-- web/                           # React + Vite + TypeScript frontend (Home/Jobs/Tracker/Resume/Settings)
 |
 |-- db/
 |   +-- schema.sql                     # Postgres + pgvector schema (companies, jobs, tier_weight, app_settings, ...)

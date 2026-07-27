@@ -50,3 +50,19 @@ real Telegram client. Never enable this outside local dev.
 `scripts/miniapp_sign_initdata.py` (repo root) forges a real, correctly
 signed initData string using the actual bot token, for testing the auth
 path itself without `MINIAPP_DEV_MODE`.
+
+## Exposing it publicly
+
+Telegram Mini Apps must be served over HTTPS. Free ngrok won't work here --
+its browser interstitial page breaks the in-Telegram webview. This project
+uses [Tailscale Funnel](https://tailscale.com/kb/1223/tailscale-funnel)
+instead (a stable `*.ts.net` hostname, no interstitial):
+
+```bash
+tailscale funnel --bg --set-path=/ http://127.0.0.1:5681
+```
+
+Then in @BotFather: `/mybots` -> your bot -> **Bot Settings** -> **Menu
+Button** -> set the URL to your `https://<name>.ts.net` origin. The bot's
+digest can also link directly into the app via a `web_app` inline button
+once `MINIAPP_PUBLIC_URL` is set in `.env` (see `docker/.env.example`).
