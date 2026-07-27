@@ -179,7 +179,9 @@ INSERT INTO app_settings (key, value) VALUES ('geo_reference', '{"countries":{"U
 
 -- ── Migration 001: applications (Mini App tracker) + cf_url_norm ──
 -- See db/migrations/001_applications.sql for the full comment/rationale.
--- Kept byte-identical here so a fresh install matches a migrated one.
+-- Kept structurally identical here (same columns/types/constraints/function
+-- body) so a fresh install matches a migrated one -- not byte-identical,
+-- the migration file carries additional inline comments this copy strips.
 CREATE OR REPLACE FUNCTION cf_url_norm(u TEXT) RETURNS TEXT
 LANGUAGE plpgsql IMMUTABLE AS $$
 DECLARE s TEXT; hostpart TEXT; pathpart TEXT; qs TEXT; kept TEXT[]; kv TEXT;

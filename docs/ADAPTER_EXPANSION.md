@@ -1,11 +1,17 @@
 # Adapter Expansion — next sprint
 
+> **Status update**: the Google (§2) and Microsoft (§3) sections below have
+> since shipped — both are live in `Build Requests`/`Parse Jobs` as
+> single-company bespoke integrations. Kept here as the research record
+> (real endpoint shapes, live-verified) rather than deleted. Still open:
+> Meta (§1), Workday tenant bulk expansion (§4), and SmartRecruiters/Eightfold
+> tenant discovery (§5) — see the renumbered priority order in §7.
+
 Design doc for the poller adapters explicitly deferred out of the 2026-07-15
-find_jobs fix wave (see `~/.claude/plans/create-an-in-depth-plan-smooth-blossom.md`,
-Phase 7). Scope: Meta/Google/Microsoft custom adapters, Workday tenant bulk
-expansion, and the SmartRecruiters/Eightfold discovery problem. This is a
-plan, not shipped code — nothing here has been wired into `Parse Jobs` or
-`Build Requests` yet.
+find_jobs fix wave. Scope: Meta/Google/Microsoft custom adapters, Workday
+tenant bulk expansion, and the SmartRecruiters/Eightfold discovery problem.
+Google and Microsoft are now shipped (see status note above); the rest of
+this doc is still an accurate plan, not shipped code.
 
 **Every endpoint shape below is written from training data (cutoff January
 2026) and MUST be live-verified — a real request against the real endpoint,
@@ -176,21 +182,19 @@ same treatment:
 
 ## 7. Prioritization
 
-Rough build-cost-vs-value ordering, cost estimated from the above:
+Rough build-cost-vs-value ordering, cost estimated from the above. Google
+and Microsoft (formerly priorities 2-3) have shipped — see the status note
+at the top of this doc.
 
 1. **Workday tenant bulk expansion** — near-zero new code (adapter already
    works), pure discovery-and-seed work, highest confidence of success.
    Do this first, and do it incrementally (verify-then-seed one tenant at a
    time, per the existing B2 protocol) rather than a big batch.
-2. **Google** — likely a plain paginated JSON search API, comparable
-   difficulty to the existing single-page adapters (`smartrecruiters`/
-   `amazon`/`oracle`). Second priority once the exact shape is confirmed.
-3. **Microsoft** — similar profile to Google, verify and build alongside it.
-4. **SmartRecruiters / Eightfold tenant discovery** — code is ready, this is
+2. **SmartRecruiters / Eightfold tenant discovery** — code is ready, this is
    pure research work (find real tenant IDs the safe way, watch for the
    empty-response-on-wrong-ID trap). Worth doing opportunistically as
    specific companies come up rather than as a dedicated sprint.
-5. **Meta** — highest implementation cost (GraphQL, likely token handling,
+3. **Meta** — highest implementation cost (GraphQL, likely token handling,
    real bot-detection risk) for a company already reachable today via the
    existing `site:metacareers.com` Serper/You.com fallback. Lowest priority;
    reconsider only if the fallback proves clearly insufficient in practice.

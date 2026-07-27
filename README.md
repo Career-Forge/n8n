@@ -60,7 +60,7 @@ flowchart TD
 | **forget_pref** | Remove a saved preference | "/prefs forget location" |
 | **verbose_toggle** | Toggle showing search queries/reasoning | "/verbose on" |
 | **check_resume** | Check whether a resume is saved | "do you have my resume?" |
-| **costs** | API/LLM spend summary (last 30 days, from `tool_cost_log`) | "costs" |
+| **costs** | Spend summary from `tool_cost_log` (last 30 days) — currently populated for Apollo enrichment calls; OpenRouter/search-provider spend isn't logged to this table yet, check your OpenRouter dashboard for that | "costs" |
 | **jd_paste** | Paste a full job description directly — no search needed | paste a job posting's full text |
 | **help** | Command list | "help" |
 

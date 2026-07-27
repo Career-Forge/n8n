@@ -1,6 +1,6 @@
 # Architecture
 
-CareerForge is a single n8n workflow (302 nodes) that handles 18 intents through one Telegram bot, plus a separate background poller workflow (17 nodes) that keeps a local job cache warm across 12+ ATS platforms. This doc walks through the system design, data flow, and key implementation patterns.
+CareerForge is a single n8n workflow (321 nodes) that handles 18 intents through one Telegram bot, plus a separate background poller workflow (18 nodes) that keeps a local job cache warm across 16 ATS platforms. This doc walks through the system design, data flow, and key implementation patterns.
 
 ## System Overview
 
@@ -218,13 +218,13 @@ See [DEPLOYMENT.md](../DEPLOYMENT.md) for step-by-step instructions for each tie
 
 ## ATS Poller & Adapter Roadmap
 
-`CareerForge_ATS_Poller.json` polls 12+ ATS platforms directly (Greenhouse, Lever, Ashby, Workday, Workable, Recruitee, SmartRecruiters, Personio, Avature, plus single-company integrations for Amazon, Apple, and Oracle) into a local job cache, so `find_jobs` can hit a warm cache before falling back to live web search. See [docs/ADAPTER_EXPANSION.md](ADAPTER_EXPANSION.md) for the design plan on the next wave of adapters (Meta, Google, Microsoft, bulk Workday tenant expansion).
+`CareerForge_ATS_Poller.json` polls 16 ATS platforms directly into a local job cache, so `find_jobs` can hit a warm cache before falling back to live web search: 11 genuinely multi-tenant adapters (Greenhouse, Lever, Ashby, Workable, Recruitee, SmartRecruiters, Workday, Eightfold, Avature, Oracle Cloud HCM, SuccessFactors — any company on that platform can be added by seeding a tenant slug, no new code) plus 5 single-company bespoke integrations (Amazon, Apple, Google, Microsoft, D.E. Shaw — each is a fixed, hardcoded endpoint). See [docs/ADAPTER_EXPANSION.md](ADAPTER_EXPANSION.md) for the one remaining gap (Meta) and the SmartRecruiters/Eightfold tenant-discovery problem.
 
 ## File Map
 
 ```
-workflows/CareerForge_Master_local.json   ← THE bot (302 nodes)
-workflows/CareerForge_ATS_Poller.json     ← Background job-registry poller (17 nodes, 12+ ATS platforms)
+workflows/CareerForge_Master_local.json   ← THE bot (321 nodes)
+workflows/CareerForge_ATS_Poller.json     ← Background job-registry poller (18 nodes, 16 ATS platforms)
 workflows/CareerForge_Registry_Seeder.json ← One-time registry seed
 workflows/archive/                        ← Historical snapshots, do not import
 prompts/*.md                              ← LLM prompt source files (regenerated from live via scripts/export_prompts.js)

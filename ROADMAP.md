@@ -8,7 +8,7 @@ What's live, and what's next. For deep implementation history, see git log and c
 - **Tailored resume + cover letter generation** — a deterministic, tier-aware content plan (fresher/junior/mid/senior) decides how many roles/projects/bullets to select and how long each bullet runs; an LLM writes within that plan, never trusted to also decide the shape. ATS-score gated with an automatic retry-and-improve loop. Verbatim-facts-only — nothing on a generated document is invented.
 - **Resume setup** — a one-time interactive JSON-template flow over Telegram (no file uploads to a server, no separate onboarding doc to read).
 - **Company intel, cold outreach, salary data, application tracking** — all sourced from live multi-provider search with reciprocal-rank-fusion merge, cached with a TTL to avoid re-researching the same company repeatedly.
-- **A self-growing job registry** — every search that surfaces a job from a known ATS (Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Eightfold, Avature, and a few single-company integrations) permanently adds that company to the background poller's coverage. Workday's seeded-tenant list covers Intel, Adobe, Target, Walmart, Visa, and Mastercard today.
+- **A self-growing job registry** — every search that surfaces a job from a known ATS (16 platforms: Greenhouse, Lever, Ashby, Workable, Recruitee, SmartRecruiters, Workday, Eightfold, Avature, Oracle Cloud HCM, SuccessFactors, plus single-company integrations for Amazon, Apple, Google, Microsoft, and D.E. Shaw) permanently adds that company to the background poller's coverage. Workday's seeded-tenant list covers Intel, Adobe, Target, Walmart, Visa, and Mastercard today.
 - **Resume section customization** — `sections:`/`order:` text commands, or a tap-to-toggle inline keyboard (send "sections") for the same thing.
 - **A Telegram Mini App** — a FastAPI + React UI (job digest table, application tracker kanban, resume/ForgeScore view, settings) with its own HMAC-validated auth, reachable from the bot's Telegram menu button. See [miniapp/README.md](miniapp/README.md).
 - **18 intents**, all documented in the bot's own `/help` text and in [README.md](README.md)'s Features table.
@@ -16,7 +16,7 @@ What's live, and what's next. For deep implementation history, see git log and c
 
 ## In progress / next up
 
-- **Poller adapter coverage** — Greenhouse/Lever/Ashby/Workable/Recruitee/SmartRecruiters/Avature plus Workday, Apple, Amazon, and Oracle's own career sites are integrated; SmartRecruiters/Eightfold tenant ids are opaque per-company strings not derivable from a brand name, so growing that coverage needs a quick manual lookup per company rather than a bulk add — see the poller adapter notes in `workflows/CareerForge_ATS_Poller.json`. Design plan for the next wave (Meta, Google, Microsoft, bulk Workday tenant expansion) is in [docs/ADAPTER_EXPANSION.md](docs/ADAPTER_EXPANSION.md).
+- **Poller adapter coverage** — 16 platforms are integrated (see the self-growing registry bullet above); SmartRecruiters/Eightfold tenant ids are opaque per-company strings not derivable from a brand name, so growing that specific coverage needs a quick manual lookup per company rather than a bulk add — see the poller adapter notes in `workflows/CareerForge_ATS_Poller.json`. Remaining design plan (Meta, bulk Workday tenant expansion) is in [docs/ADAPTER_EXPANSION.md](docs/ADAPTER_EXPANSION.md).
 
 ## Planned, not started
 

@@ -68,17 +68,12 @@ services:
       - OLLAMA_URL=${OLLAMA_URL:-http://ollama-service:11434}
       - EMBED_MODEL=${EMBED_MODEL:-bge-m3}
       - GEN_MODEL=${GEN_MODEL:-google/gemini-3.5-flash}
-      # Per-ATS provider toggles (poller fan-out branches)
-      - ATS_GREENHOUSE_ENABLED=${ATS_GREENHOUSE_ENABLED:-true}
-      - ATS_LEVER_ENABLED=${ATS_LEVER_ENABLED:-true}
-      - ATS_ASHBY_ENABLED=${ATS_ASHBY_ENABLED:-true}
-      - ATS_WORKABLE_ENABLED=${ATS_WORKABLE_ENABLED:-true}
-      - ATS_RECRUITEE_ENABLED=${ATS_RECRUITEE_ENABLED:-true}
-      - ATS_PERSONIO_ENABLED=${ATS_PERSONIO_ENABLED:-true}
-      - ATS_SMARTRECRUITERS_ENABLED=${ATS_SMARTRECRUITERS_ENABLED:-true}
-      - ATS_WORKDAY_ENABLED=${ATS_WORKDAY_ENABLED:-false}
-      - ATS_SCRAPE_ENABLED=${ATS_SCRAPE_ENABLED:-false}
-      - LIVE_SEARCH_SUPPLEMENT=${LIVE_SEARCH_SUPPLEMENT:-false}
+      # Note: which ATS platforms the poller fans out to is NOT env-driven --
+      # it's the IMPLEMENTED array hardcoded in the poller's "Build Requests"
+      # node (16 platforms today). A previous set of ATS_*_ENABLED toggles
+      # here never actually did anything: n8n's JS task runner sandboxes out
+      # process.env, so nothing in the poller could read them. Removed rather
+      # than left as decoration -- see docs/ARCHITECTURE.md for the real list.
 
       # File access
       - N8N_RESTRICT_FILE_ACCESS_TO=/data;/home/node/.n8n-files
