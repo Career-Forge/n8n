@@ -20,8 +20,9 @@ CareerForge is **self-hosted and clone-and-BYOK**: you run your own instance wit
 ## 2. Quick start
 
 ```bash
+cd docker
 cp .env.example .env          # fill in the required values (see below)
-docker compose -f docker/docker-compose.yml up -d
+docker compose up -d
 docker exec -it careerforge_ollama ollama pull bge-m3   # one-time, ~1.2 GB
 ```
 
